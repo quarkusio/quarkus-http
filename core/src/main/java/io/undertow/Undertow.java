@@ -40,6 +40,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.undertow.protocol.http.NettyHttpServerInitializer;
+import io.undertow.protocol.http.VertxHttpServerInitializer;
 import io.undertow.server.ConnectorStatistics;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.OpenListener;
@@ -143,12 +144,15 @@ public final class Undertow {
 //                    channels.add(server);
 //                    listenerInfo.add(new ListenerInfo("ajp", server.getLocalAddress(), openListener, null, server));
                 } else if (listener.type == ListenerType.HTTP) {
-                    Channel ch = bootstrap()
-                            .childHandler(new NettyHttpServerInitializer(worker, rootHandler, null, bufferSize, directBuffers))
-                            .bind(listener.host, listener.port).sync().channel();
+                    VertxHttpServerInitializer vertxHttpServerInitializer = new VertxHttpServerInitializer(workerGroup, rootHandler, bufferSize, directBuffers);
+                    vertxHttpServerInitializer.runServer(listener.host, listener.port);
 
-                    channels.add(ch);
-                    listenerInfo.add(new ListenerInfo("http", ch.localAddress(), null));
+//                    Channel ch = bootstrap()
+//                            .childHandler(new NettyHttpServerInitializer(worker, rootHandler, null, bufferSize, directBuffers))
+//                            .bind(listener.host, listener.port).sync().channel();
+//
+//                    channels.add(ch);
+//                    listenerInfo.add(new ListenerInfo("http", ch.localAddress(), null));
                 } else if (listener.type == ListenerType.HTTPS) {
 
                     SSLContext sslCtx;
