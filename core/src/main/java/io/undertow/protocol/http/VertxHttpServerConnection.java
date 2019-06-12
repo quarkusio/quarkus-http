@@ -157,12 +157,7 @@ public class VertxHttpServerConnection extends ServerConnection {
     }
 
     private Buffer createBuffer(ByteBuf data) {
-        Buffer buffer = Buffer.buffer(data.readableBytes());
-        while (data.isReadable()) {
-            buffer.appendByte(data.readByte());
-        }
-        data.release();
-        return buffer;
+        return new VertxBufferImpl(data);
     }
 
     @Override
