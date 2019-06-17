@@ -65,12 +65,17 @@ public class VertxHttpServerInitializer {
         server.requestHandler(request -> {
 
             VertxHttpServerConnection con = new VertxHttpServerConnection(request, allocator, blockingExecutor);
+
             HttpServerExchange exchange = new HttpServerExchange(con, (HttpHeaders) request.headers(), (HttpHeaders) request.response().headers(), -1);
             Connectors.setExchangeRequestPath(exchange, request.uri(), "UTF-8", true, false, new StringBuilder());
             exchange.requestMethod(request.rawMethod());
             exchange.setRequestScheme("http");
+            exchange.protocol("HTTP/1.1");
 
             con.exchange = exchange;
+            if (request.isEnded()) {
+                Connectors.terminateRequest(exchange);
+            }
             Connectors.executeRootHandler(rootHandler, exchange);
         });
 

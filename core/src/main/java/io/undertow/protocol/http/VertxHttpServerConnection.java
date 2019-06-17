@@ -11,6 +11,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.io.IoCallback;
 import io.undertow.server.BufferAllocator;
+import io.undertow.server.Connectors;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.SSLSessionInfo;
 import io.undertow.server.ServerConnection;
@@ -80,6 +81,8 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
                         request.connection().notify();
                     }
                 }
+                Connectors.terminateRequest(exchange);
+                Connectors.terminateResponse(exchange);
             }
         });
         request.resume();
@@ -123,16 +126,22 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
     @Override
     public void writeBlocking(ByteBuf data, boolean last, HttpServerExchange exchange) throws IOException {
-        handleContentLength(data, last, exchange);
-        if (last && data == null) {
-            request.response().end();
-            return;
-        }
-        awaitWriteable();
-        if (last) {
-            request.response().end(createBuffer(data));
-        } else {
-            request.response().write(createBuffer(data));
+        try {
+            handleContentLength(data, last, exchange);
+            if (last && data == null) {
+                request.response().end();
+                return;
+            }
+            awaitWriteable();
+            if (last) {
+                request.response().end(createBuffer(data));
+            } else {
+                request.response().write(createBuffer(data));
+            }
+        } finally {
+            if (last) {
+                Connectors.terminateResponse(exchange);
+            }
         }
     }
 
@@ -182,7 +191,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
         handleContentLength(data, last, exchange);
         if (last && data == null) {
             request.response().end();
-            queueWriteListener(exchange, callback, context);
+            queueWriteListener(exchange, callback, context, last);
             return;
         }
         if (request.response().writeQueueFull()) {
@@ -194,7 +203,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
                     } else {
                         request.response().write(createBuffer(data));
                     }
-                    queueWriteListener(exchange, callback, context);
+                    queueWriteListener(exchange, callback, context, last);
                 }
             });
         } else {
@@ -203,14 +212,17 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
             } else {
                 request.response().write(createBuffer(data));
             }
-            queueWriteListener(exchange, callback, context);
+            queueWriteListener(exchange, callback, context, last);
         }
     }
 
-    private <T> void queueWriteListener(HttpServerExchange exchange, IoCallback<T> callback, T context) {
+    private <T> void queueWriteListener(HttpServerExchange exchange, IoCallback<T> callback, T context, boolean last) {
         getIoThread().execute(new Runnable() {
             @Override
             public void run() {
+                if(last) {
+                    Connectors.terminateResponse(exchange);
+                }
                 callback.onComplete(exchange, context);
             }
         });
@@ -344,6 +356,9 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
             getIoThread().execute(new Runnable() {
                 @Override
                 public void run() {
+                    if(b == null) {
+                        Connectors.terminateRequest(exchange);
+                    }
                     callback.onComplete(exchange, b);
                     if(res) {
                         request.resume();
@@ -372,6 +387,9 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
                 input2 = null;
                 request.resume();
             }
+            if(ret == null) {
+                Connectors.terminateRequest(exchange);
+            }
             return ret == null ? null : ret.getByteBuf();
         }
     }
@@ -388,7 +406,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
     @Override
     public String getTransportProtocol() {
-        return null;
+        return request.version().toString();
     }
 
     @Override
