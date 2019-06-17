@@ -38,7 +38,8 @@ import io.undertow.util.AbstractAttachable;
 import io.undertow.util.UndertowOptionMap;
 
 /**
- * A server connection.
+ * A server connection. This is a representation of the underlying IO layer. It is not necessarily scoped to the life of
+ * the connection.
  *
  * @author Stuart Douglas
  */
@@ -46,6 +47,7 @@ public abstract class ServerConnection extends AbstractAttachable {
 
 
     protected abstract ByteBuf allocateBuffer();
+
     protected abstract ByteBuf allocateBuffer(boolean direct);
 
     protected abstract ByteBuf allocateBuffer(boolean direct, int bufferSize);
@@ -70,6 +72,13 @@ public abstract class ServerConnection extends AbstractAttachable {
     public abstract void sendContinueIfRequired();
 
 
+    /**
+     * Write some data to the
+     * @param data
+     * @param last
+     * @param exchange
+     * @throws IOException
+     */
     public abstract void writeBlocking(ByteBuf data, boolean last, HttpServerExchange exchange) throws IOException;
 
     public abstract <T> void writeAsync(ByteBuf data, boolean last, HttpServerExchange exchange, IoCallback<T> callback, T context);
@@ -159,13 +168,6 @@ public abstract class ServerConnection extends AbstractAttachable {
     public abstract void setSslSessionInfo(SSLSessionInfo sessionInfo, HttpServerExchange exchange);
 
     /**
-     * Adds a close listener, than will be invoked with the connection is closed
-     *
-     * @param listener The close listener
-     */
-    public abstract void addCloseListener(CloseListener listener);
-
-    /**
      *
      * @return true if this connection supports HTTP upgrade
      */
@@ -181,10 +183,6 @@ public abstract class ServerConnection extends AbstractAttachable {
      * Invoked when the exchange is complete.
      */
     protected abstract void exchangeComplete(HttpServerExchange exchange);
-//
-//    protected abstract void setUpgradeListener(HttpUpgradeListener upgradeListener);
-//
-//    protected abstract void setConnectListener(HttpUpgradeListener connectListener);
 
     /**
      * Reads some data from the exchange. Can only be called if {@link #isReadDataAvailable()} returns true.
@@ -194,7 +192,9 @@ public abstract class ServerConnection extends AbstractAttachable {
      * @throws IOException
      */
     protected abstract void readAsync(IoCallback<ByteBuf> callback, HttpServerExchange exchange);
+
     protected abstract ByteBuf readBlocking(HttpServerExchange exchange) throws IOException;
+
     protected abstract int readBytesAvailable(HttpServerExchange exchange);
 
     /**
@@ -252,11 +252,10 @@ public abstract class ServerConnection extends AbstractAttachable {
 
     public abstract boolean isRequestTrailerFieldsSupported();
 
-    public abstract ChannelPromise createPromise();
-
     public abstract void runResumeReadWrite();
 
     public abstract <T> void writeFileAsync(RandomAccessFile file, long position, long count, HttpServerExchange exchange, IoCallback<T> context, T callback);
+
     public abstract void writeFileBlocking(RandomAccessFile file, long position, long count, HttpServerExchange exchange) throws IOException;
 
 

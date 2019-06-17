@@ -241,7 +241,7 @@ public abstract class AbstractServletInputStreamTestCase {
             HttpResponse result = client.execute(post);
             Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
             final String response = HttpClientUtils.readResponse(result);
-            Assert.assertEquals(message.length(), response.length());
+            //Assert.assertEquals(message.length(), response.length());
             Assert.assertEquals(message, response);
         } finally {
             client.getConnectionManager().shutdown();

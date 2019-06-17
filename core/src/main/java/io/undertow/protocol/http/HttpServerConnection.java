@@ -68,8 +68,6 @@ import io.undertow.util.UndertowOptionMap;
  */
 public class HttpServerConnection extends ServerConnection {
 
-    private final List<CloseListener> closeListeners = new CopyOnWriteArrayList<>();
-
     private final ChannelHandlerContext ctx;
 
     private volatile HttpServerExchange currentExchange;
@@ -110,7 +108,7 @@ public class HttpServerConnection extends ServerConnection {
      * <p>
      * This will be true most of the time, this only time this will return
      * false is when performing async operations outside the scope of a call to
-     * {@link Connectors#executeRootHandler(HttpHandler, BufferAllocator)}
+     * {@link Connectors#executeRootHandler(HttpHandler, HttpServerExchange)}
      * <p>
      * If this is true then when the call stack returns the exchange will either be dispatched,
      * or the exchange will be ended.
@@ -398,20 +396,6 @@ public class HttpServerConnection extends ServerConnection {
     }
 
     /**
-     * Adds a close listener, than will be invoked with the connection is closed
-     *
-     * @param listener The close listener
-     */
-    public synchronized void addCloseListener(CloseListener listener) {
-        if (ctx.channel().isOpen()) {
-            closeListeners.add(listener);
-        } else {
-            listener.closed(this);
-        }
-    }
-
-
-    /**
      * @return true if this connection supports HTTP upgrade
      */
     protected boolean isUpgradeSupported() {
@@ -616,10 +600,6 @@ public class HttpServerConnection extends ServerConnection {
         } else {
             return ctx.writeAndFlush(resp);
         }
-    }
-
-    public ChannelPromise createPromise() {
-        return ctx.newPromise();
     }
 
     @Override

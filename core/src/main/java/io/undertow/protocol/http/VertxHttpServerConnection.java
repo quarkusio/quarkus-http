@@ -8,7 +8,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelPromise;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.io.IoCallback;
 import io.undertow.server.BufferAllocator;
@@ -22,7 +21,7 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.net.impl.ConnectionBase;
 
-public class VertxHttpServerConnection extends ServerConnection {
+public class VertxHttpServerConnection extends ServerConnection implements Handler<Buffer> {
 
     final HttpServerRequest request;
     final ConnectionBase connectionBase;
@@ -32,14 +31,59 @@ public class VertxHttpServerConnection extends ServerConnection {
     private boolean responseStarted;
     private boolean inHandlerChain;
 
+    private Buffer input1;
+    private Buffer input2;
+    private boolean waiting = false;
+
+
+    private IoCallback<ByteBuf> readCallback;
+
+
+    private IoCallback<Object> writeCallback;
+    private Object writeContext;
+
+    private boolean eof = false;
+
 
     public VertxHttpServerConnection(HttpServerRequest request, BufferAllocator allocator, Executor worker) {
         this.request = request;
         connectionBase = (ConnectionBase) request.connection();
         this.allocator = allocator;
         this.worker = worker;
-    }
+        request.handler(this);
 
+        request.endHandler(new Handler<Void>() {
+            @Override
+            public void handle(Void event) {
+                IoCallback<ByteBuf> readCallback = null;
+                synchronized (request.connection()) {
+                    eof = true;
+                    if (waiting) {
+                        request.connection().notify();
+                    }
+                    if (VertxHttpServerConnection.this.readCallback != null) {
+                        readCallback = VertxHttpServerConnection.this.readCallback;
+                        VertxHttpServerConnection.this.readCallback = null;
+                    }
+                }
+                if (readCallback != null) {
+                    readCallback.onComplete(exchange, null);
+                }
+            }
+        });
+        request.response().endHandler(new Handler<Void>() {
+            @Override
+            public void handle(Void event) {
+                synchronized (request.connection()) {
+                    eof = true;
+                    if (waiting) {
+                        request.connection().notify();
+                    }
+                }
+            }
+        });
+        request.resume();
+    }
 
 
     @Override
@@ -80,12 +124,12 @@ public class VertxHttpServerConnection extends ServerConnection {
     @Override
     public void writeBlocking(ByteBuf data, boolean last, HttpServerExchange exchange) throws IOException {
         handleContentLength(data, last, exchange);
-        if(last && data == null) {
+        if (last && data == null) {
             request.response().end();
             return;
         }
         awaitWriteable();
-        if(last) {
+        if (last) {
             request.response().end(createBuffer(data));
         } else {
             request.response().write(createBuffer(data));
@@ -95,12 +139,19 @@ public class VertxHttpServerConnection extends ServerConnection {
     private void handleContentLength(ByteBuf data, boolean last, HttpServerExchange exchange) {
         if (!responseStarted) {
             responseStarted = true;
-            if(last) {
-                if(!exchange.responseHeaders().contains(HttpHeaders.CONTENT_LENGTH)) {
-                    request.response().headers().add(HttpHeaders.CONTENT_LENGTH, Integer.toString(data.readableBytes()));
+            request.response().setStatusCode(exchange.getStatusCode());
+            if (last) {
+                if(data == null) {
+                    if (!exchange.responseHeaders().contains(HttpHeaders.CONTENT_LENGTH)) {
+                        request.response().headers().add(HttpHeaders.CONTENT_LENGTH, "0");
+                    }
+                } else {
+                    if (!exchange.responseHeaders().contains(HttpHeaders.CONTENT_LENGTH)) {
+                        request.response().headers().add(HttpHeaders.CONTENT_LENGTH, Integer.toString(data.readableBytes()));
+                    }
                 }
             } else {
-                if(!exchange.responseHeaders().contains(HttpHeaders.CONTENT_LENGTH)) {
+                if (!exchange.responseHeaders().contains(HttpHeaders.CONTENT_LENGTH)) {
                     request.response().setChunked(true);
                 }
             }
@@ -116,7 +167,7 @@ public class VertxHttpServerConnection extends ServerConnection {
                     latch.countDown();
                 }
             });
-            if(request.response().writeQueueFull()) {
+            if (request.response().writeQueueFull()) {
                 try {
                     latch.await();
                 } catch (InterruptedException e) {
@@ -129,31 +180,40 @@ public class VertxHttpServerConnection extends ServerConnection {
     @Override
     public <T> void writeAsync(ByteBuf data, boolean last, HttpServerExchange exchange, IoCallback<T> callback, T context) {
         handleContentLength(data, last, exchange);
-        if(last && data == null) {
+        if (last && data == null) {
             request.response().end();
-            callback.onComplete(exchange, context);
+            queueWriteListener(exchange, callback, context);
             return;
         }
-        if(request.response().writeQueueFull()) {
+        if (request.response().writeQueueFull()) {
             request.response().drainHandler(new Handler<Void>() {
                 @Override
                 public void handle(Void event) {
-                    if(last) {
+                    if (last) {
                         request.response().end(createBuffer(data));
                     } else {
                         request.response().write(createBuffer(data));
                     }
-                    callback.onComplete(exchange, context);
+                    queueWriteListener(exchange, callback, context);
                 }
             });
         } else {
-            if(last) {
+            if (last) {
                 request.response().end(createBuffer(data));
             } else {
                 request.response().write(createBuffer(data));
             }
-            callback.onComplete(exchange, context);
+            queueWriteListener(exchange, callback, context);
         }
+    }
+
+    private <T> void queueWriteListener(HttpServerExchange exchange, IoCallback<T> callback, T context) {
+        getIoThread().execute(new Runnable() {
+            @Override
+            public void run() {
+                callback.onComplete(exchange, context);
+            }
+        });
     }
 
     private Buffer createBuffer(ByteBuf data) {
@@ -162,12 +222,17 @@ public class VertxHttpServerConnection extends ServerConnection {
 
     @Override
     protected boolean isIoOperationQueued() {
-        return false;
+        return readCallback != null;
     }
 
     @Override
     protected <T> void scheduleIoCallback(IoCallback<T> callback, T context, HttpServerExchange exchange) {
-        callback.onComplete(exchange, context);
+        getIoThread().execute(new Runnable() {
+            @Override
+            public void run() {
+                callback.onComplete(exchange, context);
+            }
+        });
     }
 
     @Override
@@ -241,11 +306,6 @@ public class VertxHttpServerConnection extends ServerConnection {
     }
 
     @Override
-    public void addCloseListener(CloseListener listener) {
-
-    }
-
-    @Override
     protected boolean isUpgradeSupported() {
         return false;
     }
@@ -262,12 +322,58 @@ public class VertxHttpServerConnection extends ServerConnection {
 
     @Override
     protected void readAsync(IoCallback<ByteBuf> callback, HttpServerExchange exchange) {
-
+        boolean doReadCallback = false;
+        ByteBuf ret = null;
+        boolean resume = false;
+        synchronized (request.connection()) {
+            resume = input2 != null;
+            if (input1 != null) {
+                ret = input1.getByteBuf();
+                input1 = input2;
+                input2 = null;
+                doReadCallback = true;
+            } else if (eof) {
+                doReadCallback = true;
+            } else {
+                this.readCallback = callback;
+            }
+        }
+        if (doReadCallback) {
+            ByteBuf b = ret;
+            boolean res = resume;
+            getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onComplete(exchange, b);
+                    if(res) {
+                        request.resume();
+                    }
+                }
+            });
+        }
     }
 
     @Override
     protected ByteBuf readBlocking(HttpServerExchange exchange) throws IOException {
-        return null;
+        synchronized (request.connection()) {
+            while (input1 == null && !eof) {
+                try {
+                    waiting = true;
+                    request.connection().wait();
+                } catch (InterruptedException e) {
+                    throw new InterruptedIOException(e.getMessage());
+                } finally {
+                    waiting = false;
+                }
+            }
+            Buffer ret = input1;
+            input1 = input2;
+            if (input2 != null) {
+                input2 = null;
+                request.resume();
+            }
+            return ret == null ? null : ret.getByteBuf();
+        }
     }
 
     @Override
@@ -291,32 +397,64 @@ public class VertxHttpServerConnection extends ServerConnection {
     }
 
     @Override
-    public ChannelPromise createPromise() {
-        return null;
-    }
-
-    @Override
     public void runResumeReadWrite() {
 
     }
 
     @Override
     public <T> void writeFileAsync(RandomAccessFile file, long position, long count, HttpServerExchange exchange, IoCallback<T> context, T callback) {
-
+        request.connection().close();
+        exchange.endExchange();
+        context.onException(exchange, callback, new IOException("NYI"));
     }
 
     @Override
     public void writeFileBlocking(RandomAccessFile file, long position, long count, HttpServerExchange exchange) throws IOException {
-
+        request.connection().close();
+        exchange.endExchange();
+        throw new IOException("NYI");
     }
 
     @Override
     protected void ungetRequestBytes(ByteBuf buffer, HttpServerExchange exchange) {
-
+        throw new RuntimeException("NYI");
     }
 
     @Override
     public void discardRequest(HttpServerExchange exchange) {
 
+    }
+
+    @Override
+    public void handle(Buffer event) {
+        IoCallback<ByteBuf> readCallback = null;
+        synchronized (request.connection()) {
+            if(input2!= null) {
+                new IOException().printStackTrace();
+            }
+            if (this.readCallback != null) {
+                readCallback = this.readCallback;
+                this.readCallback = null;
+            } else {
+                if (input1 == null) {
+                    input1 = event;
+                } else {
+                    input2 = event;
+                    request.pause();
+                }
+                if (waiting) {
+                    request.connection().notifyAll();
+                }
+            }
+        }
+        if (readCallback != null) {
+            IoCallback<ByteBuf> f = readCallback;
+            getIoThread().execute(new Runnable() {
+                @Override
+                public void run() {
+                    f.onComplete(exchange, event.getByteBuf());
+                }
+            });
+        }
     }
 }

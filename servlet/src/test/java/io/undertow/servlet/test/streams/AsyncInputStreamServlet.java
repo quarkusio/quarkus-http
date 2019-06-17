@@ -95,6 +95,7 @@ public class AsyncInputStreamServlet extends HttpServlet {
                 dataToWrite.reset();
                 if (done) {
                     context.complete();
+                    System.out.println("WRITTEN " + written);
                 }
             }
         }
@@ -136,6 +137,7 @@ public class AsyncInputStreamServlet extends HttpServlet {
 
         @Override
         public synchronized void onAllDataRead() throws IOException {
+            System.out.println("READ " + read);
             done = true;
             if(offIoThread) {
                 context.start(new Runnable() {

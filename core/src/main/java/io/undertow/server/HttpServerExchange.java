@@ -1240,7 +1240,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * For blocking exchanges this will return a sender that uses the underlying output stream.
      *
      * @return the response sender, or {@code null} if another party already acquired the channel or the sender
-     * @see #getResponseChannel()
      */
     public Sender getResponseSender() {
         if (blockingHttpExchange != null) {

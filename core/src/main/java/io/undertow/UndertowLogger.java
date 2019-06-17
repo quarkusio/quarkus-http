@@ -409,4 +409,8 @@ UndertowLogger extends BasicLogger {
     @LogMessage(level = DEBUG)
     @Message(id = 5092, value = "Failed to free direct buffer")
     void directBufferDeallocationFailed(@Cause Throwable t);
+
+    @LogMessage(level = ERROR)
+    @Message(id = 5093, value = "Failed to run task")
+    void failedToRunTask(@Cause Throwable t);
 }
