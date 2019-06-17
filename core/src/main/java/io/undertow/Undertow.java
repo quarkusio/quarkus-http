@@ -145,7 +145,7 @@ public final class Undertow {
 //                    channels.add(server);
 //                    listenerInfo.add(new ListenerInfo("ajp", server.getLocalAddress(), openListener, null, server));
                 } else if (listener.type == ListenerType.HTTP) {
-                    VertxHttpServerInitializer vertxHttpServerInitializer = new VertxHttpServerInitializer(workerGroup, rootHandler, bufferSize, directBuffers);
+                    VertxHttpServerInitializer vertxHttpServerInitializer = new VertxHttpServerInitializer(worker, rootHandler, bufferSize, directBuffers);
                     vertxHttpServerInitializer.runServer(listener.host, listener.port);
                     initializers.add(vertxHttpServerInitializer);
 
