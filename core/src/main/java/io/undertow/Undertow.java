@@ -82,6 +82,7 @@ public final class Undertow {
     private EventLoopGroup bossGroup;
     EventLoopGroup workerGroup;
     List<Channel> channels;
+    List<VertxHttpServerInitializer> initializers = new ArrayList<>();
 
     private Undertow(Builder builder) {
         this.ioThreads = builder.ioThreads;
@@ -146,6 +147,7 @@ public final class Undertow {
                 } else if (listener.type == ListenerType.HTTP) {
                     VertxHttpServerInitializer vertxHttpServerInitializer = new VertxHttpServerInitializer(workerGroup, rootHandler, bufferSize, directBuffers);
                     vertxHttpServerInitializer.runServer(listener.host, listener.port);
+                    initializers.add(vertxHttpServerInitializer);
 
 //                    Channel ch = bootstrap()
 //                            .childHandler(new NettyHttpServerInitializer(worker, rootHandler, null, bufferSize, directBuffers))
@@ -201,7 +203,7 @@ public final class Undertow {
         }
         UndertowLogger.ROOT_LOGGER.debugf("stopping undertow server %s", this);
         if (channels != null) {
-            for (Channel channel : channels) {
+            for (VertxHttpServerInitializer channel : initializers) {
                 channel.close();
             }
             channels = null;

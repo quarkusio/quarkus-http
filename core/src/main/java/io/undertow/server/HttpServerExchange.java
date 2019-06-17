@@ -1451,6 +1451,15 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if (allAreSet(state, FLAG_REQUEST_TERMINATED | FLAG_RESPONSE_TERMINATED)) {
             if (blockingHttpExchange != null) {
                 //we still have to close the blocking exchange in this case,
+                if(isInIoThread()) {
+                    dispatch(new Runnable() {
+                        @Override
+                        public void run() {
+                            endExchange();
+                        }
+                    });
+                    return this;
+                }
                 IoUtils.safeClose(blockingHttpExchange);
             }
             return this;
@@ -1474,6 +1483,18 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         }
 
         if (blockingHttpExchange != null) {
+            //we still have to close the blocking exchange in this case,
+            if(isInIoThread()) {
+                dispatch(new Runnable() {
+                    @Override
+                    public void run() {
+                        endExchange();
+                    }
+                });
+                return this;
+            }
+            IoUtils.safeClose(blockingHttpExchange);
+        
             try {
                 //TODO: can we end up in this situation in a IO thread?
                 //this will end the exchange in a blocking manner

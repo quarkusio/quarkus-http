@@ -1,5 +1,7 @@
 package io.undertow.protocol.http;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 
 import io.netty.buffer.ByteBuf;
@@ -12,12 +14,14 @@ import io.undertow.server.HttpServerExchange;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 
-public class VertxHttpServerInitializer {
+public class VertxHttpServerInitializer implements Closeable  {
 
     private final ExecutorService blockingExecutor;
     private final HttpHandler rootHandler;
     private final int bufferSize;
     private final boolean directBuffers;
+
+    private HttpServer server;
 
     public VertxHttpServerInitializer(ExecutorService blockingExecutor, HttpHandler rootHandler, int bufferSize, boolean directBuffers) {
         this.blockingExecutor = blockingExecutor;
@@ -60,7 +64,7 @@ public class VertxHttpServerInitializer {
             }
         };
 
-        HttpServer server = vertx.createHttpServer();
+        server = vertx.createHttpServer();
 
         server.requestHandler(request -> {
 
@@ -80,5 +84,10 @@ public class VertxHttpServerInitializer {
         });
 
         server.listen(port, host);
+    }
+
+    @Override
+    public void close() {
+        server.close();
     }
 }
