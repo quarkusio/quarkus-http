@@ -47,6 +47,7 @@ import io.undertow.server.OpenListener;
 import io.undertow.util.UndertowOption;
 import io.undertow.util.UndertowOptionMap;
 import io.undertow.util.UndertowOptions;
+import io.vertx.core.Vertx;
 
 /**
  * Convenience class used to build an Undertow server.
@@ -83,6 +84,7 @@ public final class Undertow {
     EventLoopGroup workerGroup;
     List<Channel> channels;
     List<VertxHttpServerInitializer> initializers = new ArrayList<>();
+    Vertx vertx;
 
     private Undertow(Builder builder) {
         this.ioThreads = builder.ioThreads;
@@ -106,6 +108,7 @@ public final class Undertow {
     }
 
     public synchronized void start() {
+        vertx = Vertx.vertx();
         UndertowLogger.ROOT_LOGGER.debugf("starting undertow server %s", this);
         try {
 
@@ -145,7 +148,7 @@ public final class Undertow {
 //                    channels.add(server);
 //                    listenerInfo.add(new ListenerInfo("ajp", server.getLocalAddress(), openListener, null, server));
                 } else if (listener.type == ListenerType.HTTP) {
-                    VertxHttpServerInitializer vertxHttpServerInitializer = new VertxHttpServerInitializer(worker, rootHandler, bufferSize, directBuffers);
+                    VertxHttpServerInitializer vertxHttpServerInitializer = new VertxHttpServerInitializer(worker, rootHandler, bufferSize, vertx, directBuffers, ioThreads);
                     vertxHttpServerInitializer.runServer(listener.host, listener.port);
                     initializers.add(vertxHttpServerInitializer);
 
@@ -233,6 +236,7 @@ public final class Undertow {
             worker = null;
         }
         listenerInfo = null;
+        vertx.close();
     }
 
     public ExecutorService getWorker() {
