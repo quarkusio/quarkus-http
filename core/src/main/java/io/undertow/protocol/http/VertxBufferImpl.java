@@ -433,7 +433,7 @@ public class VertxBufferImpl implements Buffer {
   public ByteBuf getByteBuf() {
     // Return a duplicate so the Buffer can be written multiple times.
     // See #648
-    return buffer.duplicate();
+    return buffer;
   }
 
   private Buffer append(String str, Charset charset) {
