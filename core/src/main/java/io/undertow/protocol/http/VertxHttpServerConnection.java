@@ -45,6 +45,8 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
     private boolean eof = false;
 
+    private boolean waitingForDrain;
+    private boolean drainHandlerRegistered;
 
     public VertxHttpServerConnection(HttpServerRequest request, BufferAllocator allocator, Executor worker) {
         this.request = request;
@@ -132,11 +134,15 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
                 request.response().end();
                 return;
             }
-            awaitWriteable();
-            if (last) {
-                request.response().end(createBuffer(data));
-            } else {
-                request.response().write(createBuffer(data));
+
+            //do all this in the same lock
+            synchronized (request.connection()) {
+                awaitWriteable();
+                if (last) {
+                    request.response().end(createBuffer(data));
+                } else {
+                    request.response().write(createBuffer(data));
+                }
             }
         } finally {
             if (last) {
@@ -168,20 +174,26 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
     }
 
     private void awaitWriteable() throws InterruptedIOException {
-        if (request.response().writeQueueFull()) {
-            CountDownLatch latch = new CountDownLatch(1);
-            request.response().drainHandler(new Handler<Void>() {
-                @Override
-                public void handle(Void event) {
-                    latch.countDown();
+        assert Thread.holdsLock(request.connection());
+        while (request.response().writeQueueFull()) {
+                if (!drainHandlerRegistered) {
+                    drainHandlerRegistered = true;
+                    request.response().drainHandler(new Handler<Void>() {
+                        @Override
+                        public void handle(Void event) {
+                            if(waitingForDrain) {
+                                request.connection().notifyAll();
+                            }
+                        }
+                    });
                 }
-            });
-            if (request.response().writeQueueFull()) {
-                try {
-                    latch.await();
-                } catch (InterruptedException e) {
-                    throw new InterruptedIOException();
-                }
+            try {
+                waitingForDrain = true;
+                request.connection().wait();
+            } catch (InterruptedException e) {
+                throw new InterruptedIOException(e.getMessage());
+            } finally {
+                waitingForDrain = false;
             }
         }
     }
