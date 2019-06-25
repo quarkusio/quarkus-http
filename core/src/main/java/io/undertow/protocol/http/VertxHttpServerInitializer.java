@@ -8,7 +8,6 @@ import java.util.function.Supplier;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.server.BufferAllocator;
 import io.undertow.server.Connectors;
 import io.undertow.server.HttpHandler;
@@ -21,6 +20,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerOptions;
 
 public class VertxHttpServerInitializer implements Closeable  {
 
@@ -42,7 +42,7 @@ public class VertxHttpServerInitializer implements Closeable  {
         this.ioThreads = ioThreads;
     }
 
-    public void runServer(String host, int port) {
+    public void runServer(String host, int port, HttpServerOptions options) {
 
         BufferAllocator allocator = new BufferAllocator() {
             @Override
@@ -77,7 +77,7 @@ public class VertxHttpServerInitializer implements Closeable  {
         vertx.deployVerticle(new Supplier<Verticle>() {
             @Override
             public Verticle get() {
-                return new MyVerticle(allocator, port, host, vertx, blockingExecutor, rootHandler);
+                return new MyVerticle(allocator, port, host, vertx, blockingExecutor, rootHandler, options);
             }
         }, new DeploymentOptions().setInstances(ioThreads), new Handler<AsyncResult<String>>() {
             @Override
@@ -111,14 +111,16 @@ public class VertxHttpServerInitializer implements Closeable  {
         private final Vertx vertx;
         private final Executor blockingExecutor;
         private final HttpHandler rootHandler;
+        private final HttpServerOptions options;
 
-        public MyVerticle(BufferAllocator allocator, int port, String host, Vertx vertx, Executor blockingExecutor, HttpHandler rootHandler) {
+        public MyVerticle(BufferAllocator allocator, int port, String host, Vertx vertx, Executor blockingExecutor, HttpHandler rootHandler, HttpServerOptions options) {
             this.allocator = allocator;
             this.port = port;
             this.host = host;
             this.vertx = vertx;
             this.blockingExecutor = blockingExecutor;
             this.rootHandler = rootHandler;
+            this.options = options;
         }
 
         @Override
@@ -134,7 +136,7 @@ public class VertxHttpServerInitializer implements Closeable  {
         @Override
         public void start(Future<Void> startFuture) throws Exception {
 
-            server = vertx.createHttpServer();
+            server = vertx.createHttpServer(options);
 
             server.requestHandler(request -> {
 
@@ -143,7 +145,7 @@ public class VertxHttpServerInitializer implements Closeable  {
                 HttpServerExchange exchange = new HttpServerExchange(con, request, request.response(), -1);
                 Connectors.setExchangeRequestPath(exchange, request.uri(), "UTF-8", true, false, new StringBuilder());
                 exchange.requestMethod(request.rawMethod());
-                exchange.setRequestScheme("http");
+                exchange.setRequestScheme(request.scheme());
                 exchange.protocol("HTTP/1.1");
 
                 con.exchange = exchange;

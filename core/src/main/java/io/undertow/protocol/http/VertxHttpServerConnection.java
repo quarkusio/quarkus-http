@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
 import java.net.SocketAddress;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
 import io.netty.buffer.ByteBuf;
@@ -228,6 +227,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
                         request.response().write(createBuffer(data));
                     }
                     queueWriteListener(exchange, callback, context, last);
+                    request.response().drainHandler(null);
                 }
             });
         } else {
@@ -278,7 +278,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
     @Override
     public boolean isOpen() {
-        return true;
+        return !request.response().closed();
     }
 
     @Override
@@ -287,8 +287,8 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
     }
 
     @Override
-    public SocketAddress getPeerAddress() {
-        return null;
+    public io.vertx.core.net.SocketAddress getPeerAddress() {
+        return request.remoteAddress();
     }
 
     @Override

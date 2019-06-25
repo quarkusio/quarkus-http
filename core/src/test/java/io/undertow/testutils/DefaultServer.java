@@ -56,6 +56,7 @@ import io.undertow.util.IoUtils;
 import io.undertow.util.NetworkUtils;
 import io.undertow.util.UndertowOptionMap;
 import io.undertow.util.UndertowOptions;
+import io.vertx.core.net.JksOptions;
 
 /**
  * A class that starts a server before the test suite. By swapping out the root handler
@@ -408,12 +409,13 @@ public class DefaultServer extends BlockJUnit4ClassRunner {
      * authentication.
      */
     public static void startSSLServer() throws IOException {
-        SSLContext serverContext = getServerSslContext();
         getClientSSLContext();
         sslUndertow = Undertow.builder()
                 .setWorker(undertow.getWorker())
                 .setHandler(rootHandler)
-                .addHttpsListener(getHostSSLPort(DEFAULT), getHostAddress(), serverContext).build();
+                .addHttpsListener(getHostSSLPort(DEFAULT), getHostAddress(),
+                        new JksOptions().setPath(SERVER_KEY_STORE).setPassword(new String(STORE_PASSWORD)),
+                        new JksOptions().setPath(SERVER_TRUST_STORE).setPassword(new String(STORE_PASSWORD))).build();
         sslUndertow.start();
 
 //        startSSLServer(serverContext, OptionMap.create(Options.SSL_CLIENT_AUTH_MODE, SslClientAuthMode.REQUESTED, Options.SSL_ENABLED_PROTOCOLS, Sequence.of("TLSv1.2")));

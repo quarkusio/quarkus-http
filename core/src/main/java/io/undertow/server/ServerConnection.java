@@ -27,9 +27,7 @@ import java.util.function.Consumer;
 import javax.net.ssl.SSLSession;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowMessages;
@@ -119,7 +117,7 @@ public abstract class ServerConnection extends AbstractAttachable {
      * into account.
      * @return The address of the remote peer
      */
-    public abstract SocketAddress getPeerAddress();
+    public abstract io.vertx.core.net.SocketAddress getPeerAddress();
 
     protected abstract boolean isExecutingHandlerChain();
 
