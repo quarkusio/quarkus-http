@@ -13,6 +13,7 @@ import io.undertow.UndertowLogger;
 import io.undertow.io.IoCallback;
 import io.undertow.server.BufferAllocator;
 import io.undertow.server.Connectors;
+import io.undertow.server.HttpContinue;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.SSLSessionInfo;
 import io.undertow.server.ServerConnection;
@@ -132,7 +133,9 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
     @Override
     public void sendContinueIfRequired() {
-        throw new RuntimeException("NYI");
+        if(HttpContinue.requiresContinueResponse(exchange)) {
+            request.response().writeContinue();
+        }
     }
 
     @Override
@@ -270,7 +273,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
     @Override
     public boolean isContinueResponseSupported() {
-        return false;
+        return true;
     }
 
     @Override
