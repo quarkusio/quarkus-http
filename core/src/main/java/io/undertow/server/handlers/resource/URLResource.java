@@ -21,6 +21,7 @@ package io.undertow.server.handlers.resource;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.JarURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -33,16 +34,20 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.undertow.UndertowLogger;
-import io.undertow.io.IoCallback;
-import io.undertow.io.Sender;
+import io.undertow.protocol.http.VertxBufferImpl;
+import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.DateUtils;
 import io.undertow.util.ETag;
 import io.undertow.util.IoUtils;
 import io.undertow.util.MimeMappings;
 import io.undertow.util.StatusCodes;
+import io.vertx.core.Handler;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.streams.WriteStream;
 
 /**
  * @author Stuart Douglas
@@ -172,26 +177,43 @@ public class URLResource implements Resource, RangeAwareResource {
     }
 
     @Override
-    public void serve(Sender sender, HttpServerExchange exchange, IoCallback completionCallback) {
-        serveImpl(sender, exchange, -1, -1, false, completionCallback);
+    public void serveBlocking(final OutputStream sender, final HttpServerExchange exchange) throws IOException {
+        ByteBuf buffer = exchange.allocateBuffer(false);
+        try (InputStream in = url.openStream()) {
+            int r;
+            while ((r = in.read(buffer.array(), buffer.arrayOffset(), buffer.writableBytes())) > 0) {
+                sender.write(buffer.array(), buffer.arrayOffset(), r);
+            }
+        } finally {
+            buffer.release();
+        }
     }
 
-    public void serveImpl(final Sender sender, final HttpServerExchange exchange, final long start, final long end, final boolean range, final IoCallback completionCallback) {
+    @Override
+    public void serveAsync(WriteStream<Buffer> stream, HttpServerExchange exchange) {
+        serveImpl(stream, exchange, -1, -1, false);
+    }
 
-        class ServerTask implements Runnable, IoCallback<Sender> {
+    public void serveImpl(final WriteStream<Buffer> stream, final HttpServerExchange exchange, final long start, final long end, final boolean range) {
+
+        class ServerTask implements Runnable, Handler<Void> {
 
             private InputStream inputStream;
             private byte[] buffer;
+
 
             long toSkip = start;
             long remaining = end - start + 1;
 
             @Override
             public void run() {
+                if(stream.writeQueueFull()) {
+                    return;
+                }
                 if (range && remaining == 0) {
                     //we are done, just return
                     IoUtils.safeClose(inputStream);
-                    completionCallback.onComplete(exchange, null);
+                    exchange.endExchange();
                     return;
                 }
                 if (inputStream == null) {
@@ -202,65 +224,74 @@ public class URLResource implements Resource, RangeAwareResource {
                         return;
                     }
                     buffer = new byte[1024];//TODO: we should be pooling these
+                    exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
+                        @Override
+                        public void exchangeEvent(HttpServerExchange exchange, NextListener nextListener) {
+                            IoUtils.safeClose(inputStream);
+                            nextListener.proceed();
+                        }
+                    });
                 }
                 try {
-                    int res = inputStream.read(buffer);
-                    if (res == -1) {
-                        //we are done, just return
-                        IoUtils.safeClose(inputStream);
-                        completionCallback.onComplete(exchange, null);
-                        return;
-                    }
-                    int bufferStart = 0;
-                    int length = res;
-                    if (range && toSkip > 0) {
-                        //skip to the start of the requested range
-                        //not super efficient, but what can you do
-                        while (toSkip > res) {
-                            toSkip -= res;
-                            res = inputStream.read(buffer);
-                            if (res == -1) {
-                                //we are done, just return
-                                IoUtils.safeClose(inputStream);
-                                completionCallback.onComplete(exchange, null);
-                                return;
-                            }
+                    for(;;) {
+                        int res = inputStream.read(buffer);
+                        if (res == -1) {
+                            //we are done, just return
+                            IoUtils.safeClose(inputStream);
+                            exchange.endExchange();
+                            return;
                         }
-                        bufferStart = (int) toSkip;
-                        length -= toSkip;
-                        toSkip = 0;
+                        int bufferStart = 0;
+                        int length = res;
+                        if (range && toSkip > 0) {
+                            //skip to the start of the requested range
+                            //not super efficient, but what can you do
+                            while (toSkip > res) {
+                                toSkip -= res;
+                                res = inputStream.read(buffer);
+                                if (res == -1) {
+                                    //we are done, just return
+                                    IoUtils.safeClose(inputStream);
+                                    exchange.endExchange();
+                                    return;
+                                }
+                            }
+                            bufferStart = (int) toSkip;
+                            length -= toSkip;
+                            toSkip = 0;
+                        }
+                        if (range && length > remaining) {
+                            length = (int) remaining;
+                        }
+                        stream.write(new VertxBufferImpl(Unpooled.wrappedBuffer(buffer, bufferStart, length)));
+                        remaining -= length;
+                        if(remaining == 0) {
+                            exchange.endExchange();
+                            return;
+                        }
+                        if(stream.writeQueueFull()) {
+                            return;
+                        }
                     }
-                    if (range && length > remaining) {
-                        length = (int) remaining;
-                    }
-                    sender.send(Unpooled.wrappedBuffer(buffer, bufferStart, length), this);
                 } catch (IOException e) {
-                    onException(exchange, null, e);
+                    exchange.endExchange();
+                    UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
                 }
 
             }
 
             @Override
-            public void onComplete(final HttpServerExchange exchange, final Sender sender) {
+            public void handle(Void event) {
                 if (exchange.isInIoThread()) {
                     exchange.dispatch(this);
                 } else {
                     run();
                 }
             }
-
-            @Override
-            public void onException(final HttpServerExchange exchange, final Sender sender, final IOException exception) {
-                UndertowLogger.REQUEST_IO_LOGGER.ioException(exception);
-                IoUtils.safeClose(inputStream);
-                if (!exchange.isResponseStarted()) {
-                    exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                }
-                completionCallback.onException(exchange, sender, exception);
-            }
         }
 
         ServerTask serveTask = new ServerTask();
+        stream.drainHandler(serveTask);
         if (exchange.isInIoThread()) {
             exchange.dispatch(serveTask);
         } else {
@@ -313,8 +344,13 @@ public class URLResource implements Resource, RangeAwareResource {
     }
 
     @Override
-    public void serveRange(Sender sender, HttpServerExchange exchange, long start, long end, IoCallback completionCallback) {
-        serveImpl(sender, exchange, start, end, true, completionCallback);
+    public void serveRangeBlocking(OutputStream outputStream, HttpServerExchange exchange, long start, long end) throws IOException {
+        throw new IOException("NYI");
+    }
+
+    @Override
+    public void serveRangeAsync(WriteStream<Buffer> outputStream, HttpServerExchange exchange, long start, long end) {
+        serveImpl(outputStream, exchange, start, end, true);
     }
 
     @Override

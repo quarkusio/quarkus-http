@@ -24,7 +24,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import io.undertow.Handlers;
-import io.undertow.io.Sender;
 import io.undertow.server.DefaultResponseListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -64,8 +63,7 @@ public class SimpleErrorPageHandler implements HttpHandler {
                 final String errorPage = "<html><head><title>Error</title></head><body>" + exchange.getStatusCode() + " - " + StatusCodes.getReason(exchange.getStatusCode()) + "</body></html>";
                 exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LENGTH, "" + errorPage.length());
                 exchange.responseHeaders().set(HttpHeaderNames.CONTENT_TYPE, "text/html");
-                Sender sender = exchange.getResponseSender();
-                sender.send(errorPage);
+                exchange.response().end(errorPage);
                 return true;
             }
             return false;

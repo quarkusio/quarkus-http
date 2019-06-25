@@ -307,9 +307,9 @@ public class ResourceHandler implements HttpHandler {
                 if (!sendContent) {
                     exchange.endExchange();
                 } else if (rangeResponse != null) {
-                    ((RangeAwareResource) resource).serveRange(exchange.getResponseSender(), exchange, start, end, IoCallback.END_EXCHANGE);
+                    ((RangeAwareResource) resource).serveRangeAsync(exchange.response(), exchange, start, end);
                 } else {
-                    resource.serve(exchange.getResponseSender(), exchange, IoCallback.END_EXCHANGE);
+                    resource.serveAsync(exchange.response(), exchange);
                 }
             }
         };

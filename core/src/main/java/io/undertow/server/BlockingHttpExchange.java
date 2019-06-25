@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import io.undertow.io.Receiver;
-import io.undertow.io.Sender;
 
 
 /**
@@ -50,13 +49,6 @@ public interface BlockingHttpExchange extends Closeable {
      * @return The output stream
      */
     OutputStream getOutputStream();
-
-    /**
-     * Returns a sender based on the provided output stream
-     *
-     * @return A sender that uses the output stream
-     */
-    Sender getSender();
 
     /**
      * Closes both the input and output streams

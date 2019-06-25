@@ -24,8 +24,10 @@ import static io.undertow.util.HttpMethodNames.HEAD;
 import java.io.IOException;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.undertow.UndertowLogger;
 import io.undertow.io.IoCallback;
+import io.undertow.protocol.http.VertxBufferImpl;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.DateUtils;
@@ -33,6 +35,7 @@ import io.undertow.util.ETag;
 import io.undertow.util.ETagUtils;
 import io.undertow.util.HttpHeaderNames;
 import io.undertow.util.StatusCodes;
+import io.vertx.core.Handler;
 
 /**
  * Facade for an underlying buffer cache that contains response information.
@@ -189,7 +192,8 @@ public class ResponseCache {
 
         // Transfer Inline, or register and continue transfer
         // Pass off the entry dereference call to the listener
-        exchange.getResponseSender().send(buffers, new DereferenceCallback(entry));
+        exchange.response().endHandler(new DereferenceCallback(entry));
+        exchange.response().end(new VertxBufferImpl(Unpooled.wrappedBuffer(buffers)));
         return true;
     }
 
@@ -197,7 +201,7 @@ public class ResponseCache {
         return responseCachable;
     }
 
-    private static class DereferenceCallback<T> implements IoCallback<T> {
+    private static class DereferenceCallback implements Handler<Void> {
         private final DirectBufferCache.CacheEntry entry;
 
         DereferenceCallback(DirectBufferCache.CacheEntry entry) {
@@ -205,16 +209,8 @@ public class ResponseCache {
         }
 
         @Override
-        public void onComplete(final HttpServerExchange exchange, final T sender) {
+        public void handle(Void event) {
             entry.dereference();
-            exchange.endExchange();
-        }
-
-        @Override
-        public void onException(final HttpServerExchange exchange, final T sender, final IOException exception) {
-            UndertowLogger.REQUEST_IO_LOGGER.ioException(exception);
-            entry.dereference();
-            exchange.endExchange();
         }
     }
 }

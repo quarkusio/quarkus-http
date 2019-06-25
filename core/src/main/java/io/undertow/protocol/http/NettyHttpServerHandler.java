@@ -75,7 +75,7 @@ public class NettyHttpServerHandler extends SimpleChannelInboundHandler<HttpObje
                     }
                 });
             }
-            HttpServerExchange exchange = new HttpServerExchange(connection, request.headers());
+            HttpServerExchange exchange = new HttpServerExchange(connection, null, null, -1);
             Connectors.setExchangeRequestPath(exchange, request.uri(), "UTF-8", true, false, new StringBuilder());
             exchange.requestMethod(request.method().name());
             if (engine == null) {

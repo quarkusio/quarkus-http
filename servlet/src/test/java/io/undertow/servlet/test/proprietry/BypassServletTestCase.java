@@ -78,7 +78,7 @@ public class BypassServletTestCase {
                             @Override
                             public void handleRequest(final HttpServerExchange exchange) throws Exception {
                                 if (exchange.getRelativePath().equals("/async")) {
-                                    exchange.getResponseSender().send("This is not a servlet", IoCallback.END_EXCHANGE);
+                                    exchange.response().end("This is not a servlet");
                                 } else {
                                     handler.handleRequest(exchange);
                                 }

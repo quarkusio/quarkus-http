@@ -62,7 +62,7 @@ public class CacheHandlerTestCase {
                 if(!cache.tryServeResponse()) {
                     final String data = "Response " + responseCount.incrementAndGet();
                     exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LENGTH, data.length() + "");
-                    exchange.getResponseSender().send(data);
+                    exchange.response().end(data);
                 }
             }
         };

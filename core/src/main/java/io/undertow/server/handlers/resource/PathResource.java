@@ -1,9 +1,9 @@
 package io.undertow.server.handlers.resource;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.DirectoryStream;
@@ -13,13 +13,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import io.undertow.io.IoCallback;
-import io.undertow.io.Sender;
+import io.netty.buffer.ByteBuf;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.DateUtils;
 import io.undertow.util.ETag;
 import io.undertow.util.MimeMappings;
-import io.undertow.util.StatusCodes;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.streams.WriteStream;
 
 /**
  * A path resource
@@ -102,28 +102,22 @@ public class PathResource implements RangeAwareResource {
     }
 
     @Override
-    public void serve(final Sender sender, final HttpServerExchange exchange, final IoCallback callback) {
-        try {
-            serveImpl(sender, exchange, 0, Files.size(file), callback);
-        } catch (IOException e) {
-            callback.onException(exchange, sender, e);
+    public void serveBlocking(final OutputStream sender, final HttpServerExchange exchange) throws IOException {
+        ByteBuf buffer = exchange.allocateBuffer(false);
+        try (InputStream in = Files.newInputStream(file)) {
+            int r;
+            while ((r = in.read(buffer.array(), buffer.arrayOffset(), buffer.writableBytes())) > 0) {
+                sender.write(buffer.array(), buffer.arrayOffset(), r);
+            }
+        } finally {
+            buffer.release();
         }
     }
+
     @Override
-    public void serveRange(final Sender sender, final HttpServerExchange exchange, final long start, final long end, final IoCallback callback) {
-        serveImpl(sender, exchange, start, end + 1, callback);
-
-    }
-
-    private void serveImpl(final Sender sender, final HttpServerExchange exchange, final long start, final long end, final IoCallback<Sender> callback) {
-        RandomAccessFile fileChannel;
-        try {
-            fileChannel = new RandomAccessFile(file.toFile(), "r");
-            sender.transferFrom(fileChannel, start, end - start , callback);
-        } catch (FileNotFoundException e) {
-            exchange.setStatusCode(StatusCodes.NOT_FOUND);
-            callback.onException(exchange, sender, e);
-        }
+    public void serveAsync(WriteStream<Buffer> stream, HttpServerExchange exchange) {
+        //TODO: do this properly
+        exchange.response().sendFile(file.toAbsolutePath().toString());
     }
 
     @Override
@@ -170,8 +164,17 @@ public class PathResource implements RangeAwareResource {
     }
 
     @Override
+    public void serveRangeBlocking(OutputStream outputStream, HttpServerExchange exchange, long start, long end) throws IOException {
+        throw new IOException("NYI");
+    }
+
+    @Override
+    public void serveRangeAsync(WriteStream<Buffer> outputStream, HttpServerExchange exchange, long start, long end) {
+        exchange.response().sendFile(file.toAbsolutePath().toString(), start, end - start);
+    }
+
+    @Override
     public boolean isRangeSupported() {
         return true;
     }
-
 }

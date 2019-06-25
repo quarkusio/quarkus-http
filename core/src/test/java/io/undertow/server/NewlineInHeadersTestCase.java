@@ -50,7 +50,7 @@ public class NewlineInHeadersTestCase {
                     @Override
                     public void handle(HttpServerExchange exchange, String message) {
                         exchange.responseHeaders().set(ECHO, message);
-                        exchange.getResponseSender().send(RESPONSE);
+                        exchange.response().end(RESPONSE);
                     }
                 });
             }

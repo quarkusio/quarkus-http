@@ -40,14 +40,13 @@ import org.jboss.logging.Logger;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
 import io.undertow.io.BlockingReceiverImpl;
 import io.undertow.io.IoCallback;
 import io.undertow.io.Receiver;
-import io.undertow.io.Sender;
 import io.undertow.security.api.SecurityContext;
 import io.undertow.server.handlers.Cookie;
 import io.undertow.util.AbstractAttachable;
@@ -63,6 +62,8 @@ import io.undertow.util.NetworkUtils;
 import io.undertow.util.Rfc6265CookieSupport;
 import io.undertow.util.StatusCodes;
 import io.undertow.util.UndertowOptions;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.HttpServerResponse;
 
 /**
  * An HTTP server request/response exchange.  An instance of this class is constructed as soon as the request headers are
@@ -184,7 +185,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      */
     private String queryString = "";
 
-    private Sender sender;
     private Receiver receiver;
 
     private long requestStartTime = -1;
@@ -270,7 +270,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     private static final int FLAG_REQUEST_READ = 1 << 20;
 
     /**
-     * Flag that indicates that the request channel has been reset, and {@link #getRequestChannel()} can be called again
+     * Flag that indicates that the request channel has been reset, can be called again
      */
     private static final int FLAG_REQUEST_RESET= 1 << 21;
 
@@ -289,24 +289,24 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      */
     private InetSocketAddress destinationAddress;
 
+    final HttpServerRequest request;
+    final HttpServerResponse response;
 
-    public HttpServerExchange(final ServerConnection connection, long maxEntitySize, io.netty.handler.codec.http.HttpHeaders requestHeaders) {
-        this(connection, requestHeaders, new DefaultHttpHeaders(), maxEntitySize);
-    }
-
-    public HttpServerExchange(final ServerConnection connection) {
-        this(connection, 0, new DefaultHttpHeaders());
-    }
-
-    public HttpServerExchange(final ServerConnection connection, io.netty.handler.codec.http.HttpHeaders requestHeaders) {
-        this(connection, 0, requestHeaders);
-    }
-
-    public HttpServerExchange(final ServerConnection connection, final io.netty.handler.codec.http.HttpHeaders requestHeaders, final io.netty.handler.codec.http.HttpHeaders responseHeaders, long maxEntitySize) {
+    public HttpServerExchange(final ServerConnection connection, final HttpServerRequest request, HttpServerResponse response, long maxEntitySize) {
         this.connection = connection;
         this.maxEntitySize = maxEntitySize;
-        this.requestHeaders = requestHeaders;
-        this.responseHeaders = responseHeaders;
+        this.request = request;
+        this.response = response;
+        this.requestHeaders = (HttpHeaders) request.headers();
+        this.responseHeaders = (HttpHeaders) response.headers();
+    }
+
+    public HttpServerResponse response() {
+        return response;
+    }
+
+    public HttpServerRequest request() {
+        return request;
     }
 
     /**
@@ -1234,23 +1234,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
 
-    /**
-     * Get the response sender.
-     * <p>
-     * For blocking exchanges this will return a sender that uses the underlying output stream.
-     *
-     * @return the response sender, or {@code null} if another party already acquired the channel or the sender
-     */
-    public Sender getResponseSender() {
-        if (blockingHttpExchange != null) {
-            return blockingHttpExchange.getSender();
-        }
-        if (sender != null) {
-            return sender;
-        }
-        return sender = new AsyncSenderImpl(this);
-    }
-
     public Receiver getRequestReceiver() {
         if (blockingHttpExchange != null) {
             return blockingHttpExchange.getReceiver();
@@ -1616,7 +1599,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     /**
      * Upgrade the channel to a raw socket. This method set the response code to 101, and then marks both the
      * request and response as terminated, which means that once the current request is completed the raw channel
-     * can be obtained from {@link io.undertow.server.protocol.http.HttpServerConnection#getChannel()}
+     * can be obtained
      *
      * @throws IllegalStateException if a response or upgrade was already sent, or if the request body is already being
      *                               read
@@ -1638,7 +1621,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     /**
      * Upgrade the channel to a raw socket. This method set the response code to 101, and then marks both the
      * request and response as terminated, which means that once the current request is completed the raw channel
-     * can be obtained from {@link io.undertow.server.protocol.http.HttpServerConnection#getChannel()}
+     * can be obtained
      *
      * @param productName the product name to report to the client
      * @throws IllegalStateException if a response or upgrade was already sent, or if the request body is already being
@@ -1687,7 +1670,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
 
         private InputStream inputStream;
         private UndertowOutputStream outputStream;
-        private Sender sender;
         private final HttpServerExchange exchange;
 
         DefaultBlockingHttpExchange(final HttpServerExchange exchange) {
@@ -1706,14 +1688,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
                 outputStream = new UndertowOutputStream(exchange);
             }
             return outputStream;
-        }
-
-        @Override
-        public Sender getSender() {
-            if (sender == null) {
-                sender = new BlockingSenderImpl(exchange, getOutputStream());
-            }
-            return sender;
         }
 
         @Override

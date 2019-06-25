@@ -59,7 +59,7 @@ public class RangeRequestTestCase {
             public void handleRequest(HttpServerExchange exchange) throws Exception {
                 exchange.responseHeaders().set(HttpHeaderNames.LAST_MODIFIED, DateUtils.toDateString(new Date(10000)));
                 exchange.responseHeaders().set(HttpHeaderNames.ETAG, "\"someetag\"");
-                exchange.getResponseSender().send("0123456789");
+                exchange.response().end("0123456789");
             }
         }, true));
         path.addPrefixPath("/resource",  new ResourceHandler( new PathResourceManager(rootPath, 10485760))

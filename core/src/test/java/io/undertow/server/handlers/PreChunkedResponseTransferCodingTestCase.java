@@ -70,7 +70,7 @@ public class PreChunkedResponseTransferCodingTestCase {
                     }
                     exchange.responseHeaders().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderNames.CHUNKED);
                     exchange.putAttachment(HttpAttachments.PRE_CHUNKED_RESPONSE, true);
-                    exchange.getResponseSender().send(chunkedMessage);
+                    exchange.response().end(chunkedMessage);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

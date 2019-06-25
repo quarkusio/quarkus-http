@@ -20,20 +20,22 @@ package io.undertow.server.handlers.resource;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import io.undertow.io.IoCallback;
-import io.undertow.io.Sender;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.CopyOnWriteMap;
 import io.undertow.util.ETag;
 import io.undertow.util.HttpHeaderNames;
 import io.undertow.util.MimeMappings;
 import io.undertow.util.QValueParser;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.streams.WriteStream;
 
 /**
  * A resource supplier that allows pre-compressed resources to be served if the client accepts the request.
@@ -55,12 +57,12 @@ public class PreCompressedResourceSupplier implements ResourceSupplier {
     @Override
     public Resource getResource(HttpServerExchange exchange, String path) throws IOException {
         Resource originalResource = resourceManager.getResource(path);
-        if(exchange.requestHeaders().contains(HttpHeaderNames.RANGE)) {
+        if (exchange.requestHeaders().contains(HttpHeaderNames.RANGE)) {
             //we don't use serve pre compressed resources for range requests
             return originalResource;
         }
         Resource resource = getEncodedResource(exchange, path, originalResource);
-        if(resource == null) {
+        if (resource == null) {
             return originalResource;
         }
         return resource;
@@ -76,10 +78,10 @@ public class PreCompressedResourceSupplier implements ResourceSupplier {
         for (List<QValueParser.QValueResult> result : found) {
             for (final QValueParser.QValueResult value : result) {
                 String extension = encodingMap.get(value.getValue());
-                if(extension != null) {
+                if (extension != null) {
                     String newPath = path + extension;
                     Resource resource = resourceManager.getResource(newPath);
-                    if(resource != null && !resource.isDirectory()) {
+                    if (resource != null && !resource.isDirectory()) {
                         return new Resource() {
                             @Override
                             public String getPath() {
@@ -122,9 +124,15 @@ public class PreCompressedResourceSupplier implements ResourceSupplier {
                             }
 
                             @Override
-                            public void serve(Sender sender, HttpServerExchange exchange, IoCallback completionCallback) {
+                            public void serveBlocking(OutputStream outputStream, HttpServerExchange exchange) throws IOException {
                                 exchange.responseHeaders().set(HttpHeaderNames.CONTENT_ENCODING, value.getValue());
-                                resource.serve(sender, exchange, completionCallback);
+                                resource.serveBlocking(outputStream, exchange);
+                            }
+
+                            @Override
+                            public void serveAsync(WriteStream<Buffer> stream, HttpServerExchange exchange) {
+                                exchange.responseHeaders().set(HttpHeaderNames.CONTENT_ENCODING, value.getValue());
+                                resource.serveAsync(stream, exchange);
                             }
 
                             @Override

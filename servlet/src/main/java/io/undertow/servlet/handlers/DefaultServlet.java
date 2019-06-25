@@ -365,10 +365,9 @@ public class DefaultServlet extends HttpServlet {
                 }
             } : IoCallback.END_EXCHANGE;
             if (rangeResponse == null) {
-
-                resource.serve(exchange.getResponseSender(), exchange, callback);
+                resource.serveBlocking(exchange.getOutputStream(), exchange);
             } else {
-                ((RangeAwareResource) resource).serveRange(exchange.getResponseSender(), exchange, start, end, callback);
+                ((RangeAwareResource) resource).serveRangeBlocking(exchange.getOutputStream(), exchange, start, end);
             }
         }
     }

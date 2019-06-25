@@ -53,13 +53,13 @@ public class RoutingHandlerTestCase {
                     .add(HttpMethodNames.GET, "/baz", new HttpHandler() {
                         @Override
                         public void handleRequest(HttpServerExchange exchange) throws Exception {
-                            exchange.getResponseSender().send("baz");
+                            exchange.response().end("baz");
                         }
                     })
                     .add(HttpMethodNames.GET, "/baz/{foo}", new HttpHandler() {
                         @Override
                         public void handleRequest(HttpServerExchange exchange) throws Exception {
-                            exchange.getResponseSender().send("baz-path" + exchange.getQueryParameters().get("foo"));
+                            exchange.response().end("baz-path" + exchange.getQueryParameters().get("foo"));
                         }
                     });
 
@@ -67,25 +67,25 @@ public class RoutingHandlerTestCase {
                 .get("/bar", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("GET bar");
+                        exchange.response().end("GET bar");
                     }
                 })
                 .put("/bar", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("PUT bar");
+                        exchange.response().end("PUT bar");
                     }
                 })
                 .post("/bar", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("POST bar");
+                        exchange.response().end("POST bar");
                     }
                 })
                 .delete("/bar", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("DELETE bar");
+                        exchange.response().end("DELETE bar");
                     }
                 });
 
@@ -93,43 +93,43 @@ public class RoutingHandlerTestCase {
                 .add(HttpMethodNames.GET, "/wild/{test}/*", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("wild:" + exchange.getQueryParameters().get("test") + ":" + exchange.getQueryParameters().get("*"));
+                        exchange.response().end("wild:" + exchange.getQueryParameters().get("test") + ":" + exchange.getQueryParameters().get("*"));
                     }
                 })
                 .add(HttpMethodNames.GET, "/wilder/*", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("wilder:" + exchange.getQueryParameters().get("*"));
+                        exchange.response().end("wilder:" + exchange.getQueryParameters().get("*"));
                     }
                 })
                 .add(HttpMethodNames.GET, "/wildest*", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("wildest:" + exchange.getQueryParameters().get("*"));
+                        exchange.response().end("wildest:" + exchange.getQueryParameters().get("*"));
                     }
                 })
                 .add(HttpMethodNames.GET, "/foo", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("foo");
+                        exchange.response().end("foo");
                     }
                 })
                 .add(HttpMethodNames.GET, "/foo", Predicates.parse("contains[value=%{i,SomeHeader},search='special'] "), new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("special foo");
+                        exchange.response().end("special foo");
                     }
                 })
                 .add(HttpMethodNames.POST, "/foo", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("posted foo");
+                        exchange.response().end("posted foo");
                     }
                 })
                 .add(HttpMethodNames.GET, "/foo/{bar}", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("foo-path" + exchange.getQueryParameters().get("bar"));
+                        exchange.response().end("foo-path" + exchange.getQueryParameters().get("bar"));
                     }
                 })
                 .addAll(commonHandler)

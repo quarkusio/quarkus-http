@@ -59,7 +59,7 @@ public class JDBCLogDatabaseTestCase {
     private static final HttpHandler HELLO_HANDLER = new HttpHandler() {
         @Override
         public void handleRequest(final HttpServerExchange exchange) throws Exception {
-            exchange.getResponseSender().send("Hello");
+            exchange.response().end("Hello");
         }
     };
 

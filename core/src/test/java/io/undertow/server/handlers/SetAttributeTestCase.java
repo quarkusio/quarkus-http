@@ -123,7 +123,7 @@ public class SetAttributeTestCase {
             for (Map.Entry<String, Deque<String>> param : exchange.getQueryParameters().entrySet()) {
                 sb.append(" " + param.getKey() + ": " + param.getValue().getFirst());
             }
-            exchange.getResponseSender().send(sb.toString());
+            exchange.response().end(sb.toString());
         }
     }
 }

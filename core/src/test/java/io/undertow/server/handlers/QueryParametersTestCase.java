@@ -78,7 +78,7 @@ public class QueryParametersTestCase {
 
                 }
                 sb.append("}");
-                exchange.getResponseSender().send(sb.toString());
+                exchange.response().end(sb.toString());
             }
         });
     }
@@ -133,7 +133,7 @@ public class QueryParametersTestCase {
         out.append((char)0xb1);
         out.append((char)0xdb);
         String s = "p=" + out.toString();
-        HttpServerExchange exchange = new HttpServerExchange(null);
+        HttpServerExchange exchange = new HttpServerExchange(null, null, null, -1);
         URLUtils.parseQueryString(s, exchange, "MS949", true, 1000);
         Assert.assertEquals("한 글", exchange.getQueryParameters().get("p").getFirst());
 

@@ -20,22 +20,21 @@ package io.undertow.server.handlers.resource;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 
-import io.netty.buffer.ByteBuf;
 import io.undertow.UndertowLogger;
 import io.undertow.io.IoCallback;
-import io.undertow.io.Sender;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.cache.DirectBufferCache;
-import io.undertow.server.handlers.cache.LimitedBufferSlicePool;
-import io.undertow.server.handlers.cache.ResponseCachingSender;
 import io.undertow.util.DateUtils;
 import io.undertow.util.ETag;
 import io.undertow.util.MimeMappings;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.streams.WriteStream;
 
 /**
  * @author Stuart Douglas
@@ -112,9 +111,19 @@ public class CachedResource implements Resource, RangeAwareResource {
         return underlyingResource.getContentType(mimeMappings);
     }
 
+    @Override
+    public void serveBlocking(OutputStream outputStream, HttpServerExchange exchange) throws IOException {
+
+    }
+
+    @Override
+    public void serveAsync(WriteStream<Buffer> stream, HttpServerExchange exchange) {
+
+    }
+
     public void invalidate() {
         final DirectBufferCache dataCache = cachingResourceManager.getDataCache();
-        if(dataCache != null) {
+        if (dataCache != null) {
             dataCache.remove(cacheKey);
         }
     }
@@ -131,77 +140,77 @@ public class CachedResource implements Resource, RangeAwareResource {
         }
         return true;
     }
-
-    @Override
-    public void serve(final Sender sender, final HttpServerExchange exchange, final IoCallback completionCallback) {
-        final DirectBufferCache dataCache = cachingResourceManager.getDataCache();
-        if(dataCache == null) {
-            underlyingResource.serve(sender, exchange, completionCallback);
-            return;
-        }
-
-        final DirectBufferCache.CacheEntry existing = dataCache.get(cacheKey);
-        final Long length = getContentLength();
-        //if it is not eligible to be served from the cache
-        if (length == null || length > cachingResourceManager.getMaxFileSize()) {
-            underlyingResource.serve(sender, exchange, completionCallback);
-            return;
-        }
-        //it is not cached yet, install a wrapper to grab the data
-        if (existing == null || !existing.enabled() || !existing.reference()) {
-            Sender newSender = sender;
-
-            final DirectBufferCache.CacheEntry entry;
-            if (existing == null) {
-                entry = dataCache.add(cacheKey, length.intValue(), cachingResourceManager.getMaxAge());
-            } else {
-                entry = existing;
-            }
-
-            if (entry != null && entry.buffers().length != 0 && entry.claimEnable()) {
-                if (entry.reference()) {
-                    newSender = new ResponseCachingSender(sender, entry, length);
-                } else {
-                    entry.disable();
-                }
-            }
-            underlyingResource.serve(newSender, exchange, completionCallback);
-        } else {
-            UndertowLogger.REQUEST_LOGGER.tracef("Serving resource %s from the buffer cache to %s", name, exchange);
-            //serve straight from the cache
-            ByteBuf[] buffers;
-            boolean ok = false;
-            try {
-                LimitedBufferSlicePool.PooledByteBuffer[] pooled = existing.buffers();
-                buffers = new ByteBuf[pooled.length];
-                for (int i = 0; i < buffers.length; i++) {
-                    // Keep position from mutating
-                    buffers[i] = pooled[i].getBuffer().duplicate();
-                }
-                ok = true;
-            } finally {
-                if (!ok) {
-                    existing.dereference();
-                }
-            }
-            sender.send(buffers, new DereferenceCallback(existing, completionCallback));
-        }
-    }
+//
+//    @Override
+//    public void serve(final Sender sender, final HttpServerExchange exchange, final IoCallback completionCallback) {
+//        final DirectBufferCache dataCache = cachingResourceManager.getDataCache();
+//        if (dataCache == null) {
+//            underlyingResource.serve(sender, exchange, completionCallback);
+//            return;
+//        }
+//
+//        final DirectBufferCache.CacheEntry existing = dataCache.get(cacheKey);
+//        final Long length = getContentLength();
+//        //if it is not eligible to be served from the cache
+//        if (length == null || length > cachingResourceManager.getMaxFileSize()) {
+//            underlyingResource.serve(sender, exchange, completionCallback);
+//            return;
+//        }
+//        //it is not cached yet, install a wrapper to grab the data
+//        if (existing == null || !existing.enabled() || !existing.reference()) {
+//            Sender newSender = sender;
+//
+//            final DirectBufferCache.CacheEntry entry;
+//            if (existing == null) {
+//                entry = dataCache.add(cacheKey, length.intValue(), cachingResourceManager.getMaxAge());
+//            } else {
+//                entry = existing;
+//            }
+//
+//            if (entry != null && entry.buffers().length != 0 && entry.claimEnable()) {
+//                if (entry.reference()) {
+//                    newSender = new ResponseCachingSender(sender, entry, length);
+//                } else {
+//                    entry.disable();
+//                }
+//            }
+//            underlyingResource.serve(newSender, exchange, completionCallback);
+//        } else {
+//            UndertowLogger.REQUEST_LOGGER.tracef("Serving resource %s from the buffer cache to %s", name, exchange);
+//            //serve straight from the cache
+//            ByteBuf[] buffers;
+//            boolean ok = false;
+//            try {
+//                LimitedBufferSlicePool.PooledByteBuffer[] pooled = existing.buffers();
+//                buffers = new ByteBuf[pooled.length];
+//                for (int i = 0; i < buffers.length; i++) {
+//                    // Keep position from mutating
+//                    buffers[i] = pooled[i].getBuffer().duplicate();
+//                }
+//                ok = true;
+//            } finally {
+//                if (!ok) {
+//                    existing.dereference();
+//                }
+//            }
+//            sender.send(buffers, new DereferenceCallback(existing, completionCallback));
+//        }
+//    }
 
     @Override
     public Long getContentLength() {
         //we always use the underlying size unless the data is cached in the buffer cache
         //to prevent a mis-match between size on disk and cached size
         final DirectBufferCache dataCache = cachingResourceManager.getDataCache();
-        if(dataCache == null) {
+        if (dataCache == null) {
             return underlyingResource.getContentLength();
         }
         final DirectBufferCache.CacheEntry existing = dataCache.get(cacheKey);
-        if(existing == null || !existing.enabled()) {
+        if (existing == null || !existing.enabled()) {
             return underlyingResource.getContentLength();
         }
         //we only return the
-        return (long)existing.size();
+        return (long) existing.size();
     }
 
     @Override
@@ -233,69 +242,79 @@ public class CachedResource implements Resource, RangeAwareResource {
     public URL getUrl() {
         return underlyingResource.getUrl();
     }
+//
+//    @Override
+//    public void serveRange(Sender sender, HttpServerExchange exchange, long start, long end, IoCallback completionCallback) {
+//        final DirectBufferCache dataCache = cachingResourceManager.getDataCache();
+//        if (dataCache == null) {
+//            ((RangeAwareResource) underlyingResource).serveRange(sender, exchange, start, end, completionCallback);
+//            return;
+//        }
+//
+//        final DirectBufferCache.CacheEntry existing = dataCache.get(cacheKey);
+//        final Long length = getContentLength();
+//        //if it is not eligible to be served from the cache
+//        if (length == null || length > cachingResourceManager.getMaxFileSize()) {
+//            ((RangeAwareResource) underlyingResource).serveRange(sender, exchange, start, end, completionCallback);
+//            return;
+//        }
+//        //it is not cached yet, just serve it directly
+//        if (existing == null || !existing.enabled() || !existing.reference()) {
+//            //it is not cached yet, we can't use a range request to establish the cached item
+//            //so we just serve it
+//            ((RangeAwareResource) underlyingResource).serveRange(sender, exchange, start, end, completionCallback);
+//        } else {
+//            //serve straight from the cache
+//            ByteBuf[] buffers;
+//            boolean ok = false;
+//            try {
+//                LimitedBufferSlicePool.PooledByteBuffer[] pooled = existing.buffers();
+//                buffers = new ByteBuf[pooled.length];
+//                for (int i = 0; i < buffers.length; i++) {
+//                    // Keep position from mutating
+//                    buffers[i] = pooled[i].getBuffer().duplicate();
+//                }
+//                ok = true;
+//            } finally {
+//                if (!ok) {
+//                    existing.dereference();
+//                }
+//            }
+//            if (start > 0) {
+//                long startDec = start;
+//                long endCount = 0;
+//                //handle the start of the range
+//                for (ByteBuf b : buffers) {
+//                    if (endCount == end) {
+//                        b.clear();
+//                        continue;
+//                    } else if (endCount + b.readableBytes() < end) {
+//                        endCount += b.readableBytes();
+//                    } else {
+//                        b.writerIndex((int) (b.readerIndex() + (end - endCount)));
+//                        endCount = end;
+//                    }
+//                    if (b.readableBytes() >= startDec) {
+//                        startDec = 0;
+//                        b.readerIndex((int) (b.readerIndex() + startDec));
+//                    } else {
+//                        startDec -= b.readableBytes();
+//                        b.clear();
+//                    }
+//                }
+//            }
+//            sender.send(buffers, new DereferenceCallback(existing, completionCallback));
+//        }
+//    }
 
     @Override
-    public void serveRange(Sender sender, HttpServerExchange exchange, long start, long end, IoCallback completionCallback) {
-        final DirectBufferCache dataCache = cachingResourceManager.getDataCache();
-        if(dataCache == null) {
-            ((RangeAwareResource)underlyingResource).serveRange(sender, exchange, start, end, completionCallback);
-            return;
-        }
+    public void serveRangeBlocking(OutputStream outputStream, HttpServerExchange exchange, long start, long end) throws IOException {
 
-        final DirectBufferCache.CacheEntry existing = dataCache.get(cacheKey);
-        final Long length = getContentLength();
-        //if it is not eligible to be served from the cache
-        if (length == null || length > cachingResourceManager.getMaxFileSize()) {
-            ((RangeAwareResource)underlyingResource).serveRange(sender, exchange, start, end, completionCallback);
-            return;
-        }
-        //it is not cached yet, just serve it directly
-        if (existing == null || !existing.enabled() || !existing.reference()) {
-            //it is not cached yet, we can't use a range request to establish the cached item
-            //so we just serve it
-            ((RangeAwareResource)underlyingResource).serveRange(sender, exchange, start, end, completionCallback);
-        } else {
-            //serve straight from the cache
-            ByteBuf[] buffers;
-            boolean ok = false;
-            try {
-                LimitedBufferSlicePool.PooledByteBuffer[] pooled = existing.buffers();
-                buffers = new ByteBuf[pooled.length];
-                for (int i = 0; i < buffers.length; i++) {
-                    // Keep position from mutating
-                    buffers[i] = pooled[i].getBuffer().duplicate();
-                }
-                ok = true;
-            } finally {
-                if (!ok) {
-                    existing.dereference();
-                }
-            }
-            if(start > 0) {
-                long startDec = start;
-                long endCount = 0;
-                //handle the start of the range
-                for(ByteBuf b : buffers) {
-                    if(endCount == end) {
-                        b.clear();
-                        continue;
-                    } else if(endCount + b.readableBytes() < end) {
-                        endCount += b.readableBytes();
-                    } else {
-                        b.writerIndex((int) (b.readerIndex() + (end - endCount)));
-                        endCount = end;
-                    }
-                    if(b.readableBytes() >= startDec) {
-                        startDec = 0;
-                        b.readerIndex((int) (b.readerIndex() + startDec));
-                    } else {
-                        startDec -= b.readableBytes();
-                        b.clear();
-                    }
-                }
-            }
-            sender.send(buffers, new DereferenceCallback(existing, completionCallback));
-        }
+    }
+
+    @Override
+    public void serveRangeAsync(WriteStream<Buffer> outputStream, HttpServerExchange exchange, long start, long end) {
+
     }
 
     @Override
@@ -310,7 +329,7 @@ public class CachedResource implements Resource, RangeAwareResource {
         private final DirectBufferCache.CacheEntry entry;
         private final IoCallback<T> callback;
 
-        DereferenceCallback(DirectBufferCache.CacheEntry entry, final IoCallback <T> callback) {
+        DereferenceCallback(DirectBufferCache.CacheEntry entry, final IoCallback<T> callback) {
             this.entry = entry;
             this.callback = callback;
         }

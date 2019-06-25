@@ -25,7 +25,7 @@ public class ExceptionHandlerTestCase {
                 .addExactPath("/", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("expected");
+                        exchange.response().end("expected");
                     }
                 })
                 .addExactPath("/exceptionParent", new HttpHandler() {
@@ -57,19 +57,19 @@ public class ExceptionHandlerTestCase {
                 .addExceptionHandler(ChildException.class, new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("child exception handled");
+                        exchange.response().end("child exception handled");
                     }
                 })
                 .addExceptionHandler(ParentException.class, new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("parent exception handled");
+                        exchange.response().end("parent exception handled");
                     }
                 })
                 .addExceptionHandler(Throwable.class, new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.getResponseSender().send("catch all throwables");
+                        exchange.response().end("catch all throwables");
                     }
                 });
         DefaultServer.setRootHandler(exceptionHandler);
@@ -145,7 +145,7 @@ public class ExceptionHandlerTestCase {
             .addExceptionHandler(IllegalArgumentException.class, new HttpHandler() {
                 @Override
                 public void handleRequest(HttpServerExchange exchange) throws Exception {
-                    exchange.getResponseSender().send("exception handled");
+                    exchange.response().end("exception handled");
                 }
             });
 

@@ -20,19 +20,21 @@ package io.undertow.servlet.test.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 
 import io.undertow.io.IoCallback;
-import io.undertow.io.Sender;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.server.handlers.resource.RangeAwareResource;
 import io.undertow.server.handlers.resource.Resource;
 import io.undertow.util.ETag;
 import io.undertow.util.MimeMappings;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.streams.WriteStream;
 
 /**
  * @author Stuart Douglas
@@ -100,8 +102,13 @@ public class TestResourceLoader extends ClassPathResourceManager {
         }
 
         @Override
-        public void serve(Sender sender, HttpServerExchange exchange, IoCallback completionCallback) {
-            delegate.serve(sender, exchange, completionCallback);
+        public void serveBlocking(OutputStream outputStream, HttpServerExchange exchange) throws IOException {
+            delegate.serveBlocking(outputStream, exchange);
+        }
+
+        @Override
+        public void serveAsync(WriteStream<Buffer> stream, HttpServerExchange exchange) {
+            delegate.serveAsync(stream, exchange);
         }
 
         @Override
@@ -140,8 +147,13 @@ public class TestResourceLoader extends ClassPathResourceManager {
         }
 
         @Override
-        public void serveRange(Sender sender, HttpServerExchange exchange, long start, long end, IoCallback completionCallback) {
-            ((RangeAwareResource)delegate).serveRange(sender, exchange, start, end, completionCallback);
+        public void serveRangeBlocking(OutputStream outputStream, HttpServerExchange exchange, long start, long end) throws IOException {
+            ((RangeAwareResource)delegate).serveRangeBlocking(outputStream, exchange, start, end);
+        }
+
+        @Override
+        public void serveRangeAsync(WriteStream<Buffer> outputStream, HttpServerExchange exchange, long start, long end) {
+            ((RangeAwareResource)delegate).serveRangeAsync(outputStream, exchange, start, end);
         }
 
         @Override

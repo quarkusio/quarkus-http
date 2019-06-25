@@ -39,7 +39,7 @@ public class PredicateParsingTestCase {
     public void testPredicateParser() {
         Predicate predicate = PredicateParser.parse("path[foo]", PredicateParsingTestCase.class.getClassLoader());
         Assert.assertTrue(predicate instanceof PathMatchPredicate);
-        HttpServerExchange e = new HttpServerExchange(null, new DefaultHttpHeaders());
+        HttpServerExchange e = new HttpServerExchange(null, null, null, -1);
         e.setRelativePath("/foo");
         Assert.assertTrue(predicate.resolve(e));
         e.setRelativePath("/bob");
@@ -53,7 +53,7 @@ public class PredicateParsingTestCase {
                 "true and not path[foo] or not path[foo] and false"}) {
             try {
                 predicate = PredicateParser.parse(string, PredicateParsingTestCase.class.getClassLoader());
-                e = new HttpServerExchange(null, new DefaultHttpHeaders());
+                e =new HttpServerExchange(null, null, null, -1);
                 e.setRelativePath("/foo");
                 Assert.assertFalse(predicate.resolve(e));
                 e.setRelativePath("/bob");
@@ -68,7 +68,7 @@ public class PredicateParsingTestCase {
     public void testPredicateContextVariable() {
         Predicate predicate = PredicateParser.parse("regex[pattern=\"/publicdb/(.*?)/.*\", value=\"%R\", full-match=false] and equals[%{i,username}, ${1}]", PredicateParsingTestCase.class.getClassLoader());
 
-        HttpServerExchange e = new HttpServerExchange(null, new DefaultHttpHeaders());
+        HttpServerExchange e = new HttpServerExchange(null, null, null, -1);
         e.setRelativePath("/publicdb/foo/bar");
         Assert.assertFalse(predicate.resolve(e));
         e.requestHeaders().add("username", "foo");
@@ -78,7 +78,7 @@ public class PredicateParsingTestCase {
     @Test
     public void testRegularExpressionsWithPredicateContext() {
         Predicate predicate = PredicateParser.parse("regex[pattern=a* , value=%{RELATIVE_PATH}] and equals[{$0, aaa}]", PredicateParsingTestCase.class.getClassLoader());
-        HttpServerExchange e = new HttpServerExchange(null, new DefaultHttpHeaders());
+        HttpServerExchange e = new HttpServerExchange(null, null, null, -1);
         e.putAttachment(Predicate.PREDICATE_CONTEXT, new HashMap<String, Object>());
         e.setRelativePath("aaab");
         Assert.assertTrue(predicate.resolve(e));
@@ -105,7 +105,7 @@ public class PredicateParsingTestCase {
         }) {
             try {
                 predicate = PredicateParser.parse(string, PredicateParsingTestCase.class.getClassLoader());
-                HttpServerExchange e = new HttpServerExchange(null, new DefaultHttpHeaders());
+                HttpServerExchange e = new HttpServerExchange(null, null, null, -1);
                 Assert.assertFalse(predicate.resolve(e));
                 e.requestHeaders().add(HttpHeaderNames.CONTENT_TYPE, "text");
                 Assert.assertTrue(predicate.resolve(e));
@@ -118,7 +118,7 @@ public class PredicateParsingTestCase {
     @Test
     public void testDefaultArrayValue() {
         Predicate predicate = PredicateParser.parse("equals[%{i,Content-Type},\"text/plain\"]", PredicateParsingTestCase.class.getClassLoader());
-        HttpServerExchange e = new HttpServerExchange(null, new DefaultHttpHeaders());
+        HttpServerExchange e = new HttpServerExchange(null, null, null, -1);
         Assert.assertFalse(predicate.resolve(e));
         e.requestHeaders().add(HttpHeaderNames.CONTENT_TYPE, "text/plain");
         Assert.assertTrue(predicate.resolve(e));
@@ -133,7 +133,7 @@ public class PredicateParsingTestCase {
     private void expect(String string, boolean result1, boolean result2) {
         try {
             Predicate predicate = PredicateParser.parse(string, PredicateParsingTestCase.class.getClassLoader());
-            HttpServerExchange e = new HttpServerExchange(null, new DefaultHttpHeaders());
+            HttpServerExchange e = new HttpServerExchange(null, null, null, -1);
             e.requestHeaders().add(HttpHeaderNames.TRAILER, "a");
             Assert.assertEquals(result1, predicate.resolve(e));
             e.requestHeaders().add(HttpHeaderNames.CONTENT_LENGTH, "a");

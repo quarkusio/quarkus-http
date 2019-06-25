@@ -64,7 +64,7 @@ public class HttpTraceHandler implements HttpHandler {
                 }
             }
             body.append("\r\n");
-            exchange.getResponseSender().send(body.toString());
+            exchange.response().end(body.toString());
         } else {
             handler.handleRequest(exchange);
         }

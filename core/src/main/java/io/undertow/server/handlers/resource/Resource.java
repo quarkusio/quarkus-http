@@ -19,16 +19,20 @@
 package io.undertow.server.handlers.resource;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 
 import io.undertow.io.IoCallback;
-import io.undertow.io.Sender;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.ETag;
 import io.undertow.util.MimeMappings;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.streams.WriteStream;
 
 /**
  * Representation of a static resource.
@@ -81,12 +85,14 @@ public interface Resource {
     String getContentType(final MimeMappings mimeMappings);
 
     /**
-     * Serve the resource, and call the provided callback when complete.
-     *
-     * @param sender The sender to use.
      * @param exchange The exchange
      */
-    void serve(final Sender sender, final HttpServerExchange exchange, final IoCallback completionCallback);
+    void serveBlocking(OutputStream outputStream, final HttpServerExchange exchange) throws IOException;
+
+    /**
+     * @param exchange The exchange
+     */
+    void serveAsync(WriteStream<Buffer> stream, final HttpServerExchange exchange);
 
     /**
      * @return The content length, or null if it is unknown

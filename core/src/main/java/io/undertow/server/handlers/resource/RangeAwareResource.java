@@ -18,9 +18,13 @@
 
 package io.undertow.server.handlers.resource;
 
+import java.io.IOException;
+import java.io.OutputStream;
+
 import io.undertow.io.IoCallback;
-import io.undertow.io.Sender;
 import io.undertow.server.HttpServerExchange;
+import io.vertx.core.buffer.Buffer;
+import io.vertx.core.streams.WriteStream;
 
 /**
  * A resource implementation that
@@ -33,10 +37,18 @@ public interface RangeAwareResource extends Resource {
     /**
      * Serve the resource, and call the provided callback when complete.
      *
-     * @param sender The sender to use.
-     * @param exchange The exchange
+     * @param outputStream The sender to use.
+     * @param exchange     The exchange
      */
-    void serveRange(final Sender sender, final HttpServerExchange exchange, long start, long end, final IoCallback completionCallback);
+    void serveRangeBlocking(final OutputStream outputStream, final HttpServerExchange exchange, long start, long end) throws IOException;
+
+    /**
+     * Serve the resource, and call the provided callback when complete.
+     *
+     * @param outputStream The sender to use.
+     * @param exchange     The exchange
+     */
+    void serveRangeAsync(final WriteStream<Buffer> outputStream, final HttpServerExchange exchange, long start, long end);
 
     /**
      * It is possible that some resources managers may only support range requests on a subset of their resources,

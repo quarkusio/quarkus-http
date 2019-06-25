@@ -39,7 +39,7 @@ public class EncodedEncodedSlashTestCase {
         DefaultServer.setRootHandler(new HttpHandler() {
             @Override
             public void handleRequest(HttpServerExchange exchange) throws Exception {
-                exchange.getResponseSender().send(exchange.getRequestPath());
+                exchange.response().end(exchange.getRequestPath());
             }
         });
     }

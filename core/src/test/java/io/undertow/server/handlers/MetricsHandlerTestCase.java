@@ -52,7 +52,7 @@ public class MetricsHandlerTestCase {
                 if(exchange.getQueryString().contains("error")) {
                     throw new RuntimeException();
                 }
-                exchange.getResponseSender().send("Hello");
+                exchange.response().end("Hello");
             }
         })));
         HttpGet get = new HttpGet(DefaultServer.getDefaultServerURL() + "/path");

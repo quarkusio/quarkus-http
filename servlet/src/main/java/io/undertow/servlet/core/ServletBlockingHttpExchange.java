@@ -26,9 +26,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 import io.undertow.io.Receiver;
-import io.undertow.io.Sender;
 import io.undertow.server.BlockingHttpExchange;
-import io.undertow.server.BlockingSenderImpl;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.handlers.ServletRequestContext;
 import io.undertow.servlet.spec.HttpServletRequestImpl;
@@ -59,23 +57,13 @@ public class ServletBlockingHttpExchange implements BlockingHttpExchange {
     public OutputStream getOutputStream() {
         ServletResponse response = exchange.getAttachment(ServletRequestContext.ATTACHMENT_KEY).getServletResponse();
         try {
-            return response.getOutputStream();
+            try {
+                return response.getOutputStream();
+            } catch (IllegalStateException ex) {
+                return new WriterOutputStream(exchange, response.getWriter(), response.getCharacterEncoding());
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    @Override
-    public Sender getSender() {
-        try {
-            return new BlockingSenderImpl(exchange, getOutputStream());
-        } catch (IllegalStateException e) {
-            ServletResponse response = exchange.getAttachment(ServletRequestContext.ATTACHMENT_KEY).getServletResponse();
-            try {
-                return new BlockingWriterSenderImpl(exchange, response.getWriter(), response.getCharacterEncoding());
-            } catch (IOException e1) {
-                throw new RuntimeException(e1);
-            }
         }
     }
 

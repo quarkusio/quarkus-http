@@ -9,6 +9,7 @@ import java.util.concurrent.Executor;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.util.concurrent.EventExecutor;
+import io.undertow.UndertowLogger;
 import io.undertow.io.IoCallback;
 import io.undertow.server.BufferAllocator;
 import io.undertow.server.Connectors;
@@ -54,6 +55,14 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
         this.allocator = allocator;
         this.worker = worker;
         request.handler(this);
+        request.response().exceptionHandler(new Handler<Throwable>() {
+            @Override
+            public void handle(Throwable event) {
+                UndertowLogger.REQUEST_IO_LOGGER.ioException(event);
+                //TODO: do we need this?
+                exchange.endExchange();
+            }
+        });
 
         request.endHandler(new Handler<Void>() {
             @Override

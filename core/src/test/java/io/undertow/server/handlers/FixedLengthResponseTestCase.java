@@ -28,7 +28,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import io.undertow.io.Sender;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.ServerConnection;
@@ -63,16 +62,8 @@ public class FixedLengthResponseTestCase {
 
             @Override
             public void handleRequest(final HttpServerExchange exchange) throws Exception {
-                if (connection == null) {
-                    connection = exchange.getConnection();
-                } else if (!DefaultServer.isAjp() && !DefaultServer.isProxy() && connection != exchange.getConnection()) {
-                    Sender sender = exchange.getResponseSender();
-                    sender.send("Connection not persistent");
-                    return;
-                }
                 exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LENGTH, message.length() + "");
-                final Sender sender = exchange.getResponseSender();
-                sender.send(message);
+                exchange.response().end(message);
             }
         });
     }

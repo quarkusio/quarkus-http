@@ -48,7 +48,7 @@ public class SimpleNonBlockingServerTestCase {
         DefaultServer.setRootHandler(new SetHeaderHandler(new HttpHandler() {
             @Override
             public void handleRequest(HttpServerExchange exchange) throws Exception {
-                exchange.getResponseSender().send("hi all");
+                exchange.response().end("hi all");
             }
         }, "MyHeader", "MyValue"));
     }

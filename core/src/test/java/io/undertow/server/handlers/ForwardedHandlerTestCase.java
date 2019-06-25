@@ -38,7 +38,7 @@ public class ForwardedHandlerTestCase {
         DefaultServer.setRootHandler(new ForwardedHandler(new HttpHandler() {
             @Override
             public void handleRequest(HttpServerExchange exchange) throws Exception {
-                exchange.getResponseSender().send(exchange.getRequestScheme() + "|" + exchange.getHostAndPort()+ "|" + exchange.getDestinationAddress() + "|" + exchange.getSourceAddress() );
+                exchange.response().end(exchange.getRequestScheme() + "|" + exchange.getHostAndPort()+ "|" + exchange.getDestinationAddress() + "|" + exchange.getSourceAddress() );
             }
         }));
     }

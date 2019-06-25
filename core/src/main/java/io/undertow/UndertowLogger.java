@@ -109,7 +109,7 @@ UndertowLogger extends BasicLogger {
 
     @LogMessage(level = DEBUG)
     @Message(id = 5013, value = "An IOException occurred")
-    void ioException(@Cause IOException e);
+    void ioException(@Cause Throwable e);
 
     @LogMessage(level = DEBUG)
     @Message(id = 5014, value = "Failed to parse request")

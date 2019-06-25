@@ -59,7 +59,7 @@ public class PathTestCase {
             handler.addExactPath("/aa", new HttpHandler() {
                 @Override
                 public void handleRequest(HttpServerExchange exchange) throws Exception {
-                    exchange.getResponseSender().send("Exact /aa match:" + exchange.getRelativePath() + ":" + exchange.getResolvedPath());
+                    exchange.response().end("Exact /aa match:" + exchange.getRelativePath() + ":" + exchange.getResolvedPath());
                 }
             });
             handler.addPrefixPath("/aa/anotherSubPath", new RemainingPathHandler("/aa/anotherSubPath"));
