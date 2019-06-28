@@ -61,9 +61,8 @@ public class CompletionLatchHandler implements HttpHandler {
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
             @Override
-            public void exchangeEvent(HttpServerExchange exchange, NextListener nextListener) {
+            public void exchangeEvent(HttpServerExchange exchange) {
                 latch.countDown();
-                nextListener.proceed();
             }
         });
         next.handleRequest(exchange);

@@ -121,9 +121,8 @@ public class AccessLogHandler implements HttpHandler {
     }
 
 
-
     private static String handleCommonNames(String formatString) {
-        if(formatString.equals("common")) {
+        if (formatString.equals("common")) {
             return "%h %l %u %t \"%r\" %s %b";
         } else if (formatString.equals("combined")) {
             return "%h %l %u %t \"%r\" %s %b \"%{i,Referer}\" \"%{i,User-Agent}\"";
@@ -140,13 +139,9 @@ public class AccessLogHandler implements HttpHandler {
 
     private class AccessLogCompletionListener implements ExchangeCompletionListener {
         @Override
-        public void exchangeEvent(final HttpServerExchange exchange, final NextListener nextListener) {
-            try {
-                if(predicate == null || predicate.resolve(exchange)) {
-                    accessLogReceiver.logMessage(tokens.readAttribute(exchange));
-                }
-            } finally {
-                nextListener.proceed();
+        public void exchangeEvent(final HttpServerExchange exchange) {
+            if (predicate == null || predicate.resolve(exchange)) {
+                accessLogReceiver.logMessage(tokens.readAttribute(exchange));
             }
         }
     }

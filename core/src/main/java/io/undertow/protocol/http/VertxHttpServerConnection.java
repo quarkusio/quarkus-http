@@ -5,10 +5,13 @@ import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
 import java.net.SocketAddress;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowLogger;
+import io.undertow.UndertowMessages;
 import io.undertow.io.IoCallback;
 import io.undertow.server.BufferAllocator;
 import io.undertow.server.Connectors;
@@ -54,7 +57,28 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
         connectionBase = (ConnectionBase) request.connection();
         this.allocator = allocator;
         this.worker = worker;
-        request.handler(this);
+        if(!request.isEnded()) {
+            request.handler(this);
+            request.endHandler(new Handler<Void>() {
+                @Override
+                public void handle(Void event) {
+                    IoCallback<ByteBuf> readCallback = null;
+                    synchronized (request.connection()) {
+                        eof = true;
+                        if (waiting) {
+                            request.connection().notify();
+                        }
+                        if (VertxHttpServerConnection.this.readCallback != null) {
+                            readCallback = VertxHttpServerConnection.this.readCallback;
+                            VertxHttpServerConnection.this.readCallback = null;
+                        }
+                    }
+                    if (readCallback != null) {
+                        readCallback.onComplete(exchange, null);
+                    }
+                }
+            });
+        }
         request.response().exceptionHandler(new Handler<Throwable>() {
             @Override
             public void handle(Throwable event) {
@@ -64,25 +88,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
             }
         });
 
-        request.endHandler(new Handler<Void>() {
-            @Override
-            public void handle(Void event) {
-                IoCallback<ByteBuf> readCallback = null;
-                synchronized (request.connection()) {
-                    eof = true;
-                    if (waiting) {
-                        request.connection().notify();
-                    }
-                    if (VertxHttpServerConnection.this.readCallback != null) {
-                        readCallback = VertxHttpServerConnection.this.readCallback;
-                        VertxHttpServerConnection.this.readCallback = null;
-                    }
-                }
-                if (readCallback != null) {
-                    readCallback.onComplete(exchange, null);
-                }
-            }
-        });
+
         request.response().endHandler(new Handler<Void>() {
             @Override
             public void handle(Void event) {
@@ -340,10 +346,13 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
     public void setSslSessionInfo(SSLSessionInfo sessionInfo, HttpServerExchange exchange) {
 
     }
+    protected  void setUpgradeListener(Consumer<ChannelHandlerContext> listener) {
+        request.upgrade();
+    }
 
     @Override
     protected boolean isUpgradeSupported() {
-        return false;
+        return true;
     }
 
     @Override

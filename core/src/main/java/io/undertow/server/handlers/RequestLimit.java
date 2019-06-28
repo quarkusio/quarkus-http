@@ -61,19 +61,15 @@ public class RequestLimit {
     private final ExchangeCompletionListener COMPLETION_LISTENER = new ExchangeCompletionListener() {
 
         @Override
-        public void exchangeEvent(final HttpServerExchange exchange, final NextListener nextListener) {
-            try {
-                synchronized (RequestLimit.this) {
-                    final SuspendedRequest task = queue.poll();
-                    if (task != null) {
-                        task.exchange.addExchangeCompleteListener(COMPLETION_LISTENER);
-                        task.exchange.dispatch(task.next);
-                    } else {
-                        decrementRequests();
-                    }
+        public void exchangeEvent(final HttpServerExchange exchange) {
+            synchronized (RequestLimit.this) {
+                final SuspendedRequest task = queue.poll();
+                if (task != null) {
+                    task.exchange.addExchangeCompleteListener(COMPLETION_LISTENER);
+                    task.exchange.dispatch(task.next);
+                } else {
+                    decrementRequests();
                 }
-            } finally {
-                nextListener.proceed();
             }
         }
     };
@@ -153,7 +149,7 @@ public class RequestLimit {
         }
         int oldMax = this.max;
         this.max = newMax;
-        if(newMax > oldMax) {
+        if (newMax > oldMax) {
             synchronized (this) {
                 while (!queue.isEmpty()) {
                     int oldVal, newVal;

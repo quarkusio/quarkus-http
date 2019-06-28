@@ -185,8 +185,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      */
     private String queryString = "";
 
-    private Receiver receiver;
-
     private long requestStartTime = -1;
 
 
@@ -1222,18 +1220,15 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     private void invokeExchangeCompleteListeners() {
-        if (exchangeCompletionListenersCount > 0) {
+        while (exchangeCompletionListenersCount > 0) {
             int i = exchangeCompletionListenersCount - 1;
             ExchangeCompletionListener next = exchangeCompleteListeners[i];
             exchangeCompletionListenersCount = -1;
-            next.exchangeEvent(this, new ExchangeCompleteNextListener(exchangeCompleteListeners, this, i));
-        } else if (exchangeCompletionListenersCount == 0) {
-            exchangeCompletionListenersCount = -1;
-            connection.exchangeComplete(this);
+            next.exchangeEvent(this);
         }
     }
 
-
+    Receiver receiver;
     public Receiver getRequestReceiver() {
         if (blockingHttpExchange != null) {
             return blockingHttpExchange.getReceiver();
@@ -1642,28 +1637,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
 
     public void resetRequestChannel() {
         state |= FLAG_REQUEST_RESET;
-    }
-
-    private static class ExchangeCompleteNextListener implements ExchangeCompletionListener.NextListener {
-        private final ExchangeCompletionListener[] list;
-        private final HttpServerExchange exchange;
-        private int i;
-
-        ExchangeCompleteNextListener(final ExchangeCompletionListener[] list, final HttpServerExchange exchange, int i) {
-            this.list = list;
-            this.exchange = exchange;
-            this.i = i;
-        }
-
-        @Override
-        public void proceed() {
-            if (--i >= 0) {
-                final ExchangeCompletionListener next = list[i];
-                next.exchangeEvent(exchange, this);
-            } else if (i == -1) {
-                exchange.connection.exchangeComplete(exchange);
-            }
-        }
     }
 
     private static class DefaultBlockingHttpExchange implements BlockingHttpExchange {

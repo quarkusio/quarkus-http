@@ -64,9 +64,8 @@ public class SSLHeaderHandler implements HttpHandler {
 
     private static final ExchangeCompletionListener CLEAR_SSL_LISTENER = new ExchangeCompletionListener() {
         @Override
-        public void exchangeEvent(HttpServerExchange exchange, NextListener nextListener) {
+        public void exchangeEvent(HttpServerExchange exchange) {
             exchange.getConnection().setSslSessionInfo(null, exchange);
-            nextListener.proceed();
         }
     };
 

@@ -103,14 +103,10 @@ public class SessionAttachmentHandler implements HttpHandler {
         }
 
         @Override
-        public void exchangeEvent(final HttpServerExchange exchange, final NextListener next) {
-            try {
-                final Session session = sessionManager.getSession(exchange, sessionConfig);
-                if (session != null) {
-                    session.requestDone(exchange);
-                }
-            } finally {
-                next.proceed();
+        public void exchangeEvent(final HttpServerExchange exchange) {
+            final Session session = sessionManager.getSession(exchange, sessionConfig);
+            if (session != null) {
+                session.requestDone(exchange);
             }
         }
     }

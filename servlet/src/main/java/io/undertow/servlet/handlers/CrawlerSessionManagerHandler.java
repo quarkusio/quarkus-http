@@ -41,14 +41,13 @@ import io.undertow.util.HttpHeaderNames;
  * ensures that crawlers are associated with a single session - just like normal
  * users - regardless of whether or not they provide a session token with their
  * requests.
- *
  */
 public class CrawlerSessionManagerHandler implements HttpHandler {
 
     private static final String SESSION_ATTRIBUTE_NAME = "listener_" + CrawlerSessionManagerHandler.class.getName();
 
-    private final Map<String,String> clientIpSessionId = new ConcurrentHashMap<>();
-    private final Map<String,String> sessionIdClientIp = new ConcurrentHashMap<>();
+    private final Map<String, String> clientIpSessionId = new ConcurrentHashMap<>();
+    private final Map<String, String> sessionIdClientIp = new ConcurrentHashMap<>();
 
     private final CrawlerSessionManagerConfig config;
     private final Pattern uaPattern;
@@ -72,7 +71,7 @@ public class CrawlerSessionManagerHandler implements HttpHandler {
         ServletRequestContext src = exchange.getAttachment(ServletRequestContext.ATTACHMENT_KEY);
 
         // If the incoming request has a valid session ID, no action is required
-        if ( src.getOriginalRequest().getSession(false) == null) {
+        if (src.getOriginalRequest().getSession(false) == null) {
 
             // Is this a crawler - check the UA headers
             List<String> userAgentHeaders = exchange.requestHeaders().getAll(HttpHeaderNames.USER_AGENT);
@@ -119,32 +118,28 @@ public class CrawlerSessionManagerHandler implements HttpHandler {
 
 
                 @Override
-                public void exchangeEvent(HttpServerExchange exchange, NextListener nextListener) {
-                    try {
-                        ServletRequestContext src = exchange.getAttachment(ServletRequestContext.ATTACHMENT_KEY);
-                        if (finalSessionId == null) {
-                            // Has bot just created a session, if so make a note of it
-                            HttpSession s = src.getOriginalRequest().getSession(false);
-                            if (s != null) {
-                                clientIpSessionId.put(finalClientId, s.getId());
-                                sessionIdClientIp.put(s.getId(), finalClientId);
-                                // #valueUnbound() will be called on session expiration
-                                s.setAttribute(SESSION_ATTRIBUTE_NAME, new CrawlerBindingListener(clientIpSessionId, sessionIdClientIp));
-                                s.setMaxInactiveInterval(config.getSessionInactiveInterval());
+                public void exchangeEvent(HttpServerExchange exchange) {
+                    ServletRequestContext src = exchange.getAttachment(ServletRequestContext.ATTACHMENT_KEY);
+                    if (finalSessionId == null) {
+                        // Has bot just created a session, if so make a note of it
+                        HttpSession s = src.getOriginalRequest().getSession(false);
+                        if (s != null) {
+                            clientIpSessionId.put(finalClientId, s.getId());
+                            sessionIdClientIp.put(s.getId(), finalClientId);
+                            // #valueUnbound() will be called on session expiration
+                            s.setAttribute(SESSION_ATTRIBUTE_NAME, new CrawlerBindingListener(clientIpSessionId, sessionIdClientIp));
+                            s.setMaxInactiveInterval(config.getSessionInactiveInterval());
 
-                                if (UndertowLogger.REQUEST_LOGGER.isDebugEnabled()) {
-                                    UndertowLogger.REQUEST_LOGGER.debug(exchange +
-                                            ": New bot session. SessionID=" + s.getId());
-                                }
-                            }
-                        } else {
                             if (UndertowLogger.REQUEST_LOGGER.isDebugEnabled()) {
                                 UndertowLogger.REQUEST_LOGGER.debug(exchange +
-                                        ": Bot session accessed. SessionID=" + finalSessionId);
+                                        ": New bot session. SessionID=" + s.getId());
                             }
                         }
-                    } finally {
-                        nextListener.proceed();
+                    } else {
+                        if (UndertowLogger.REQUEST_LOGGER.isDebugEnabled()) {
+                            UndertowLogger.REQUEST_LOGGER.debug(exchange +
+                                    ": Bot session accessed. SessionID=" + finalSessionId);
+                        }
                     }
                 }
             });
@@ -157,10 +152,10 @@ public class CrawlerSessionManagerHandler implements HttpHandler {
 
 class CrawlerBindingListener implements HttpSessionBindingListener, Serializable {
     private static final long serialVersionUID = -8841692120840734349L;
-    private transient Map<String,String> clientIpSessionId;
-    private transient Map<String,String> sessionIdClientIp;
+    private transient Map<String, String> clientIpSessionId;
+    private transient Map<String, String> sessionIdClientIp;
 
-    CrawlerBindingListener(Map<String,String> clientIpSessionId, Map<String,String> sessionIdClientIp) {
+    CrawlerBindingListener(Map<String, String> clientIpSessionId, Map<String, String> sessionIdClientIp) {
         this.clientIpSessionId = clientIpSessionId;
         this.sessionIdClientIp = sessionIdClientIp;
     }

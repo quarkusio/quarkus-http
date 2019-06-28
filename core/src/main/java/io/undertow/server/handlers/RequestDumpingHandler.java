@@ -111,7 +111,7 @@ public class RequestDumpingHandler implements HttpHandler {
 
         exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
             @Override
-            public void exchangeEvent(final HttpServerExchange exchange, final NextListener nextListener) {
+            public void exchangeEvent(final HttpServerExchange exchange) {
 
                 dumpRequestBody(exchange, sb);
 
@@ -147,8 +147,6 @@ public class RequestDumpingHandler implements HttpHandler {
 
                 sb.append("\n==============================================================");
 
-
-                nextListener.proceed();
                 UndertowLogger.REQUEST_DUMPER_LOGGER.info(sb.toString());
             }
         });

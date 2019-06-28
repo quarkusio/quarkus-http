@@ -54,10 +54,9 @@ public class MetricsHandler implements HttpHandler {
             final long start = System.currentTimeMillis();
             exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
                 @Override
-                public void exchangeEvent(HttpServerExchange exchange, NextListener nextListener) {
+                public void exchangeEvent(HttpServerExchange exchange) {
                     long time = System.currentTimeMillis() - start;
                     totalResult.update((int) time, exchange.getStatusCode());
-                    nextListener.proceed();
                 }
             });
         }

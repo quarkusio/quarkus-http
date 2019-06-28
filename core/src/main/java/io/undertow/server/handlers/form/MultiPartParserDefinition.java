@@ -83,9 +83,8 @@ public class MultiPartParserDefinition implements FormParserFactory.ParserDefini
             final MultiPartUploadHandler parser = new MultiPartUploadHandler(exchange, boundary, maxIndividualFileSize, fileSizeThreshold, defaultEncoding);
             exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
                 @Override
-                public void exchangeEvent(final HttpServerExchange exchange, final NextListener nextListener) {
+                public void exchangeEvent(final HttpServerExchange exchange) {
                     IoUtils.safeClose(parser);
-                    nextListener.proceed();
                 }
             });
             Long sizeLimit = exchange.getConnection().getUndertowOptions().get(UndertowOptions.MULTIPART_MAX_ENTITY_SIZE);

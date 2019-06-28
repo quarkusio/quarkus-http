@@ -52,28 +52,24 @@ public class ConnectorStatisticsImpl implements ConnectorStatistics {
 
     private final ExchangeCompletionListener completionListener = new ExchangeCompletionListener() {
         @Override
-        public void exchangeEvent(HttpServerExchange exchange, NextListener nextListener) {
-            try {
-                activeRequestsUpdater.decrementAndGet(ConnectorStatisticsImpl.this);
-                if (exchange.getStatusCode() == StatusCodes.INTERNAL_SERVER_ERROR) {
-                    errorCountUpdater.incrementAndGet(ConnectorStatisticsImpl.this);
-                }
-                long start = exchange.getRequestStartTime();
-                if (start > 0) {
-                    long elapsed = System.nanoTime() - start;
-                    processingTimeUpdater.addAndGet(ConnectorStatisticsImpl.this, elapsed);
-                    long oldMax;
-                    do {
-                        oldMax = maxProcessingTimeUpdater.get(ConnectorStatisticsImpl.this);
-                        if (oldMax >= elapsed) {
-                            break;
-                        }
-                    } while (!maxProcessingTimeUpdater.compareAndSet(ConnectorStatisticsImpl.this, oldMax, elapsed));
-                }
-
-            } finally {
-                nextListener.proceed();
+        public void exchangeEvent(HttpServerExchange exchange) {
+            activeRequestsUpdater.decrementAndGet(ConnectorStatisticsImpl.this);
+            if (exchange.getStatusCode() == StatusCodes.INTERNAL_SERVER_ERROR) {
+                errorCountUpdater.incrementAndGet(ConnectorStatisticsImpl.this);
             }
+            long start = exchange.getRequestStartTime();
+            if (start > 0) {
+                long elapsed = System.nanoTime() - start;
+                processingTimeUpdater.addAndGet(ConnectorStatisticsImpl.this, elapsed);
+                long oldMax;
+                do {
+                    oldMax = maxProcessingTimeUpdater.get(ConnectorStatisticsImpl.this);
+                    if (oldMax >= elapsed) {
+                        break;
+                    }
+                } while (!maxProcessingTimeUpdater.compareAndSet(ConnectorStatisticsImpl.this, oldMax, elapsed));
+            }
+
         }
     };
 
@@ -145,7 +141,7 @@ public class ConnectorStatisticsImpl implements ConnectorStatistics {
         long maxActiveRequests;
         do {
             maxActiveRequests = this.maxActiveRequests;
-            if(current <= maxActiveRequests) {
+            if (current <= maxActiveRequests) {
                 break;
             }
         } while (!maxActiveRequestsUpdater.compareAndSet(this, maxActiveRequests, current));
@@ -190,7 +186,7 @@ public class ConnectorStatisticsImpl implements ConnectorStatistics {
         long maxActiveConnections;
         do {
             maxActiveConnections = this.maxActiveConnections;
-            if(current <= maxActiveConnections) {
+            if (current <= maxActiveConnections) {
                 return;
             }
         } while (!maxActiveConnectionsUpdater.compareAndSet(this, maxActiveConnections, current));
@@ -199,6 +195,7 @@ public class ConnectorStatisticsImpl implements ConnectorStatistics {
     public void decrementConnectionCount() {
         activeConnectionsUpdater.decrementAndGet(this);
     }
+
     @Override
     public long getActiveRequests() {
         return activeRequests;

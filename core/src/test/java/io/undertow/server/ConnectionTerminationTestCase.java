@@ -59,10 +59,9 @@ public class ConnectionTerminationTestCase {
                 exchange.startBlocking();
                 exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
                     @Override
-                    public void exchangeEvent(HttpServerExchange exchange, NextListener nextListener) {
+                    public void exchangeEvent(HttpServerExchange exchange) {
                         completionListenerCalled = true;
                         completionListenerCalledLatch.countDown();
-                        nextListener.proceed();
                     }
                 });
                 final InputStream request = exchange.getInputStream();

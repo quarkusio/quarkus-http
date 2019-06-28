@@ -155,7 +155,7 @@ public class LearningPushHandler implements HttpHandler {
         }
 
         @Override
-        public void exchangeEvent(HttpServerExchange exchange, NextListener nextListener) {
+        public void exchangeEvent(HttpServerExchange exchange) {
             if (exchange.getStatusCode() == 200 && referer != null) {
                 //for now only cache 200 response codes
                 String lmString = exchange.responseHeaders().get(HttpHeaderNames.LAST_MODIFIED);
@@ -178,8 +178,6 @@ public class LearningPushHandler implements HttpHandler {
                 }
                 pushes.put(fullPath, new PushedRequest(new DefaultHttpHeaders(), requestPath, etag, lastModified));
             }
-
-            nextListener.proceed();
         }
     }
 

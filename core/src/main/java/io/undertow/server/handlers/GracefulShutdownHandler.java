@@ -175,12 +175,8 @@ public class GracefulShutdownHandler implements HttpHandler {
     private final class GracefulShutdownListener implements ExchangeCompletionListener {
 
         @Override
-        public void exchangeEvent(HttpServerExchange exchange, NextListener nextListener) {
-            try {
-                decrementRequests();
-            } finally {
-                nextListener.proceed();
-            }
+        public void exchangeEvent(HttpServerExchange exchange) {
+            decrementRequests();
         }
     }
 

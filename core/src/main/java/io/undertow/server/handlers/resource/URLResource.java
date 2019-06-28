@@ -226,9 +226,8 @@ public class URLResource implements Resource, RangeAwareResource {
                     buffer = new byte[1024];//TODO: we should be pooling these
                     exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
                         @Override
-                        public void exchangeEvent(HttpServerExchange exchange, NextListener nextListener) {
+                        public void exchangeEvent(HttpServerExchange exchange) {
                             IoUtils.safeClose(inputStream);
-                            nextListener.proceed();
                         }
                     });
                 }

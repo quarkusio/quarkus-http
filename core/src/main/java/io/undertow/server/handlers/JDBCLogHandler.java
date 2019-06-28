@@ -114,12 +114,8 @@ public class JDBCLogHandler implements HttpHandler, Runnable {
     private class JDBCLogCompletionListener implements ExchangeCompletionListener {
 
         @Override
-        public void exchangeEvent(final HttpServerExchange exchange, final NextListener nextListener) {
-            try {
-                logMessage(formatString, exchange);
-            } finally {
-                nextListener.proceed();
-            }
+        public void exchangeEvent(final HttpServerExchange exchange) {
+            logMessage(formatString, exchange);
         }
     }
 
@@ -442,7 +438,7 @@ public class JDBCLogHandler implements HttpHandler, Runnable {
             try {
                 DataSource ds = (DataSource) new InitialContext().lookup((String) config.get("datasource"));
                 String format = (String) config.get("format");
-                return new Wrapper(format, ds, (String)config.get("tableName"), (String)config.get("remoteHostField"), (String)config.get("userField"), (String)config.get("timestampField"), (String)config.get("virtualHostField"), (String)config.get("methodField"), (String)config.get("queryField"), (String)config.get("statusField"), (String)config.get("bytesField"), (String)config.get("refererField"), (String)config.get("userAgentField"));
+                return new Wrapper(format, ds, (String) config.get("tableName"), (String) config.get("remoteHostField"), (String) config.get("userField"), (String) config.get("timestampField"), (String) config.get("virtualHostField"), (String) config.get("methodField"), (String) config.get("queryField"), (String) config.get("statusField"), (String) config.get("bytesField"), (String) config.get("refererField"), (String) config.get("userAgentField"));
             } catch (NamingException ex) {
                 throw UndertowMessages.MESSAGES.datasourceNotFound(datasourceName);
             }
@@ -486,37 +482,37 @@ public class JDBCLogHandler implements HttpHandler, Runnable {
         @Override
         public HttpHandler wrap(HttpHandler handler) {
             JDBCLogHandler jdbc = new JDBCLogHandler(handler, format, datasource);
-            if(tableName != null) {
+            if (tableName != null) {
                 jdbc.setTableName(tableName);
             }
-            if(remoteHostField != null) {
+            if (remoteHostField != null) {
                 jdbc.setRemoteHostField(remoteHostField);
             }
-            if(userField != null) {
+            if (userField != null) {
                 jdbc.setUserField(userField);
             }
-            if(timestampField != null) {
+            if (timestampField != null) {
                 jdbc.setTimestampField(timestampField);
             }
-            if(virtualHostField != null) {
+            if (virtualHostField != null) {
                 jdbc.setVirtualHostField(virtualHostField);
             }
-            if(methodField != null) {
+            if (methodField != null) {
                 jdbc.setMethodField(methodField);
             }
-            if(queryField != null) {
+            if (queryField != null) {
                 jdbc.setQueryField(queryField);
             }
-            if(statusField != null) {
+            if (statusField != null) {
                 jdbc.setStatusField(statusField);
             }
-            if(bytesField != null) {
+            if (bytesField != null) {
                 jdbc.setBytesField(bytesField);
             }
-            if(refererField != null) {
+            if (refererField != null) {
                 jdbc.setRefererField(refererField);
             }
-            if(userAgentField != null) {
+            if (userAgentField != null) {
                 jdbc.setUserAgentField(userAgentField);
             }
 

@@ -61,7 +61,6 @@ import io.undertow.servlet.handlers.ServletPathMatch;
 import io.undertow.servlet.handlers.ServletRequestContext;
 import io.undertow.util.CanonicalPathUtils;
 import io.undertow.util.HttpHeaderNames;
-import io.undertow.util.IoUtils;
 import io.undertow.util.SameThreadExecutor;
 import io.undertow.util.StatusCodes;
 
@@ -378,12 +377,8 @@ public class AsyncContextImpl implements AsyncContext {
             final InstanceHandle<T> instance = factory.createInstance();
             exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
                 @Override
-                public void exchangeEvent(HttpServerExchange exchange, NextListener nextListener) {
-                    try {
-                        instance.release();
-                    } finally {
-                        nextListener.proceed();
-                    }
+                public void exchangeEvent(HttpServerExchange exchange) {
+                    instance.release();
                 }
             });
             return instance.getInstance();
@@ -409,12 +404,12 @@ public class AsyncContextImpl implements AsyncContext {
         dispatched = false; //we reset the dispatched state
         onAsyncError(error);
         if (!dispatched) {
-            if(!exchange.isResponseStarted()) {
+            if (!exchange.isResponseStarted()) {
                 exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
                 exchange.responseHeaders().clear();
             }
             servletRequest.setAttribute(RequestDispatcher.ERROR_EXCEPTION, error);
-            if(!exchange.isResponseStarted()) {
+            if (!exchange.isResponseStarted()) {
                 try {
                     boolean errorPage = servletRequestContext.displayStackTraces();
                     if (errorPage) {
@@ -435,11 +430,11 @@ public class AsyncContextImpl implements AsyncContext {
                 UndertowLogger.REQUEST_IO_LOGGER.ioException((IOException) error);
             } else {
                 ExceptionHandler exceptionHandler = servletRequestContext.getDeployment().getDeploymentInfo().getExceptionHandler();
-                if(exceptionHandler == null) {
+                if (exceptionHandler == null) {
                     exceptionHandler = LoggingExceptionHandler.DEFAULT;
                 }
                 boolean handled = exceptionHandler.handleThrowable(exchange, getRequest(), getResponse(), error);
-                if(!handled) {
+                if (!handled) {
                     exchange.endExchange();
                 }
             }
