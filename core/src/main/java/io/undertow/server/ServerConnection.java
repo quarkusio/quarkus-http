@@ -20,11 +20,9 @@ package io.undertow.server;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
-
-import javax.net.ssl.SSLSession;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -104,7 +102,7 @@ public abstract class ServerConnection extends AbstractAttachable {
      * into account.
      * @return The address of the remote peer
      */
-    public abstract io.vertx.core.net.SocketAddress getPeerAddress();
+    public abstract InetSocketAddress getPeerAddress();
 
     protected abstract boolean isExecutingHandlerChain();
 
@@ -112,19 +110,7 @@ public abstract class ServerConnection extends AbstractAttachable {
 
     protected abstract void endExecutingHandlerChain(HttpServerExchange exchange);
 
-    /**
-     * Returns the actual address of the remote connection. This will not take things like X-Forwarded-for
-     * into account.
-     *
-     * @param type The type of address to return
-     * @param <A> The address type
-     * @return The remote endpoint address
-     */
-    public abstract <A extends SocketAddress> A getPeerAddress(Class<A> type);
-
-    public abstract SocketAddress getLocalAddress();
-
-    public abstract <A extends SocketAddress> A getLocalAddress(Class<A> type);
+    public abstract InetSocketAddress getLocalAddress();
 
     public abstract UndertowOptionMap getUndertowOptions();
 

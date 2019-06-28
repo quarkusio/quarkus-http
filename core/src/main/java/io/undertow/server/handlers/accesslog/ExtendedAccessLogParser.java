@@ -258,7 +258,7 @@ public class ExtendedAccessLogParser {
                 return new ExchangeAttribute() {
                     @Override
                     public String readAttribute(HttpServerExchange exchange) {
-                        final InetSocketAddress peerAddress = exchange.getConnection().getPeerAddress(InetSocketAddress.class);
+                        final InetSocketAddress peerAddress = exchange.getConnection().getPeerAddress();
 
                         try {
                             return peerAddress.getHostName();
@@ -282,7 +282,7 @@ public class ExtendedAccessLogParser {
                     @Override
                     public String readAttribute(HttpServerExchange exchange) {
                         try {
-                            return exchange.getConnection().getLocalAddress(InetSocketAddress.class).getHostName();
+                            return exchange.getDestinationAddress().getHostName();
                         } catch (Throwable e) {
                             return "localhost";
                         }

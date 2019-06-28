@@ -3,7 +3,8 @@ package io.undertow.protocol.http;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.RandomAccessFile;
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
@@ -88,7 +89,6 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
             }
         });
 
-
         request.response().endHandler(new Handler<Void>() {
             @Override
             public void handle(Void event) {
@@ -146,6 +146,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
     @Override
     public void writeBlocking(ByteBuf data, boolean last, HttpServerExchange exchange) throws IOException {
         try {
+            boolean first = !responseStarted;
             handleContentLength(data, last, exchange);
             if (last && data == null) {
                 request.response().end();
@@ -159,6 +160,24 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
                     request.response().end(createBuffer(data));
                 } else {
                     request.response().write(createBuffer(data));
+                }
+            }
+            if(first) {
+                //we make sure the data has actually be written for the first request, to make sure
+                //the headers are no longer mutable
+                //this kinda sucks
+                CountDownLatch latch = new CountDownLatch(1);
+                getIoThread().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        ((ConnectionBase)request.connection()).channel().flush();
+                        latch.countDown();
+                    }
+                });
+                try {
+                    latch.await();
+                } catch (InterruptedException e) {
+                    throw new InterruptedIOException();
                 }
             }
         } finally {
@@ -293,8 +312,8 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
     }
 
     @Override
-    public io.vertx.core.net.SocketAddress getPeerAddress() {
-        return request.remoteAddress();
+    public InetSocketAddress getPeerAddress() {
+        return (InetSocketAddress) ((ConnectionBase) request.connection()).channel().remoteAddress();
     }
 
     @Override
@@ -313,18 +332,8 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
     }
 
     @Override
-    public <A extends SocketAddress> A getPeerAddress(Class<A> type) {
-        return null;
-    }
-
-    @Override
-    public SocketAddress getLocalAddress() {
-        return null;
-    }
-
-    @Override
-    public <A extends SocketAddress> A getLocalAddress(Class<A> type) {
-        return null;
+    public InetSocketAddress getLocalAddress() {
+        return (InetSocketAddress) ((ConnectionBase) request.connection()).channel().localAddress();
     }
 
     @Override
@@ -339,7 +348,10 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
     @Override
     protected SSLSessionInfo getSslSessionInfo() {
-        return new ConnectionSSLSessionInfo(request.sslSession());
+        if (request.sslSession() != null) {
+            return new ConnectionSSLSessionInfo(request.sslSession());
+        }
+        return null;
     }
 
     protected void setUpgradeListener(Consumer<ChannelHandlerContext> listener) {

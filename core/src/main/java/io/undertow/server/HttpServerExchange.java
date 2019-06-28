@@ -857,7 +857,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if (sourceAddress != null) {
             return sourceAddress;
         }
-        return connection.getPeerAddress(InetSocketAddress.class);
+        return connection.getPeerAddress();
     }
 
     /**
@@ -880,7 +880,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if (destinationAddress != null) {
             return destinationAddress;
         }
-        return connection.getLocalAddress(InetSocketAddress.class);
+        return connection.getLocalAddress();
     }
 
     /**
