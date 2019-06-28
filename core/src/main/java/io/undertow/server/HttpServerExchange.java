@@ -44,9 +44,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
-import io.undertow.io.BlockingReceiverImpl;
 import io.undertow.io.IoCallback;
-import io.undertow.io.Receiver;
 import io.undertow.security.api.SecurityContext;
 import io.undertow.server.handlers.Cookie;
 import io.undertow.util.AbstractAttachable;
@@ -99,7 +97,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     private static final IoCallback<ByteBuf> DRAIN_CALLBACK = new IoCallback<ByteBuf>() {
         @Override
         public void onComplete(HttpServerExchange exchange, ByteBuf context) {
-            if(context != null) {
+            if (context != null) {
                 context.release();
                 exchange.readAsync(this);
             }
@@ -270,12 +268,12 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     /**
      * Flag that indicates that the request channel has been reset, can be called again
      */
-    private static final int FLAG_REQUEST_RESET= 1 << 21;
+    private static final int FLAG_REQUEST_RESET = 1 << 21;
 
     /**
      * Flag that indicates that the last data has been queued
      */
-    private static final int FLAG_LAST_DATA_QUEUED= 1 << 22;
+    private static final int FLAG_LAST_DATA_QUEUED = 1 << 22;
 
     /**
      * The source address for the request. If this is null then the actual source address from the channel is used
@@ -357,6 +355,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     public HttpString getRequestMethod() {
         return new HttpString(requestMethod);
     }
+
     /**
      * Get the HTTP request method.  Normally this is one of the strings listed in {@link HttpMethodNames}.
      *
@@ -915,6 +914,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     public HeaderMap getRequestHeaders() {
         return new HeaderMap(requestHeaders);
     }
+
     /**
      * Get the request headers.
      *
@@ -944,6 +944,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     public HeaderMap getResponseHeaders() {
         return new HeaderMap(responseHeaders);
     }
+
     /**
      * Get the response headers.
      *
@@ -1114,14 +1115,14 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             throw new IllegalArgumentException("cannot call write with a null buffer and last being false");
         }
         if (anyAreSet(state, FLAG_RESPONSE_TERMINATED | FLAG_LAST_DATA_QUEUED)) {
-            if(last && data == null) {
+            if (last && data == null) {
                 callback.onComplete(this, context);
                 return;
             }
             callback.onException(this, context, new IOException(UndertowMessages.MESSAGES.responseComplete()));
             return;
         }
-        if(last) {
+        if (last) {
             state |= FLAG_LAST_DATA_QUEUED;
         }
 
@@ -1134,12 +1135,12 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             throw new IllegalArgumentException("cannot call write with a null buffer and last being false");
         }
         if (anyAreSet(state, FLAG_RESPONSE_TERMINATED | FLAG_LAST_DATA_QUEUED)) {
-            if(last && data == null) {
+            if (last && data == null) {
                 return;
             }
             throw UndertowMessages.MESSAGES.responseComplete();
         }
-        if(last) {
+        if (last) {
             state |= FLAG_LAST_DATA_QUEUED;
         }
         handleFirstData();
@@ -1226,18 +1227,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             exchangeCompletionListenersCount = -1;
             next.exchangeEvent(this);
         }
-    }
-
-    Receiver receiver;
-    public Receiver getRequestReceiver() {
-        if (blockingHttpExchange != null) {
-            return blockingHttpExchange.getReceiver();
-        }
-        if (receiver != null) {
-            return receiver;
-        }
-        throw new RuntimeException("NYI");
-        //return receiver = new AsyncReceiverImpl(this);
     }
 
     /**
@@ -1429,7 +1418,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if (allAreSet(state, FLAG_REQUEST_TERMINATED | FLAG_RESPONSE_TERMINATED)) {
             if (blockingHttpExchange != null) {
                 //we still have to close the blocking exchange in this case,
-                if(isInIoThread()) {
+                if (isInIoThread()) {
                     dispatch(new Runnable() {
                         @Override
                         public void run() {
@@ -1462,7 +1451,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
 
         if (blockingHttpExchange != null) {
             //we still have to close the blocking exchange in this case,
-            if(isInIoThread()) {
+            if (isInIoThread()) {
                 dispatch(new Runnable() {
                     @Override
                     public void run() {
@@ -1472,7 +1461,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
                 return this;
             }
             IoUtils.safeClose(blockingHttpExchange);
-        
+
             try {
                 //TODO: can we end up in this situation in a IO thread?
                 //this will end the exchange in a blocking manner
@@ -1486,7 +1475,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             }
         }
         if (!isRequestComplete()) {
-            connection.readAsync(DRAIN_CALLBACK,this);
+            connection.readAsync(DRAIN_CALLBACK, this);
         }
 
         if (!isResponseComplete() && allAreClear(state, FLAG_LAST_DATA_QUEUED)) {
@@ -1565,6 +1554,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     public ByteBuf allocateBuffer() {
         return connection.allocateBuffer();
     }
+
     @Override
     public ByteBuf allocateBuffer(boolean direct) {
         return connection.allocateBuffer(direct);
@@ -1574,18 +1564,20 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     public ByteBuf allocateBuffer(int bufferSize) {
         return connection.allocateBuffer(bufferSize);
     }
+
     @Override
     public ByteBuf allocateBuffer(boolean direct, int bufferSize) {
         return connection.allocateBuffer(direct, bufferSize);
     }
+
     /**
      * Used to terminate the request in an async manner, the actual mechanism will depend on the underlying protocol,
      * for example HTTP/2 may send a RST_STREAM stream if there is more data coming.
-     *
+     * <p>
      * This may result in an unclean close if it is called on a non multiplexed protocol
      */
     public void discardRequest() {
-        if(isRequestComplete()) {
+        if (isRequestComplete()) {
             return;
         }
         connection.discardRequest(this);
@@ -1603,7 +1595,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if (!connection.isUpgradeSupported()) {
             throw UndertowMessages.MESSAGES.upgradeNotSupported();
         }
-        if(!requestHeaders().contains(HttpHeaderNames.UPGRADE)) {
+        if (!requestHeaders().contains(HttpHeaderNames.UPGRADE)) {
             throw UndertowMessages.MESSAGES.notAnUpgradeRequest();
         }
         UndertowLogger.REQUEST_LOGGER.debugf("Upgrading request %s", this);
@@ -1670,11 +1662,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             } finally {
                 getOutputStream().close();
             }
-        }
-
-        @Override
-        public Receiver getReceiver() {
-            return new BlockingReceiverImpl(exchange, getInputStream());
         }
     }
 

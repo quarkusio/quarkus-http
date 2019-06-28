@@ -25,10 +25,11 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import io.undertow.io.Receiver;
+import io.undertow.server.handlers.BlockingHandler;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
+import io.undertow.util.FileUtils;
 import io.undertow.util.StatusCodes;
 
 /**
@@ -43,18 +44,14 @@ public class NewlineInHeadersTestCase {
 
     @Test
     public void testNewlineInHeaders() throws IOException {
-        DefaultServer.setRootHandler(new HttpHandler() {
+        DefaultServer.setRootHandler(new BlockingHandler(new HttpHandler() {
             @Override
             public void handleRequest(HttpServerExchange exchange) throws Exception {
-                exchange.getRequestReceiver().receiveFullString(new Receiver.FullStringCallback() {
-                    @Override
-                    public void handle(HttpServerExchange exchange, String message) {
-                        exchange.responseHeaders().set(ECHO, message);
-                        exchange.response().end(RESPONSE);
-                    }
-                });
+                String message = FileUtils.readFile(exchange.getInputStream());
+                exchange.responseHeaders().set(ECHO, message);
+                exchange.response().end(RESPONSE);
             }
-        });
+        }));
         final TestHttpClient client = new TestHttpClient();
         try {
             HttpPost post = new HttpPost(DefaultServer.getDefaultServerURL());

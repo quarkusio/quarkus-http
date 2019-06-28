@@ -23,8 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import io.undertow.io.Receiver;
-
 
 /**
  * An interface that provides the input and output streams for blocking HTTP requests.
@@ -42,7 +40,7 @@ public interface BlockingHttpExchange extends Closeable {
 
     /**
      * Returns the output stream that is in use for this exchange.
-     *
+     * <p>
      * In some circumstances this may not be available, such as if a writer
      * is being used for a servlet response
      *
@@ -55,9 +53,4 @@ public interface BlockingHttpExchange extends Closeable {
      */
     void close() throws IOException;
 
-    /**
-     * returns a receiver based on the provided input stream.
-     * @return The receiver
-     */
-    Receiver getReceiver();
 }

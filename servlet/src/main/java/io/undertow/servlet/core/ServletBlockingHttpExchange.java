@@ -25,7 +25,6 @@ import java.io.OutputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-import io.undertow.io.Receiver;
 import io.undertow.server.BlockingHttpExchange;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.handlers.ServletRequestContext;
@@ -80,18 +79,12 @@ public class ServletBlockingHttpExchange implements BlockingHttpExchange {
             }
         } else {
             try {
-            HttpServletRequestImpl request = servletRequestContext.getOriginalRequest();
-            request.freeResources();
+                HttpServletRequestImpl request = servletRequestContext.getOriginalRequest();
+                request.freeResources();
             } finally {
                 HttpServletResponseImpl response = servletRequestContext.getOriginalResponse();
                 response.freeResources();
             }
         }
-    }
-
-    @Override
-    public Receiver getReceiver() {
-        throw new RuntimeException("NYI");
-        //return new BlockingReceiverImpl(exchange, getInputStream());
     }
 }
