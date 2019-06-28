@@ -36,7 +36,7 @@ public class SslClientCertAttribute implements ExchangeAttribute {
 
     @Override
     public String readAttribute(HttpServerExchange exchange) {
-        SSLSessionInfo ssl = exchange.getConnection().getSslSessionInfo();
+        SSLSessionInfo ssl = exchange.getSslSessionInfo();
         if(ssl == null) {
             return null;
         }

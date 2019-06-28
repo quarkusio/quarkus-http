@@ -62,13 +62,6 @@ public class SSLHeaderHandler implements HttpHandler {
 
     public static final String HTTPS = "https";
 
-    private static final ExchangeCompletionListener CLEAR_SSL_LISTENER = new ExchangeCompletionListener() {
-        @Override
-        public void exchangeEvent(HttpServerExchange exchange) {
-            exchange.getConnection().setSslSessionInfo(null, exchange);
-        }
-    };
-
     private final HttpHandler next;
 
     public SSLHeaderHandler(HttpHandler next) {
@@ -95,8 +88,7 @@ public class SSLHeaderHandler implements HttpHandler {
             try {
                 SSLSessionInfo info = new BasicSSLSessionInfo(sessionId, cipher, clientCert);
                 exchange.setRequestScheme(HTTPS);
-                exchange.getConnection().setSslSessionInfo(info, exchange);
-                exchange.addExchangeCompleteListener(CLEAR_SSL_LISTENER);
+                exchange.setSslSessionInfo(info);
             } catch (java.security.cert.CertificateException | CertificateException e) {
                 UndertowLogger.REQUEST_LOGGER.debugf(e, "Could not create certificate from header %s", clientCert);
             }

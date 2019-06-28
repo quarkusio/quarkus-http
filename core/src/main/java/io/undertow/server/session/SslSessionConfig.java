@@ -87,7 +87,7 @@ public class SslSessionConfig implements SessionConfig {
     @Override
     public void setSessionId(final HttpServerExchange exchange, final String sessionId) {
         UndertowLogger.SESSION_LOGGER.tracef("Setting SSL session id %s on %s", sessionId, exchange);
-        SSLSessionInfo sslSession = exchange.getConnection().getSslSessionInfo();
+        SSLSessionInfo sslSession = exchange.getSslSessionInfo();
         if (sslSession == null) {
             if (fallbackSessionConfig != null) {
                 fallbackSessionConfig.setSessionId(exchange, sessionId);
@@ -104,7 +104,7 @@ public class SslSessionConfig implements SessionConfig {
     @Override
     public void clearSession(final HttpServerExchange exchange, final String sessionId) {
         UndertowLogger.SESSION_LOGGER.tracef("Clearing SSL session id %s on %s", sessionId, exchange);
-        SSLSessionInfo sslSession = exchange.getConnection().getSslSessionInfo();
+        SSLSessionInfo sslSession = exchange.getSslSessionInfo();
         if (sslSession == null) {
             if (fallbackSessionConfig != null) {
                 fallbackSessionConfig.clearSession(exchange, sessionId);
@@ -121,7 +121,7 @@ public class SslSessionConfig implements SessionConfig {
 
     @Override
     public String findSessionId(final HttpServerExchange exchange) {
-        SSLSessionInfo sslSession = exchange.getConnection().getSslSessionInfo();
+        SSLSessionInfo sslSession = exchange.getSslSessionInfo();
         if (sslSession == null) {
             if (fallbackSessionConfig != null) {
                 return fallbackSessionConfig.findSessionId(exchange);

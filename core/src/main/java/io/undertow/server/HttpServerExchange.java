@@ -36,8 +36,6 @@ import java.util.TreeMap;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
-import org.jboss.logging.Logger;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -72,18 +70,8 @@ import io.vertx.core.http.HttpServerResponse;
 public final class HttpServerExchange extends AbstractAttachable implements BufferAllocator {
 
     // immutable state
-
-    private static final Logger log = Logger.getLogger(HttpServerExchange.class);
-
-    private static final RuntimePermission SET_SECURITY_CONTEXT = new RuntimePermission("io.undertow.SET_SECURITY_CONTEXT");
     private static final String ISO_8859_1 = "ISO-8859-1";
     private static final String HTTPS = "https";
-
-    /**
-     * The HTTP reason phrase to send. This is an attachment rather than a field as it is rarely used. If this is not set
-     * a generic description from the RFC is used instead.
-     */
-    private static final AttachmentKey<String> REASON_PHRASE = AttachmentKey.create(String.class);
 
     /**
      * Attachment key that can be used to hold additional request attributes
@@ -94,6 +82,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * Attachment key that can be used as a flag of secure attribute
      */
     public static final AttachmentKey<Boolean> SECURE_REQUEST = AttachmentKey.create(Boolean.class);
+
     private static final IoCallback<ByteBuf> DRAIN_CALLBACK = new IoCallback<ByteBuf>() {
         @Override
         public void onComplete(HttpServerExchange exchange, ByteBuf context) {
@@ -287,6 +276,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
 
     final HttpServerRequest request;
     final HttpServerResponse response;
+    private SSLSessionInfo sslSessionInfo;
 
     public HttpServerExchange(final ServerConnection connection, final HttpServerRequest request, HttpServerResponse response, long maxEntitySize) {
         this.connection = connection;
@@ -1287,28 +1277,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     /**
-     * Sets the HTTP reason phrase. Depending on the protocol this may or may not be honoured. In particular HTTP2
-     * has removed support for the reason phrase.
-     * <p>
-     * This method should only be used to interact with legacy frameworks that give special meaning to the reason phrase.
-     *
-     * @param message The status message
-     * @return this exchange
-     */
-    public HttpServerExchange setReasonPhrase(String message) {
-        putAttachment(REASON_PHRASE, message);
-        return this;
-    }
-
-    /**
-     * @return The current reason phrase
-     */
-    public String getReasonPhrase() {
-        return getAttachment(REASON_PHRASE);
-    }
-
-
-    /**
      * Calling this method puts the exchange in blocking mode, and creates a
      * {@link BlockingHttpExchange} object to store the streams.
      * <p>
@@ -1514,10 +1482,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     public void setSecurityContext(SecurityContext securityContext) {
-        SecurityManager sm = System.getSecurityManager();
-        if (sm != null) {
-            sm.checkPermission(SET_SECURITY_CONTEXT);
-        }
         this.securityContext = securityContext;
     }
 
@@ -1629,6 +1593,17 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
 
     public void resetRequestChannel() {
         state |= FLAG_REQUEST_RESET;
+    }
+
+    public void setSslSessionInfo(SSLSessionInfo info) {
+        this.sslSessionInfo = info;
+    }
+
+    public SSLSessionInfo getSslSessionInfo() {
+        if(sslSessionInfo == null) {
+            return connection.getSslSessionInfo();
+        }
+        return sslSessionInfo;
     }
 
     private static class DefaultBlockingHttpExchange implements BlockingHttpExchange {

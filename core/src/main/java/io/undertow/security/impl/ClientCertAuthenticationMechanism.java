@@ -87,7 +87,7 @@ public class ClientCertAuthenticationMechanism implements AuthenticationMechanis
     }
 
     public AuthenticationMechanismOutcome authenticate(final HttpServerExchange exchange, final SecurityContext securityContext) {
-        SSLSessionInfo sslSession = exchange.getConnection().getSslSessionInfo();
+        SSLSessionInfo sslSession = exchange.getSslSessionInfo();
         if (sslSession != null) {
             try {
                 Certificate[] clientCerts = getPeerCertificates(exchange, sslSession, securityContext);

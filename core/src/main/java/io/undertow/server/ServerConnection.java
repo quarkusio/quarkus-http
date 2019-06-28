@@ -100,19 +100,6 @@ public abstract class ServerConnection extends AbstractAttachable {
     protected abstract void close(HttpServerExchange exchange);
 
     /**
-     *
-     * Gets the SSLSession of the underlying connection, or null if SSL is not in use.
-     *
-     * Note that for client cert auth {@link #getSslSessionInfo()} should be used instead, as it
-     * takes into account other information potentially provided by load balancers that terminate SSL
-     *
-     * @return The SSLSession of the connection
-     */
-    public SSLSession getSslSession() {
-        return null;
-    }
-
-    /**
      * Returns the actual address of the remote connection. This will not take things like X-Forwarded-for
      * into account.
      * @return The address of the remote peer
@@ -144,26 +131,11 @@ public abstract class ServerConnection extends AbstractAttachable {
     public abstract int getBufferSize();
 
     /**
-     * Gets SSL information about the connection. This could represent the actual
-     * client connection, or could be providing SSL information that was provided
-     * by a front end proxy.
+     * Gets SSL information about the connection
      *
      * @return SSL information about the connection
      */
-    public abstract SSLSessionInfo getSslSessionInfo();
-
-    /**
-     * Sets the current SSL information. This can be used by handlers to setup SSL
-     * information that was provided by a front end proxy.
-     *
-     * If this is being set of a per request basis then you must ensure that it is either
-     * cleared by an exchange completion listener at the end of the request, or is always
-     * set for every request. Otherwise it is possible to SSL information to 'leak' between
-     * requests.
-     *
-     * @param sessionInfo The ssl session information
-     */
-    public abstract void setSslSessionInfo(SSLSessionInfo sessionInfo, HttpServerExchange exchange);
+    protected abstract SSLSessionInfo getSslSessionInfo();
 
     /**
      *
@@ -176,11 +148,6 @@ public abstract class ServerConnection extends AbstractAttachable {
      * @return <code>true</code> if this connection supports the HTTP CONNECT verb
      */
     protected abstract boolean isConnectSupported();
-
-    /**
-     * Invoked when the exchange is complete.
-     */
-    protected abstract void exchangeComplete(HttpServerExchange exchange);
 
     /**
      * Reads some data from the exchange. Can only be called if {@link #isReadDataAvailable()} returns true.

@@ -118,7 +118,7 @@ public class SSLInformationAssociationHandler implements HttpHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         ServletRequest request = exchange.getAttachment(ServletRequestContext.ATTACHMENT_KEY).getServletRequest();
-        SSLSessionInfo ssl = exchange.getConnection().getSslSessionInfo();
+        SSLSessionInfo ssl = exchange.getSslSessionInfo();
         if (ssl != null) {
             String cipherSuite = ssl.getCipherSuite();
             request.setAttribute("javax.servlet.request.cipher_suite", cipherSuite);

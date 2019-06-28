@@ -11,9 +11,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowLogger;
-import io.undertow.UndertowMessages;
 import io.undertow.io.IoCallback;
 import io.undertow.server.BufferAllocator;
+import io.undertow.server.ConnectionSSLSessionInfo;
 import io.undertow.server.Connectors;
 import io.undertow.server.HttpContinue;
 import io.undertow.server.HttpServerExchange;
@@ -57,7 +57,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
         connectionBase = (ConnectionBase) request.connection();
         this.allocator = allocator;
         this.worker = worker;
-        if(!request.isEnded()) {
+        if (!request.isEnded()) {
             request.handler(this);
             request.endHandler(new Handler<Void>() {
                 @Override
@@ -138,7 +138,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
     @Override
     public void sendContinueIfRequired() {
-        if(HttpContinue.requiresContinueResponse(exchange)) {
+        if (HttpContinue.requiresContinueResponse(exchange)) {
             request.response().writeContinue();
         }
     }
@@ -173,7 +173,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
             responseStarted = true;
             request.response().setStatusCode(exchange.getStatusCode());
             if (last) {
-                if(data == null) {
+                if (data == null) {
                     if (!exchange.responseHeaders().contains(HttpHeaders.CONTENT_LENGTH)) {
                         request.response().headers().add(HttpHeaders.CONTENT_LENGTH, "0");
                     }
@@ -193,17 +193,17 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
     private void awaitWriteable() throws InterruptedIOException {
         assert Thread.holdsLock(request.connection());
         while (request.response().writeQueueFull()) {
-                if (!drainHandlerRegistered) {
-                    drainHandlerRegistered = true;
-                    request.response().drainHandler(new Handler<Void>() {
-                        @Override
-                        public void handle(Void event) {
-                            if(waitingForDrain) {
-                                request.connection().notifyAll();
-                            }
+            if (!drainHandlerRegistered) {
+                drainHandlerRegistered = true;
+                request.response().drainHandler(new Handler<Void>() {
+                    @Override
+                    public void handle(Void event) {
+                        if (waitingForDrain) {
+                            request.connection().notifyAll();
                         }
-                    });
-                }
+                    }
+                });
+            }
             try {
                 waitingForDrain = true;
                 request.connection().wait();
@@ -250,7 +250,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
         getIoThread().execute(new Runnable() {
             @Override
             public void run() {
-                if(last) {
+                if (last) {
                     Connectors.terminateResponse(exchange);
                 }
                 callback.onComplete(exchange, context);
@@ -338,15 +338,11 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
     }
 
     @Override
-    public SSLSessionInfo getSslSessionInfo() {
-        return null;
+    protected SSLSessionInfo getSslSessionInfo() {
+        return new ConnectionSSLSessionInfo(request.sslSession());
     }
 
-    @Override
-    public void setSslSessionInfo(SSLSessionInfo sessionInfo, HttpServerExchange exchange) {
-
-    }
-    protected  void setUpgradeListener(Consumer<ChannelHandlerContext> listener) {
+    protected void setUpgradeListener(Consumer<ChannelHandlerContext> listener) {
         request.upgrade();
     }
 
@@ -358,11 +354,6 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
     @Override
     protected boolean isConnectSupported() {
         return false;
-    }
-
-    @Override
-    protected void exchangeComplete(HttpServerExchange exchange) {
-
     }
 
     @Override
@@ -389,11 +380,11 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
             getIoThread().execute(new Runnable() {
                 @Override
                 public void run() {
-                    if(b == null) {
+                    if (b == null) {
                         Connectors.terminateRequest(exchange);
                     }
                     callback.onComplete(exchange, b);
-                    if(res) {
+                    if (res) {
                         request.resume();
                     }
                 }
@@ -420,7 +411,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
                 input2 = null;
                 request.resume();
             }
-            if(ret == null) {
+            if (ret == null) {
                 Connectors.terminateRequest(exchange);
             }
             return ret == null ? null : ret.getByteBuf();
@@ -480,7 +471,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
     public void handle(Buffer event) {
         IoCallback<ByteBuf> readCallback = null;
         synchronized (request.connection()) {
-            if(input2!= null) {
+            if (input2 != null) {
                 new IOException().printStackTrace();
             }
             if (this.readCallback != null) {

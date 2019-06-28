@@ -31,7 +31,7 @@ public class SslSessionIdAttribute implements ExchangeAttribute {
 
     @Override
     public String readAttribute(HttpServerExchange exchange) {
-        SSLSessionInfo ssl = exchange.getConnection().getSslSessionInfo();
+        SSLSessionInfo ssl = exchange.getSslSessionInfo();
         if(ssl == null || ssl.getSessionId() == null) {
             return null;
         }

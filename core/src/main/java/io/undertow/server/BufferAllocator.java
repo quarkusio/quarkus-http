@@ -18,6 +18,7 @@ package io.undertow.server;
 import io.netty.buffer.ByteBuf;
 
 public interface BufferAllocator {
+
     ByteBuf allocateBuffer();
 
     ByteBuf allocateBuffer(boolean direct);
