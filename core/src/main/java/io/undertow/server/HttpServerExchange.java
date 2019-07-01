@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Map;
@@ -70,7 +71,6 @@ import io.vertx.core.http.HttpServerResponse;
 public final class HttpServerExchange extends AbstractAttachable implements BufferAllocator {
 
     // immutable state
-    private static final String ISO_8859_1 = "ISO-8859-1";
     private static final String HTTPS = "https";
 
     /**
@@ -111,6 +111,9 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     private int responseCommitListenerCount;
     private ResponseCommitListener[] responseCommitListeners;
 
+    private int writeFunctionCount;
+    private WriteFunction[] writeFunctions;
+
     private Map<String, Deque<String>> queryParameters;
     private Map<String, Deque<String>> pathParameters;
 
@@ -130,6 +133,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
 
     private int state = 200;
     private String requestMethod;
+
     private String requestScheme;
 
     /**
@@ -174,7 +178,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
 
     private long requestStartTime = -1;
 
-
     /**
      * The maximum entity size. This can be modified before the request stream is obtained, however once the request
      * stream is obtained this cannot be modified further.
@@ -193,7 +196,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
 
     /**
      * When the call stack return this task will be executed by the executor specified in {@link #dispatchExecutor}.
-     * If the executor is null then it will be executed by the XNIO worker.
+     * If the executor is null then it will be executed by the worker.
      */
     private Runnable dispatchTask;
 
@@ -274,8 +277,8 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      */
     private InetSocketAddress destinationAddress;
 
-    final HttpServerRequest request;
-    final HttpServerResponse response;
+    private final HttpServerRequest request;
+    private final HttpServerResponse response;
     private SSLSessionInfo sslSessionInfo;
 
     public HttpServerExchange(final ServerConnection connection, final HttpServerRequest request, HttpServerResponse response, long maxEntitySize) {
@@ -557,7 +560,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
                 return value;
             }
         }
-        return ISO_8859_1;
+        return StandardCharsets.ISO_8859_1.name();
     }
 
     /**
@@ -1117,6 +1120,11 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         }
 
         handleFirstData();
+        if(writeFunctions != null) {
+            for(int i = 0; i < writeFunctionCount; ++i) {
+                data = writeFunctions[i].preWrite(data, last);
+            }
+        }
         connection.writeAsync(data, last, this, callback, context);
     }
 
@@ -1134,15 +1142,20 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             state |= FLAG_LAST_DATA_QUEUED;
         }
         handleFirstData();
+        if(writeFunctions != null) {
+            for(int i = 0; i < writeFunctionCount; ++i) {
+                data = writeFunctions[i].preWrite(data, last);
+            }
+        }
         connection.writeBlocking(data, last, this);
     }
 
     private void handleFirstData() {
         if (anyAreClear(state, FLAG_RESPONSE_SENT)) {
-            state |= FLAG_RESPONSE_SENT;
             for (int i = responseCommitListenerCount - 1; i >= 0; --i) {
                 responseCommitListeners[i].beforeCommit(this);
             }
+            state |= FLAG_RESPONSE_SENT;
             Connectors.flattenCookies(this);
         }
     }
@@ -1504,6 +1517,18 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             }
         }
         responseCommitListeners[responseCommitListenerCount] = listener;
+    }
+    public void addWriteFunction(final WriteFunction listener) {
+        final int writeFunctionCount = this.writeFunctionCount++;
+        WriteFunction[] writeFunctions = this.writeFunctions;
+        if (writeFunctions == null || writeFunctions.length == writeFunctionCount) {
+            WriteFunction[] old = writeFunctions;
+            this.writeFunctions = writeFunctions = new WriteFunction[writeFunctionCount + 2];
+            if (old != null) {
+                System.arraycopy(old, 0, writeFunctions, 0, writeFunctionCount);
+            }
+        }
+        writeFunctions[writeFunctionCount] = listener;
     }
 
     public void readAsync(IoCallback<ByteBuf> cb) {

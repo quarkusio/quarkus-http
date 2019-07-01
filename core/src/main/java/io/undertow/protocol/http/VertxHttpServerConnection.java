@@ -6,6 +6,7 @@ import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import io.netty.buffer.ByteBuf;
@@ -43,7 +44,6 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
 
     private IoCallback<ByteBuf> readCallback;
-
 
     private IoCallback<Object> writeCallback;
     private Object writeContext;
@@ -145,6 +145,9 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
     @Override
     public void writeBlocking(ByteBuf data, boolean last, HttpServerExchange exchange) throws IOException {
+        if(data != null) {
+            Connectors.updateResponseBytesSent(exchange, data.writableBytes());
+        }
         try {
             boolean first = !responseStarted;
             handleContentLength(data, last, exchange);
@@ -165,7 +168,6 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
             if(first) {
                 //we make sure the data has actually be written for the first request, to make sure
                 //the headers are no longer mutable
-                //this kinda sucks
                 CountDownLatch latch = new CountDownLatch(1);
                 getIoThread().execute(new Runnable() {
                     @Override
@@ -236,6 +238,9 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
     @Override
     public <T> void writeAsync(ByteBuf data, boolean last, HttpServerExchange exchange, IoCallback<T> callback, T context) {
+        if(data != null) {
+            Connectors.updateResponseBytesSent(exchange, data.writableBytes());
+        }
         handleContentLength(data, last, exchange);
         if (last && data == null) {
             request.response().end();

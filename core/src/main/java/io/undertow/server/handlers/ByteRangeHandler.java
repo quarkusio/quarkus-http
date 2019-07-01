@@ -23,12 +23,19 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.ResponseCommitListener;
+import io.undertow.server.WriteFunction;
 import io.undertow.server.handlers.builder.HandlerBuilder;
+import io.undertow.util.ByteRange;
+import io.undertow.util.DateUtils;
 import io.undertow.util.HttpHeaderNames;
+import io.undertow.util.HttpMethodNames;
+import io.undertow.util.StatusCodes;
 
 /**
  * Handler for Range requests. This is a generic handler that can handle range requests to any resource
@@ -69,48 +76,101 @@ public class ByteRangeHandler implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-//        //range requests are only support for GET requests as per the RFC
-//        if(!Methods.GET.equals(exchange.requestMethod()) && !Methods.HEAD.equals(exchange.requestMethod())) {
-//            next.handleRequest(exchange);
-//            return;
-//        }
-//        if (sendAcceptRanges) {
-//            exchange.addResponseCommitListener(ACCEPT_RANGE_LISTENER);
-//        }
-//        final ByteRange range = ByteRange.parse(exchange.requestHeaders().get(Headers.RANGE));
-//        if (range != null && range.getRanges() == 1) {
-//            exchange.addResponseWrapper(new ConduitWrapper<StreamSinkConduit>() {
-//                @Override
-//                public StreamSinkConduit wrap(ConduitFactory<StreamSinkConduit> factory, HttpServerExchange exchange) {
-//                    if(exchange.getStatusCode() != StatusCodes.OK ) {
-//                        return factory.create();
-//                    }
-//                    String length = exchange.responseHeaders().get(Headers.CONTENT_LENGTH);
-//                    if (length == null) {
-//                        return factory.create();
-//                    }
-//                    long responseLength = Long.parseLong(length);
-//                    String lastModified = exchange.responseHeaders().get(Headers.LAST_MODIFIED);
-//                    ByteRange.RangeResponseResult rangeResponse = range.getResponseResult(responseLength, exchange.requestHeaders().get(Headers.IF_RANGE), lastModified == null ? null : DateUtils.parseDate(lastModified), exchange.responseHeaders().get(Headers.ETAG));
-//                    if(rangeResponse != null){
-//                        long start = rangeResponse.getStart();
-//                        long end = rangeResponse.getEnd();
-//                        exchange.setStatusCode(rangeResponse.getStatusCode());
-//                        exchange.responseHeaders().put(Headers.CONTENT_RANGE, rangeResponse.getContentRange());
-//                        exchange.setResponseContentLength(rangeResponse.getContentLength());
-//                        if(rangeResponse.getStatusCode() == StatusCodes.REQUEST_RANGE_NOT_SATISFIABLE) {
-//                            return new HeadStreamSinkConduit(factory.create(), null, true);
-//                        }
-//                        return new RangeStreamSinkConduit(factory.create(), start, end, responseLength);
-//                    } else {
-//                        return factory.create();
-//                    }
-//                }
-//            });
-//        }
-//        next.handleRequest(exchange);
+        //range requests are only support for GET requests as per the RFC
+        if (!HttpMethodNames.GET.equals(exchange.requestMethod()) && !HttpMethodNames.HEAD.equals(exchange.requestMethod())) {
+            next.handleRequest(exchange);
+            return;
+        }
+        if (sendAcceptRanges) {
+            exchange.addResponseCommitListener(ACCEPT_RANGE_LISTENER);
+        }
+        final ByteRange range = ByteRange.parse(exchange.requestHeaders().get(HttpHeaderNames.RANGE));
+        if (range != null && range.getRanges() == 1) {
+            exchange.addResponseCommitListener(new ResponseCommitListener() {
+                @Override
+                public void beforeCommit(HttpServerExchange exchange) {
+                    if (exchange.getStatusCode() != StatusCodes.OK) {
+                        return;
+                    }
+                    String length = exchange.responseHeaders().get(HttpHeaderNames.CONTENT_LENGTH);
+                    if (length == null) {
+                        return;
+                    }
+                    long responseLength = Long.parseLong(length);
+                    String lastModified = exchange.responseHeaders().get(HttpHeaderNames.LAST_MODIFIED);
+                    ByteRange.RangeResponseResult rangeResponse = range.getResponseResult(responseLength, exchange.requestHeaders().get(HttpHeaderNames.IF_RANGE),
+                            lastModified == null ? null : DateUtils.parseDate(lastModified), exchange.responseHeaders().get(HttpHeaderNames.ETAG));
+                    if (rangeResponse != null) {
+                        long start = rangeResponse.getStart();
+                        long end = rangeResponse.getEnd();
+                        exchange.setStatusCode(rangeResponse.getStatusCode());
+                        exchange.responseHeaders().set(HttpHeaderNames.CONTENT_RANGE, rangeResponse.getContentRange());
+                        exchange.setResponseContentLength(rangeResponse.getContentLength());
+                        if (rangeResponse.getStatusCode() == StatusCodes.REQUEST_RANGE_NOT_SATISFIABLE) {
+                            exchange.addWriteFunction(new WriteFunction() {
+                                @Override
+                                public ByteBuf preWrite(ByteBuf data, boolean last) {
+                                    data.release();
+                                    return Unpooled.EMPTY_BUFFER;
+                                }
+                            });
+                        }
+                        exchange.addWriteFunction(new RangeWriteFunction(start, end, responseLength));
+                    }
+                }
+
+            });
+        }
+        next.handleRequest(exchange);
 
     }
+
+    private class RangeWriteFunction implements WriteFunction {
+
+        private final long start, end;
+        private final long originalResponseLength;
+
+        private long written;
+
+        public RangeWriteFunction(long start, long end, long originalResponseLength) {
+            this.start = start;
+            this.end = end;
+            this.originalResponseLength = originalResponseLength;
+        }
+
+        @Override
+        public ByteBuf preWrite(ByteBuf src, boolean last) {
+            if(src == null) {
+                return null;
+            }
+            if (written > end) {
+                src.release();
+                return Unpooled.EMPTY_BUFFER;
+            }
+            if (written < start) {
+                long toEat = start - written;
+                if (src.readableBytes() < toEat) {
+                    written += src.readableBytes();
+                    src.release();
+                    return Unpooled.EMPTY_BUFFER;
+                } else {
+                    src.readerIndex((int) (src.readerIndex() + toEat));
+                    written += toEat;
+                }
+            }
+            long remaining = end - written + 1;
+            if (src.readableBytes() > remaining) {
+                src.writerIndex((int) (src.readerIndex() + remaining));
+                written += remaining;
+            } else {
+                written += src.readableBytes();
+            }
+            return src;
+        }
+
+
+    }
+
 
     public static class Wrapper implements HandlerWrapper {
 

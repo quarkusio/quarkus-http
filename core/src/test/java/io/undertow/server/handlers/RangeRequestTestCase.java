@@ -17,6 +17,7 @@ package io.undertow.server.handlers;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
@@ -30,7 +31,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import io.netty.buffer.Unpooled;
 import io.undertow.Handlers;
+import io.undertow.io.IoCallback;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.cache.DirectBufferCache;
@@ -59,7 +62,8 @@ public class RangeRequestTestCase {
             public void handleRequest(HttpServerExchange exchange) throws Exception {
                 exchange.responseHeaders().set(HttpHeaderNames.LAST_MODIFIED, DateUtils.toDateString(new Date(10000)));
                 exchange.responseHeaders().set(HttpHeaderNames.ETAG, "\"someetag\"");
-                exchange.response().end("0123456789");
+                exchange.setResponseContentLength("0123456789".length());
+                exchange.writeAsync(Unpooled.copiedBuffer("0123456789", StandardCharsets.UTF_8), true, IoCallback.END_EXCHANGE, null);
             }
         }, true));
         path.addPrefixPath("/resource",  new ResourceHandler( new PathResourceManager(rootPath, 10485760))
@@ -70,7 +74,6 @@ public class RangeRequestTestCase {
     }
 
     @Test
-    @Ignore("UT3 - P4")
     public void testGenericRangeHandler() throws IOException, InterruptedException {
         runTest("/path", true);
     }
