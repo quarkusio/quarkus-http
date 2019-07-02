@@ -91,7 +91,7 @@ public class FormAuthenticationMechanism implements AuthenticationMechanism {
     @Override
     public AuthenticationMechanismOutcome authenticate(final HttpServerExchange exchange,
                                                        final SecurityContext securityContext) {
-        if (exchange.getRequestPath().endsWith(postLocation) && exchange.requestMethod().equals(HttpMethodNames.POST)) {
+        if (exchange.getRequestPath().endsWith(postLocation) && exchange.getRequestMethod().equals(HttpMethodNames.POST)) {
             return runFormAuth(exchange, securityContext);
         } else {
             return AuthenticationMechanismOutcome.NOT_ATTEMPTED;
@@ -166,7 +166,7 @@ public class FormAuthenticationMechanism implements AuthenticationMechanism {
     }
 
     public ChallengeResult sendChallenge(final HttpServerExchange exchange, final SecurityContext securityContext) {
-        if (exchange.getRequestPath().endsWith(postLocation) && exchange.requestMethod().equals(HttpMethodNames.POST)) {
+        if (exchange.getRequestPath().endsWith(postLocation) && exchange.getRequestMethod().equals(HttpMethodNames.POST)) {
             UndertowLogger.SECURITY_LOGGER.debugf("Serving form auth error page %s for %s", loginPage, exchange);
             // This method would no longer be called if authentication had already occurred.
             Integer code = servePage(exchange, errorPage);

@@ -127,7 +127,7 @@ public class GSSAPIAuthenticationMechanism implements AuthenticationMechanism {
             }
         }
 
-        List<String> authHeaders = exchange.requestHeaders().getAll(AUTHORIZATION);
+        List<String> authHeaders = exchange.getRequestHeaders(AUTHORIZATION);
         if (authHeaders != null) {
             for (String current : authHeaders) {
                 if (current.startsWith(NEGOTIATE_PREFIX)) {
@@ -195,7 +195,7 @@ public class GSSAPIAuthenticationMechanism implements AuthenticationMechanism {
     }
 
     private String getHostName(final HttpServerExchange exchange) {
-        String hostName = exchange.requestHeaders().get(HOST);
+        String hostName = exchange.getRequestHeader(HOST);
         if (hostName != null) {
             if (hostName.startsWith("[") && hostName.contains("]")) {
                 hostName = hostName.substring(0, hostName.indexOf(']') + 1);

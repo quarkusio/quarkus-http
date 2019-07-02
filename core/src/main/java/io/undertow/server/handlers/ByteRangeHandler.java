@@ -77,14 +77,14 @@ public class ByteRangeHandler implements HttpHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         //range requests are only support for GET requests as per the RFC
-        if (!HttpMethodNames.GET.equals(exchange.requestMethod()) && !HttpMethodNames.HEAD.equals(exchange.requestMethod())) {
+        if (!HttpMethodNames.GET.equals(exchange.getRequestMethod()) && !HttpMethodNames.HEAD.equals(exchange.getRequestMethod())) {
             next.handleRequest(exchange);
             return;
         }
         if (sendAcceptRanges) {
             exchange.addResponseCommitListener(ACCEPT_RANGE_LISTENER);
         }
-        final ByteRange range = ByteRange.parse(exchange.requestHeaders().get(HttpHeaderNames.RANGE));
+        final ByteRange range = ByteRange.parse(exchange.getRequestHeader(HttpHeaderNames.RANGE));
         if (range != null && range.getRanges() == 1) {
             exchange.addResponseCommitListener(new ResponseCommitListener() {
                 @Override
@@ -98,7 +98,7 @@ public class ByteRangeHandler implements HttpHandler {
                     }
                     long responseLength = Long.parseLong(length);
                     String lastModified = exchange.responseHeaders().get(HttpHeaderNames.LAST_MODIFIED);
-                    ByteRange.RangeResponseResult rangeResponse = range.getResponseResult(responseLength, exchange.requestHeaders().get(HttpHeaderNames.IF_RANGE),
+                    ByteRange.RangeResponseResult rangeResponse = range.getResponseResult(responseLength, exchange.getRequestHeader(HttpHeaderNames.IF_RANGE),
                             lastModified == null ? null : DateUtils.parseDate(lastModified), exchange.responseHeaders().get(HttpHeaderNames.ETAG));
                     if (rangeResponse != null) {
                         long start = rangeResponse.getStart();

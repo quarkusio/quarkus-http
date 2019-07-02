@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.TimeUnit;
 
 import io.undertow.UndertowLogger;
 import io.undertow.predicate.Predicate;
@@ -127,13 +126,13 @@ public class ResourceHandler implements HttpHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if (exchange.requestMethod().equals(HttpMethodNames.GET) ||
-                exchange.requestMethod().equals(HttpMethodNames.POST)) {
+        if (exchange.getRequestMethod().equals(HttpMethodNames.GET) ||
+                exchange.getRequestMethod().equals(HttpMethodNames.POST)) {
             serveResource(exchange, true);
-        } else if (exchange.requestMethod().equals(HttpMethodNames.HEAD)) {
+        } else if (exchange.getRequestMethod().equals(HttpMethodNames.HEAD)) {
             serveResource(exchange, false);
         } else {
-            if (KNOWN_METHODS.contains(exchange.requestMethod())) {
+            if (KNOWN_METHODS.contains(exchange.getRequestMethod())) {
                 exchange.setStatusCode(StatusCodes.METHOD_NOT_ALLOWED);
                 exchange.responseHeaders().add(HttpHeaderNames.ALLOW,
                         String.join(", ", HttpMethodNames.GET, HttpMethodNames.HEAD, HttpMethodNames.POST));
@@ -240,9 +239,9 @@ public class ResourceHandler implements HttpHandler {
 
                     exchange.responseHeaders().set(HttpHeaderNames.ACCEPT_RANGES, "bytes");
                     //TODO: figure out what to do with the content encoded resource manager
-                    ByteRange range = ByteRange.parse(exchange.requestHeaders().get(HttpHeaderNames.RANGE));
+                    ByteRange range = ByteRange.parse(exchange.getRequestHeader(HttpHeaderNames.RANGE));
                     if (range != null && range.getRanges() == 1 && resource.getContentLength() != null) {
-                        rangeResponse = range.getResponseResult(resource.getContentLength(), exchange.requestHeaders().get(HttpHeaderNames.IF_RANGE), resource.getLastModified(), resource.getETag() == null ? null : resource.getETag().getTag());
+                        rangeResponse = range.getResponseResult(resource.getContentLength(), exchange.getRequestHeader(HttpHeaderNames.IF_RANGE), resource.getLastModified(), resource.getETag() == null ? null : resource.getETag().getTag());
                         if (rangeResponse != null) {
                             start = rangeResponse.getStart();
                             end = rangeResponse.getEnd();
@@ -276,9 +275,9 @@ public class ResourceHandler implements HttpHandler {
                 if (!sendContent) {
                     exchange.endExchange();
                 } else if (rangeResponse != null) {
-                    ((RangeAwareResource) resource).serveRangeAsync(exchange, exchange, start, end);
+                    ((RangeAwareResource) resource).serveRangeAsync(exchange.getOutputChannel(), exchange, start, end);
                 } else {
-                    resource.serveAsync(exchange, exchange);
+                    resource.serveAsync(exchange.getOutputChannel(), exchange);
                 }
             }
         };

@@ -71,7 +71,7 @@ public class PredicateParsingTestCase {
         HttpServerExchange e = new HttpServerExchange(null, null, new DefaultHttpHeaders(), new DefaultHttpHeaders(), -1);
         e.setRelativePath("/publicdb/foo/bar");
         Assert.assertFalse(predicate.resolve(e));
-        e.requestHeaders().add("username", "foo");
+        e.addRequestHeader("username", "foo");
         Assert.assertTrue(predicate.resolve(e));
     }
 
@@ -107,7 +107,7 @@ public class PredicateParsingTestCase {
                 predicate = PredicateParser.parse(string, PredicateParsingTestCase.class.getClassLoader());
                 HttpServerExchange e = new HttpServerExchange(null, null, new DefaultHttpHeaders(), new DefaultHttpHeaders(), -1);
                 Assert.assertFalse(predicate.resolve(e));
-                e.requestHeaders().add(HttpHeaderNames.CONTENT_TYPE, "text");
+                e.addRequestHeader(HttpHeaderNames.CONTENT_TYPE, "text");
                 Assert.assertTrue(predicate.resolve(e));
             } catch (Throwable ex) {
                 throw new RuntimeException("String " + string, ex);
@@ -120,7 +120,7 @@ public class PredicateParsingTestCase {
         Predicate predicate = PredicateParser.parse("equals[%{i,Content-Type},\"text/plain\"]", PredicateParsingTestCase.class.getClassLoader());
         HttpServerExchange e = new HttpServerExchange(null, null, new DefaultHttpHeaders(), new DefaultHttpHeaders(), -1);
         Assert.assertFalse(predicate.resolve(e));
-        e.requestHeaders().add(HttpHeaderNames.CONTENT_TYPE, "text/plain");
+        e.addRequestHeader(HttpHeaderNames.CONTENT_TYPE, "text/plain");
         Assert.assertTrue(predicate.resolve(e));
     }
 
@@ -134,9 +134,9 @@ public class PredicateParsingTestCase {
         try {
             Predicate predicate = PredicateParser.parse(string, PredicateParsingTestCase.class.getClassLoader());
             HttpServerExchange e = new HttpServerExchange(null, null, new DefaultHttpHeaders(), new DefaultHttpHeaders(), -1);
-            e.requestHeaders().add(HttpHeaderNames.TRAILER, "a");
+            e.addRequestHeader(HttpHeaderNames.TRAILER, "a");
             Assert.assertEquals(result1, predicate.resolve(e));
-            e.requestHeaders().add(HttpHeaderNames.CONTENT_LENGTH, "a");
+            e.addRequestHeader(HttpHeaderNames.CONTENT_LENGTH, "a");
             Assert.assertEquals(result2, predicate.resolve(e));
         } catch (Throwable ex) {
             throw new RuntimeException("String " + string, ex);

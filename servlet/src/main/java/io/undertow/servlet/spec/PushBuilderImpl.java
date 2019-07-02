@@ -18,6 +18,7 @@
 
 package io.undertow.servlet.spec;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -94,10 +95,10 @@ public class PushBuilderImpl implements PushBuilder {
             this.sessionId = servletRequest.getRequestedSessionId();
         }
 
-        HttpHeaders headers = servletRequest.getExchange().requestHeaders();
-        for(Map.Entry<String, String> header : headers) {
-            if(!IGNORE.contains(header.getKey())) {
-                this.headers.add(header.getKey(), headers.getAll(header.getKey()));
+        Collection<String> headers = servletRequest.getExchange().getRequestHeaderNames();
+        for(String header : headers) {
+            if(!IGNORE.contains(header)) {
+                this.headers.add(header, servletRequest.getExchange().getRequestHeaders(header));
             }
         }
         if(servletRequest.getQueryString() == null) {

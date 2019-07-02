@@ -53,7 +53,7 @@ public class AllowedMethodsHandler implements HttpHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        if (allowedMethods.contains(exchange.requestMethod())) {
+        if (allowedMethods.contains(exchange.getRequestMethod())) {
             next.handleRequest(exchange);
         } else {
             exchange.setStatusCode(StatusCodes.METHOD_NOT_ALLOWED);

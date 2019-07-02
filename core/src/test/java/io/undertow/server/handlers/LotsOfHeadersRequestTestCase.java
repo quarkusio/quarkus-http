@@ -16,6 +16,7 @@
 package io.undertow.server.handlers;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Map;
 
 import org.apache.http.Header;
@@ -87,10 +88,10 @@ public class LotsOfHeadersRequestTestCase {
         blockingHandler.setRootHandler(new HttpHandler() {
             @Override
             public void handleRequest(final HttpServerExchange exchange) {
-                HttpHeaders headers = exchange.requestHeaders();
-                for (Map.Entry<String, String> header : headers) {
-                    for (String val : exchange.requestHeaders().getAll(header.getKey())) {
-                        exchange.responseHeaders().set(header.getKey(), val);
+                Collection<String> headers = exchange.getRequestHeaderNames();
+                for (String header : headers) {
+                    for (String val : exchange.getRequestHeaders(header)) {
+                        exchange.responseHeaders().set(header, val);
                     }
                 }
             }

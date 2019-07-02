@@ -74,7 +74,7 @@ public class CrawlerSessionManagerHandler implements HttpHandler {
         if (src.getOriginalRequest().getSession(false) == null) {
 
             // Is this a crawler - check the UA headers
-            List<String> userAgentHeaders = exchange.requestHeaders().getAll(HttpHeaderNames.USER_AGENT);
+            List<String> userAgentHeaders = exchange.getRequestHeaders(HttpHeaderNames.USER_AGENT);
             if (userAgentHeaders != null) {
                 Iterator<String> uaHeaders = userAgentHeaders.iterator();
                 String uaHeader = null;

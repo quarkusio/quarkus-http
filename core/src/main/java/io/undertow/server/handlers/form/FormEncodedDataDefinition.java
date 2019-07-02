@@ -46,11 +46,11 @@ public class FormEncodedDataDefinition implements FormParserFactory.ParserDefini
 
     @Override
     public FormDataParser create(final HttpServerExchange exchange) {
-        String mimeType = exchange.requestHeaders().get(HttpHeaderNames.CONTENT_TYPE);
+        String mimeType = exchange.getRequestHeader(HttpHeaderNames.CONTENT_TYPE);
         if (forceCreation || (mimeType != null && mimeType.startsWith(APPLICATION_X_WWW_FORM_URLENCODED))) {
 
             String charset = defaultEncoding;
-            String contentType = exchange.requestHeaders().get(HttpHeaderNames.CONTENT_TYPE);
+            String contentType = exchange.getRequestHeader(HttpHeaderNames.CONTENT_TYPE);
             if (contentType != null) {
                 String cs = HttpHeaderNames.extractQuotedValueFromHeader(contentType, "charset");
                 if (cs != null) {
@@ -226,7 +226,7 @@ public class FormEncodedDataDefinition implements FormParserFactory.ParserDefini
         public void onComplete(HttpExchange exchange, ByteBuf buffer) {
             doParse(buffer);
             if (state != 4) {
-                exchange.readAsync(this);
+                exchange.getInputChannel().readAsync(this);
             } else {
                 ((HttpServerExchange)exchange).dispatch(SameThreadExecutor.INSTANCE, handler);
             }

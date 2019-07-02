@@ -142,10 +142,10 @@ public class JDBCLogHandler implements HttpHandler, Runnable {
         jdbcLogAttribute.status = exchange.getStatusCode();
 
         if (jdbcLogAttribute.pattern.equals("combined")) {
-            jdbcLogAttribute.virtualHost = exchange.requestHeaders().get(HttpHeaderNames.HOST);
-            jdbcLogAttribute.method = exchange.requestMethod();
-            jdbcLogAttribute.referer = exchange.requestHeaders().get(HttpHeaderNames.REFERER);
-            jdbcLogAttribute.userAgent = exchange.requestHeaders().get(HttpHeaderNames.USER_AGENT);
+            jdbcLogAttribute.virtualHost = exchange.getRequestHeader(HttpHeaderNames.HOST);
+            jdbcLogAttribute.method = exchange.getRequestMethod();
+            jdbcLogAttribute.referer = exchange.getRequestHeader(HttpHeaderNames.REFERER);
+            jdbcLogAttribute.userAgent = exchange.getRequestHeader(HttpHeaderNames.USER_AGENT);
         }
 
         this.pendingMessages.add(jdbcLogAttribute);

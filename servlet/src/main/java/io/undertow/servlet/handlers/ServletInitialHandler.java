@@ -132,12 +132,12 @@ public class ServletInitialHandler implements HttpHandler, ServletDispatcher {
         //as there is a good chance the web socket client won't understand the redirect
         //we make an exception for HTTP2 upgrade requests, as this would have already be handled at
         //the connector level if it was going to be handled.
-        String upgradeString = exchange.requestHeaders().get(HttpHeaderNames.UPGRADE);
+        String upgradeString = exchange.getRequestHeader(HttpHeaderNames.UPGRADE);
         boolean isUpgradeRequest = upgradeString != null && !upgradeString.startsWith(HTTP2_UPGRADE_PREFIX);
         if (info.getType() == ServletPathMatch.Type.REDIRECT && !isUpgradeRequest) {
             //UNDERTOW-89
             //we redirect on GET requests to the root context to add an / to the end
-            if (exchange.requestMethod().equals(HttpMethodNames.GET) || exchange.requestMethod().equals(HttpMethodNames.HEAD)) {
+            if (exchange.getRequestMethod().equals(HttpMethodNames.GET) || exchange.getRequestMethod().equals(HttpMethodNames.HEAD)) {
                 exchange.setStatusCode(StatusCodes.FOUND);
             } else {
                 exchange.setStatusCode(StatusCodes.TEMPORARY_REDIRECT);
@@ -208,7 +208,7 @@ public class ServletInitialHandler implements HttpHandler, ServletDispatcher {
 //        MockServerConnection connection = new MockServerConnection(bufferPool);
 //        HttpServerExchange exchange = new HttpServerExchange(connection);
 //        exchange.setRequestScheme(request.getScheme());
-//        exchange.requestMethod(new HttpString(request.getMethod()));
+//        exchange.getRequestMethod(new HttpString(request.getMethod()));
 //        exchange.protocol(Protocols.HTTP_1_0);
 //        exchange.setResolvedPath(request.getContextPath());
 //        String relative;

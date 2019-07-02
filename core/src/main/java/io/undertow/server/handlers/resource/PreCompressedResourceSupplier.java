@@ -58,7 +58,7 @@ public class PreCompressedResourceSupplier implements ResourceSupplier {
     @Override
     public Resource getResource(HttpServerExchange exchange, String path) throws IOException {
         Resource originalResource = resourceManager.getResource(path);
-        if (exchange.requestHeaders().contains(HttpHeaderNames.RANGE)) {
+        if (exchange.containsRequestHeader(HttpHeaderNames.RANGE)) {
             //we don't use serve pre compressed resources for range requests
             return originalResource;
         }
@@ -71,7 +71,7 @@ public class PreCompressedResourceSupplier implements ResourceSupplier {
 
 
     private Resource getEncodedResource(final HttpServerExchange exchange, String path, Resource originalResource) throws IOException {
-        final List<String> res = exchange.requestHeaders().getAll(HttpHeaderNames.ACCEPT_ENCODING);
+        final List<String> res = exchange.getRequestHeaders(HttpHeaderNames.ACCEPT_ENCODING);
         if (res == null || res.isEmpty()) {
             return null;
         }

@@ -74,7 +74,7 @@ public class MultiPartParserDefinition implements FormParserFactory.ParserDefini
 
     @Override
     public FormDataParser create(final HttpServerExchange exchange) {
-        String mimeType = exchange.requestHeaders().get(HttpHeaderNames.CONTENT_TYPE);
+        String mimeType = exchange.getRequestHeader(HttpHeaderNames.CONTENT_TYPE);
         if (mimeType != null && mimeType.startsWith(MULTIPART_FORM_DATA)) {
             String boundary = HttpHeaderNames.extractQuotedValueFromHeader(mimeType, "boundary");
             if (boundary == null) {
@@ -166,7 +166,7 @@ public class MultiPartParserDefinition implements FormParserFactory.ParserDefini
             this.fileSizeThreshold = fileSizeThreshold;
             this.data = new FormData(exchange.getConnection().getUndertowOptions().get(UndertowOptions.MAX_PARAMETERS, 1000));
             String charset = defaultEncoding;
-            String contentType = exchange.requestHeaders().get(HttpHeaderNames.CONTENT_TYPE);
+            String contentType = exchange.getRequestHeader(HttpHeaderNames.CONTENT_TYPE);
             if (contentType != null) {
                 String value = HttpHeaderNames.extractQuotedValueFromHeader(contentType, "charset");
                 if (value != null) {

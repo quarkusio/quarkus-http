@@ -178,7 +178,7 @@ public class DateUtils {
      * @return
      */
     public static boolean handleIfModifiedSince(final HttpServerExchange exchange, final Date lastModified) {
-        return handleIfModifiedSince(exchange.requestHeaders().get(HttpHeaderNames.IF_MODIFIED_SINCE), lastModified);
+        return handleIfModifiedSince(exchange.getRequestHeader(HttpHeaderNames.IF_MODIFIED_SINCE), lastModified);
     }
 
     /**
@@ -210,7 +210,7 @@ public class DateUtils {
      * @return
      */
     public static boolean handleIfUnmodifiedSince(final HttpServerExchange exchange, final Date lastModified) {
-        return handleIfUnmodifiedSince(exchange.requestHeaders().get(HttpHeaderNames.IF_UNMODIFIED_SINCE), lastModified);
+        return handleIfUnmodifiedSince(exchange.getRequestHeader(HttpHeaderNames.IF_UNMODIFIED_SINCE), lastModified);
     }
 
     /**

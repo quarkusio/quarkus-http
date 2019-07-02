@@ -54,7 +54,7 @@ public class ProxyPeerAddressHandler implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        String forwardedFor = exchange.requestHeaders().get(HttpHeaderNames.X_FORWARDED_FOR);
+        String forwardedFor = exchange.getRequestHeader(HttpHeaderNames.X_FORWARDED_FOR);
         if (forwardedFor != null) {
             String remoteClient = mostRecent(forwardedFor);
             //we have no way of knowing the port
@@ -66,12 +66,12 @@ public class ProxyPeerAddressHandler implements HttpHandler {
                 exchange.setSourceAddress(InetSocketAddress.createUnresolved(remoteClient, 0));
             }
         }
-        String forwardedProto = exchange.requestHeaders().get(HttpHeaderNames.X_FORWARDED_PROTO);
+        String forwardedProto = exchange.getRequestHeader(HttpHeaderNames.X_FORWARDED_PROTO);
         if (forwardedProto != null) {
             exchange.setRequestScheme(mostRecent(forwardedProto));
         }
-        String forwardedHost = exchange.requestHeaders().get(HttpHeaderNames.X_FORWARDED_HOST);
-        String forwardedPort = exchange.requestHeaders().get(HttpHeaderNames.X_FORWARDED_PORT);
+        String forwardedHost = exchange.getRequestHeader(HttpHeaderNames.X_FORWARDED_HOST);
+        String forwardedPort = exchange.getRequestHeader(HttpHeaderNames.X_FORWARDED_PORT);
         if (forwardedHost != null) {
             String value = mostRecent(forwardedHost);
             if(value.startsWith("[")) {
@@ -109,7 +109,7 @@ public class ProxyPeerAddressHandler implements HttpHandler {
                     UndertowLogger.REQUEST_LOGGER.debugf("Cannot parse port: %s", forwardedPort);
                 }
             }
-            exchange.requestHeaders().set(HttpHeaderNames.HOST, hostHeader);
+            exchange.setRequestHeader(HttpHeaderNames.HOST, hostHeader);
             exchange.setDestinationAddress(InetSocketAddress.createUnresolved(value, port));
         }
         next.handleRequest(exchange);

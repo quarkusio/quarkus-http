@@ -242,7 +242,7 @@ public class ServletRequestContext {
             if(!address.isLoopbackAddress()) {
                 return false;
             }
-            return !getExchange().requestHeaders().contains(HttpHeaderNames.X_FORWARDED_FOR);
+            return !getExchange().containsRequestHeader(HttpHeaderNames.X_FORWARDED_FOR);
         }
 
     }

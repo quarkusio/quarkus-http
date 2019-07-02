@@ -70,10 +70,9 @@ public class SSLHeaderHandler implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        HttpHeaders requestHeaders = exchange.requestHeaders();
-        final String sessionId = requestHeaders.get(SSL_SESSION_ID);
-        final String cipher = requestHeaders.get(SSL_CIPHER);
-        String clientCert = requestHeaders.get(SSL_CLIENT_CERT);
+        final String sessionId = exchange.getRequestHeader(SSL_SESSION_ID);
+        final String cipher = exchange.getRequestHeader(SSL_CIPHER);
+        String clientCert = exchange.getRequestHeader(SSL_CLIENT_CERT);
         //the proxy client replaces \n with ' '
         if (clientCert != null && clientCert.length() > 28) {
             StringBuilder sb = new StringBuilder(clientCert.length() + 1);

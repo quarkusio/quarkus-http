@@ -60,12 +60,10 @@ public class HttpContinue {
             return false;
         }
 
-        HttpHeaders requestHeaders = exchange.requestHeaders();
-        return requiresContinueResponse(requestHeaders);
+        return requiresContinueResponse(exchange.getRequestHeaders(HttpHeaderNames.EXPECT));
     }
 
-    public static boolean requiresContinueResponse(HttpHeaders requestHeaders) {
-        List<String> expect = requestHeaders.getAll(HttpHeaderNames.EXPECT);
+    public static boolean requiresContinueResponse(List<String> expect) {
         if (expect != null) {
             for (String header : expect) {
                 if (header.equalsIgnoreCase(CONTINUE)) {

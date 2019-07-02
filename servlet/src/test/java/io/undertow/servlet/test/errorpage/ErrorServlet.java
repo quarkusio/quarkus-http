@@ -32,7 +32,7 @@ public class ErrorServlet extends HttpServlet {
 
     @Override
     protected void doGet(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
-        String statusCode = req.getParameter("statusCode");
+        String statusCode = req.getParameter("setStatusCode");
         if (statusCode != null) {
             resp.sendError(Integer.parseInt(statusCode));
         } else {

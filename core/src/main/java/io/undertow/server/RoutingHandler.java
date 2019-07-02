@@ -66,7 +66,7 @@ public class RoutingHandler implements HttpHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
 
-        PathTemplateMatcher<RoutingMatch> matcher = matches.get(exchange.requestMethod());
+        PathTemplateMatcher<RoutingMatch> matcher = matches.get(exchange.getRequestMethod());
         if (matcher == null) {
             handleNoMatch(exchange);
             return;

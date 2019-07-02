@@ -47,7 +47,7 @@ public class OriginHandler implements HttpHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        final List<String> origin = exchange.requestHeaders().getAll(HttpHeaderNames.ORIGIN);
+        final List<String> origin = exchange.getRequestHeaders(HttpHeaderNames.ORIGIN);
         if (origin == null) {
             if (requireOriginHeader) {
                 //TODO: Is 403 (Forbidden) the best response code

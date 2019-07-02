@@ -77,7 +77,7 @@ public class DirectoryUtils {
             exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(buffer.readableBytes()));
             exchange.responseHeaders().set(HttpHeaderNames.CONTENT_TYPE, type);
             exchange.responseHeaders().set(HttpHeaderNames.ETAG, quotedEtag);
-            if (HttpMethodNames.HEAD.equals(exchange.requestMethod())) {
+            if (HttpMethodNames.HEAD.equals(exchange.getRequestMethod())) {
                 exchange.endExchange();
                 return true;
             }

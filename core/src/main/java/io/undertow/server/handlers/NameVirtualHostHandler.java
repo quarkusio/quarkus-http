@@ -40,7 +40,7 @@ public class NameVirtualHostHandler implements HttpHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        final String hostHeader = exchange.requestHeaders().get(HttpHeaderNames.HOST);
+        final String hostHeader = exchange.getRequestHeader(HttpHeaderNames.HOST);
         if (hostHeader != null) {
             String host;
             if (hostHeader.contains(":")) { //header can be in host:port format

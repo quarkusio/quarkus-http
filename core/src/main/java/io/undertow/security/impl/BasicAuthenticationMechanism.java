@@ -126,7 +126,7 @@ public class BasicAuthenticationMechanism implements AuthenticationMechanism {
     @Override
     public AuthenticationMechanismOutcome authenticate(HttpServerExchange exchange, SecurityContext securityContext) {
 
-        List<String> authHeaders = exchange.requestHeaders().getAll(AUTHORIZATION);
+        List<String> authHeaders = exchange.getRequestHeaders(AUTHORIZATION);
         if (authHeaders != null) {
             for (String current : authHeaders) {
                 if (current.toLowerCase(Locale.ENGLISH).startsWith(LOWERCASE_BASIC_PREFIX)) {
@@ -138,7 +138,7 @@ public class BasicAuthenticationMechanism implements AuthenticationMechanism {
 
                         Charset charset = this.charset;
                         if(!userAgentCharsets.isEmpty()) {
-                            String ua = exchange.requestHeaders().get(HttpHeaderNames.USER_AGENT);
+                            String ua = exchange.getRequestHeader(HttpHeaderNames.USER_AGENT);
                             if(ua != null) {
                                 for (Map.Entry<Pattern, Charset> entry : userAgentCharsets.entrySet()) {
                                     if(entry.getKey().matcher(ua).find()) {
@@ -193,7 +193,7 @@ public class BasicAuthenticationMechanism implements AuthenticationMechanism {
         if(silent) {
             //if this is silent we only send a challenge if the request contained auth headers
             //otherwise we assume another method will send the challenge
-            String authHeader = exchange.requestHeaders().get(AUTHORIZATION);
+            String authHeader = exchange.getRequestHeader(AUTHORIZATION);
             if(authHeader == null) {
                 return ChallengeResult.NOT_SENT;
             }

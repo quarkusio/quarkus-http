@@ -43,7 +43,7 @@ public class MethodPredicate implements Predicate {
     @Override
     public boolean resolve(final HttpServerExchange value) {
         for(int i =0; i < methods.length; ++i) {
-            if(value.requestMethod().equals(methods[i])) {
+            if(value.getRequestMethod().equals(methods[i])) {
                 return true;
             }
         }

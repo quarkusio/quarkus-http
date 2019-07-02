@@ -54,9 +54,9 @@ public class RequestDumpingHandler implements HttpHandler {
         final SecurityContext sc = exchange.getSecurityContext();
         sb.append("\n----------------------------REQUEST---------------------------\n");
         sb.append("               URI=" + exchange.getRequestURI() + "\n");
-        sb.append(" characterEncoding=" + exchange.requestHeaders().get(HttpHeaderNames.CONTENT_ENCODING) + "\n");
+        sb.append(" characterEncoding=" + exchange.getRequestHeader(HttpHeaderNames.CONTENT_ENCODING) + "\n");
         sb.append("     contentLength=" + exchange.getRequestContentLength() + "\n");
-        sb.append("       contentType=" + exchange.requestHeaders().get(HttpHeaderNames.CONTENT_TYPE) + "\n");
+        sb.append("       contentType=" + exchange.getRequestHeader(HttpHeaderNames.CONTENT_TYPE) + "\n");
         //sb.append("       contextPath=" + exchange.getContextPath());
         if (sc != null) {
             if (sc.isAuthenticated()) {
@@ -75,13 +75,13 @@ public class RequestDumpingHandler implements HttpHandler {
                         cookie.getValue() + "\n");
             }
         }
-        for (Map.Entry<String, String> header : exchange.requestHeaders()) {
-            for (String value : exchange.requestHeaders().getAll(header.getKey())) {
-                sb.append("            header=" + header.getKey() + "=" + value + "\n");
+        for (String header : exchange.getRequestHeaderNames()) {
+            for (String value : exchange.getRequestHeaders(header)) {
+                sb.append("            header=" + header + "=" + value + "\n");
             }
         }
-        sb.append("            locale=" + LocaleUtils.getLocalesFromHeader(exchange.requestHeaders().get(HttpHeaderNames.ACCEPT_LANGUAGE)) + "\n");
-        sb.append("            method=" + exchange.requestMethod() + "\n");
+        sb.append("            locale=" + LocaleUtils.getLocalesFromHeader(exchange.getRequestHeader(HttpHeaderNames.ACCEPT_LANGUAGE)) + "\n");
+        sb.append("            method=" + exchange.getRequestMethod() + "\n");
         Map<String, Deque<String>> pnames = exchange.getQueryParameters();
         for (Map.Entry<String, Deque<String>> entry : pnames.entrySet()) {
             String pname = entry.getKey();
@@ -104,7 +104,7 @@ public class RequestDumpingHandler implements HttpHandler {
         sb.append("        remoteHost=" + exchange.getSourceAddress().getHostName() + "\n");
         //sb.append("requestedSessionId=" + exchange.getRequestedSessionId());
         sb.append("            scheme=" + exchange.getRequestScheme() + "\n");
-        sb.append("              host=" + exchange.requestHeaders().get(HttpHeaderNames.HOST) + "\n");
+        sb.append("              host=" + exchange.getRequestHeader(HttpHeaderNames.HOST) + "\n");
         sb.append("        serverPort=" + exchange.getDestinationAddress().getPort() + "\n");
         //sb.append("       servletPath=" + exchange.getServletPath());
         sb.append("          isSecure=" + exchange.isSecure() + "\n");

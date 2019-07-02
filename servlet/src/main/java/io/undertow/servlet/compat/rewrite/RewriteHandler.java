@@ -165,7 +165,7 @@ public class RewriteHandler implements HttpHandler {
             // - content type (note: this will not force the content type, use a filter
             //   to do that)
             if (rules[i].isType() && newtest != null) {
-                exchange.requestHeaders().set(HttpHeaderNames.CONTENT_TYPE, rules[i].getTypeValue());
+                exchange.setRequestHeader(HttpHeaderNames.CONTENT_TYPE, rules[i].getTypeValue());
             }
             // - qsappend
             if (rules[i].isQsappend() && newtest != null) {
@@ -230,7 +230,7 @@ public class RewriteHandler implements HttpHandler {
                 }
                 // Set the new host if it changed
                 if (!host.equals(request.getServerName())) {
-                    exchange.requestHeaders().set(HttpHeaderNames.HOST, host + ":" + exchange.getHostPort());
+                    exchange.setRequestHeader(HttpHeaderNames.HOST, host + ":" + exchange.getHostPort());
                 }
                 // Reinvoke the whole request recursively
                 src.getDeployment().getHandler().handleRequest(exchange);

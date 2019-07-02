@@ -150,7 +150,7 @@ public class DigestAuthenticationMechanism implements AuthenticationMechanism {
 
     public AuthenticationMechanismOutcome authenticate(final HttpServerExchange exchange,
                                                        final SecurityContext securityContext) {
-        List<String> authHeaders = exchange.requestHeaders().getAll(AUTHORIZATION);
+        List<String> authHeaders = exchange.getRequestHeaders(AUTHORIZATION);
         if (authHeaders != null) {
             for (String current : authHeaders) {
                 if (current.startsWith(DIGEST_PREFIX)) {
@@ -159,7 +159,7 @@ public class DigestAuthenticationMechanism implements AuthenticationMechanism {
                     try {
                         DigestContext context = new DigestContext();
                         Map<DigestAuthorizationToken, String> parsedHeader = parseHeader(digestChallenge);
-                        context.setMethod(exchange.requestMethod());
+                        context.setMethod(exchange.getRequestMethod());
                         context.setParsedHeader(parsedHeader);
                         // Some form of Digest authentication is going to occur so get the DigestContext set on the exchange.
                         exchange.putAttachment(DigestContext.ATTACHMENT_KEY, context);

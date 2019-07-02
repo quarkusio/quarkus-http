@@ -52,7 +52,7 @@ public class CustomAuthenticationMechanism extends ServletFormAuthenticationMech
 
     @Override
     public AuthenticationMechanismOutcome authenticate(final HttpServerExchange exchange, final SecurityContext securityContext) {
-        if (exchange.getRequestURI().endsWith(POST_LOCATION) && exchange.requestMethod().equals(HttpMethodNames.POST)) {
+        if (exchange.getRequestURI().endsWith(POST_LOCATION) && exchange.getRequestMethod().equals(HttpMethodNames.POST)) {
             return runFormAuth(exchange, securityContext);
         } else {
             return AuthenticationMechanismOutcome.NOT_ATTEMPTED;

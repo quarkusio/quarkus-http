@@ -215,7 +215,7 @@ public class ErrorPageTestCase {
         final HttpGet get;
         final HttpResponse result;
         final String response;
-        get = new HttpGet(DefaultServer.getDefaultServerURL() + "/servletContext" + deploymentNo + "/error?" + (statusCode != null ? "statusCode=" + statusCode : "exception=" + exception.getName()));
+        get = new HttpGet(DefaultServer.getDefaultServerURL() + "/servletContext" + deploymentNo + "/error?" + (statusCode != null ? "setStatusCode=" + statusCode : "exception=" + exception.getName()));
         result = client.execute(get);
         Assert.assertEquals(statusCode == null ? StatusCodes.INTERNAL_SERVER_ERROR : statusCode, result.getStatusLine().getStatusCode());
         response = HttpClientUtils.readResponse(result);

@@ -94,7 +94,7 @@ public class GenericHeaderAuthenticationMechanism implements AuthenticationMecha
 
     private String getPrincipal(HttpServerExchange exchange) {
         for (String header : identityHeaders) {
-            String res = exchange.requestHeaders().get(header);
+            String res = exchange.getRequestHeader(header);
             if (res != null) {
                 return res;
             }

@@ -46,7 +46,7 @@ public class HttpServerExchangeTestCase {
             public void handleRequest(HttpServerExchange exchange) throws Exception {
                 exchange.writeAsync(exchange.getHostName()
                         + ":" + exchange.protocol()
-                        + ":" + exchange.requestMethod()
+                        + ":" + exchange.getRequestMethod()
                         + ":" + exchange.getHostPort()
                         + ":" + exchange.getRequestURI()
                         + ":" + exchange.getRelativePath()

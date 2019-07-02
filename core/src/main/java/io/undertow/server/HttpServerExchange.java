@@ -32,7 +32,9 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Deque;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
@@ -45,6 +47,7 @@ import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
 import io.undertow.iocore.HttpExchange;
+import io.undertow.iocore.InputChannel;
 import io.undertow.iocore.IoCallback;
 import io.undertow.iocore.OutputChannel;
 import io.undertow.security.api.SecurityContext;
@@ -63,7 +66,6 @@ import io.undertow.util.Rfc6265CookieSupport;
 import io.undertow.util.StatusCodes;
 import io.undertow.util.UndertowOptions;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.ServerWebSocket;
 
 /**
@@ -72,7 +74,7 @@ import io.vertx.core.http.ServerWebSocket;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class HttpServerExchange extends AbstractAttachable implements BufferAllocator, OutputChannel, HttpExchange {
+public final class HttpServerExchange extends AbstractAttachable implements BufferAllocator, OutputChannel, HttpExchange, InputChannel {
 
     // immutable state
     private static final String HTTPS = "https";
@@ -349,17 +351,8 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      *
      * @return the HTTP request method
      */
-    @Deprecated
-    public HttpString getRequestMethod() {
-        return new HttpString(requestMethod);
-    }
-
-    /**
-     * Get the HTTP request method.  Normally this is one of the strings listed in {@link HttpMethodNames}.
-     *
-     * @return the HTTP request method
-     */
-    public String requestMethod() {
+    @Override
+    public String getRequestMethod() {
         return requestMethod;
     }
 
@@ -667,6 +660,16 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         return getIoThread().inEventLoop();
     }
 
+    @Override
+    public OutputChannel getOutputChannel() {
+        return this;
+    }
+
+    @Override
+    public InputChannel getInputChannel() {
+        return this;
+    }
+
     /**
      * @return True if this exchange represents an upgrade response
      */
@@ -678,7 +681,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @return The number of bytes sent in the entity body
      */
     public long getResponseBytesSent() {
-        if (Connectors.isEntityBodyAllowed(this) && !requestMethod().equals(HttpMethodNames.HEAD)) {
+        if (Connectors.isEntityBodyAllowed(this) && !getRequestMethod().equals(HttpMethodNames.HEAD)) {
             return responseBytesSent;
         } else {
             return 0; //body is not allowed, even if we attempt to write it will be ignored
@@ -691,7 +694,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @param bytes The number of bytes to increase the response size by. May be negative
      */
     void updateBytesSent(long bytes) {
-        if (Connectors.isEntityBodyAllowed(this) && !requestMethod().equals(HttpMethodNames.HEAD)) {
+        if (Connectors.isEntityBodyAllowed(this) && !getRequestMethod().equals(HttpMethodNames.HEAD)) {
             responseBytesSent += bytes;
         }
     }
@@ -900,26 +903,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     public HttpServerExchange setDestinationAddress(InetSocketAddress destinationAddress) {
         this.destinationAddress = destinationAddress;
         return this;
-    }
-
-
-    /**
-     * Get the request headers.
-     *
-     * @return the request headers
-     */
-    @Deprecated
-    public HeaderMap getRequestHeaders() {
-        return new HeaderMap(requestHeaders);
-    }
-
-    /**
-     * Get the request headers.
-     *
-     * @return the request headers
-     */
-    public io.netty.handler.codec.http.HttpHeaders requestHeaders() {
-        return requestHeaders;
     }
 
     /**
@@ -1284,6 +1267,41 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         return state & MASK_RESPONSE_CODE;
     }
 
+    @Override
+    public String getRequestHeader(String name) {
+        return requestHeaders.get(name);
+    }
+
+    @Override
+    public List<String> getRequestHeaders(String name) {
+        return requestHeaders.getAll(name);
+    }
+
+    @Override
+    public boolean containsRequestHeader(String name) {
+        return requestHeaders.contains(name);
+    }
+
+    @Override
+    public void removeRequestHeader(String name) {
+        requestHeaders.remove(name);
+    }
+
+    @Override
+    public void setRequestHeader(String name, String value) {
+        requestHeaders.set(name, value);
+    }
+
+    @Override
+    public Collection<String> getRequestHeaderNames() {
+        return requestHeaders.names();
+    }
+
+    @Override
+    public void addRequestHeader(String name, String value) {
+        requestHeaders.add(name, value);
+    }
+
     /**
      * Change the status code for this response.  If not specified, the code will be a {@code 200}.  Setting
      * the status code after the response headers have been transmitted has no effect.
@@ -1603,7 +1621,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if (!connection.isUpgradeSupported()) {
             throw UndertowMessages.MESSAGES.upgradeNotSupported();
         }
-        if (!requestHeaders().contains(HttpHeaderNames.UPGRADE)) {
+        if (!requestHeaders.contains(HttpHeaderNames.UPGRADE)) {
             throw UndertowMessages.MESSAGES.notAnUpgradeRequest();
         }
         UndertowLogger.REQUEST_LOGGER.debugf("Upgrading request %s", this);
@@ -1693,6 +1711,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
 
     @Override
     public String toString() {
-        return "HttpServerExchange{ " + requestMethod() + " " + getRequestURI() + " request " + requestHeaders + " response " + responseHeaders + '}';
+        return "HttpServerExchange{ " + getRequestMethod() + " " + getRequestURI() + " request " + requestHeaders + " response " + responseHeaders + '}';
     }
 }

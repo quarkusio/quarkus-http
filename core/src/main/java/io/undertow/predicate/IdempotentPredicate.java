@@ -51,7 +51,7 @@ public class IdempotentPredicate implements Predicate {
 
     @Override
     public boolean resolve(HttpServerExchange value) {
-        return METHODS.contains(value.requestMethod());
+        return METHODS.contains(value.getRequestMethod());
     }
 
     public static class Builder implements PredicateBuilder {

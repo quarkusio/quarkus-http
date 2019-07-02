@@ -41,7 +41,7 @@ public class ForwardedHandler implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        List<String> forwarded = exchange.requestHeaders().getAll(HttpHeaderNames.FORWARDED);
+        List<String> forwarded = exchange.getRequestHeaders(HttpHeaderNames.FORWARDED);
         if (forwarded != null) {
             Map<Token, String> values = new HashMap<>();
             for (String val : forwarded) {
@@ -53,7 +53,7 @@ public class ForwardedHandler implements HttpHandler {
             String forVal = values.get(Token.FOR);
 
             if (host != null) {
-                exchange.requestHeaders().set(HttpHeaderNames.HOST, host);
+                exchange.setRequestHeader(HttpHeaderNames.HOST, host);
                 exchange.setDestinationAddress(InetSocketAddress.createUnresolved(exchange.getHostName(), exchange.getHostPort()));
             } else if (by != null) {
                 //we only use 'by' if the host is null

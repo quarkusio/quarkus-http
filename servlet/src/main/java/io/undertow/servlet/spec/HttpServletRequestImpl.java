@@ -73,10 +73,7 @@ import io.undertow.server.session.SessionConfig;
 import io.undertow.servlet.UndertowServletMessages;
 import io.undertow.servlet.api.AuthorizationManager;
 import io.undertow.servlet.api.Deployment;
-import io.undertow.servlet.api.InstanceFactory;
-import io.undertow.servlet.api.InstanceHandle;
 import io.undertow.servlet.core.ManagedServlet;
-import io.undertow.servlet.core.ServletUpgradeListener;
 import io.undertow.servlet.handlers.ServletChain;
 import io.undertow.servlet.handlers.ServletPathMatch;
 import io.undertow.servlet.handlers.ServletRequestContext;
@@ -179,7 +176,7 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
 
     @Override
     public long getDateHeader(final String name) {
-        String header = exchange.requestHeaders().get(name);
+        String header = exchange.getRequestHeader(name);
         if (header == null) {
             return -1;
         }
@@ -192,13 +189,12 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
 
     @Override
     public String getHeader(final String name) {
-        HttpHeaders headers = exchange.requestHeaders();
-        return headers.get(name);
+        return exchange.getRequestHeader(name);
     }
 
     @Override
     public Enumeration<String> getHeaders(final String name) {
-        List<String> headers = exchange.requestHeaders().getAll(name);
+        List<String> headers = exchange.getRequestHeaders(name);
         if (headers == null) {
             return EmptyEnumeration.instance();
         }
@@ -207,10 +203,7 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
 
     @Override
     public Enumeration<String> getHeaderNames() {
-        final Set<String> headers = new HashSet<>();
-        for (final Map.Entry<String, String> i : exchange.requestHeaders()) {
-            headers.add(i.getKey());
-        }
+        final Set<String> headers = new HashSet<>(exchange.getRequestHeaderNames());
         return new IteratorEnumeration<>(headers.iterator());
     }
 
@@ -262,7 +255,7 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
 
     @Override
     public String getMethod() {
-        return exchange.requestMethod();
+        return exchange.getRequestMethod();
     }
 
     @Override
@@ -546,7 +539,7 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
 
         if (parts == null) {
             final List<Part> parts = new ArrayList<>();
-            String mimeType = exchange.requestHeaders().get(HttpHeaderNames.CONTENT_TYPE);
+            String mimeType = exchange.getRequestHeader(HttpHeaderNames.CONTENT_TYPE);
             if (mimeType != null && mimeType.startsWith(MULTIPART_FORM_DATA)) {
 
                 FormData formData = parseFormData();
@@ -603,7 +596,7 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
     }
 
     private String getCharacterEncodingFromHeader() {
-        String contentType = exchange.requestHeaders().get(HttpHeaderNames.CONTENT_TYPE);
+        String contentType = exchange.getRequestHeader(HttpHeaderNames.CONTENT_TYPE);
         if (contentType == null) {
             return null;
         }
@@ -713,7 +706,7 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
             queryParameters = exchange.getQueryParameters();
         }
         final Set<String> parameterNames = new HashSet<>(queryParameters.keySet());
-        if (exchange.requestMethod().equals(HttpMethodNames.POST)) {
+        if (exchange.getRequestMethod().equals(HttpMethodNames.POST)) {
             final FormData parsedFormData = parseFormData();
             if (parsedFormData != null) {
                 Iterator<String> it = parsedFormData.iterator();
@@ -743,7 +736,7 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
                 ret.add(param);
             }
         }
-        if (exchange.requestMethod().equals(HttpMethodNames.POST)) {
+        if (exchange.getRequestMethod().equals(HttpMethodNames.POST)) {
             final FormData parsedFormData = parseFormData();
             if (parsedFormData != null) {
                 Deque<FormData.FormValue> res = parsedFormData.get(name);
@@ -771,7 +764,7 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
         for (Map.Entry<String, Deque<String>> entry : queryParameters.entrySet()) {
             arrayMap.put(entry.getKey(), new ArrayList<>(entry.getValue()));
         }
-        if (exchange.requestMethod().equals(HttpMethodNames.POST)) {
+        if (exchange.getRequestMethod().equals(HttpMethodNames.POST)) {
 
             final FormData parsedFormData = parseFormData();
             if (parsedFormData != null) {
@@ -937,7 +930,7 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
 
     @Override
     public Enumeration<Locale> getLocales() {
-        final List<String> acceptLanguage = exchange.requestHeaders().getAll(HttpHeaderNames.ACCEPT_LANGUAGE);
+        final List<String> acceptLanguage = exchange.getRequestHeaders(HttpHeaderNames.ACCEPT_LANGUAGE);
         List<Locale> ret = LocaleUtils.getLocalesFromHeader(acceptLanguage);
         if (ret.isEmpty()) {
             return new IteratorEnumeration<>(Collections.singletonList(Locale.getDefault()).iterator());

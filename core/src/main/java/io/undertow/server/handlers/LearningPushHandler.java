@@ -77,9 +77,9 @@ public class LearningPushHandler implements HttpHandler {
         }
 
         doPush(exchange, fullPath);
-        String referrer = exchange.requestHeaders().get(HttpHeaderNames.REFERER);
+        String referrer = exchange.getRequestHeader(HttpHeaderNames.REFERER);
         if (referrer != null) {
-            String accept = exchange.requestHeaders().get(HttpHeaderNames.ACCEPT);
+            String accept = exchange.getRequestHeader(HttpHeaderNames.ACCEPT);
             if (accept == null || !accept.contains("text/html")) {
                 //if accept contains text/html it generally means the user has clicked
                 //a link to move to a new page, and is not a resource load for the current page
