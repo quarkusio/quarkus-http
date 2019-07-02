@@ -58,7 +58,7 @@ public class AccessLogTestCase {
         @Override
         public void handleRequest(final HttpServerExchange exchange) throws Exception {
             exchange.responseHeaders().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
-            exchange.response().end("HelloResponse");
+            exchange.writeAsync("HelloResponse");
         }
     };
 

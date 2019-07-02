@@ -66,7 +66,7 @@ public class BasicAuthServer {
                     @Override
                     public void handleRequest(final HttpServerExchange exchange) throws Exception {
                         final SecurityContext context = exchange.getSecurityContext();
-                        exchange.response().end("Hello " + context.getAuthenticatedAccount().getPrincipal().getName(), IoCallback.END_EXCHANGE);
+                        exchange.writeAsync("Hello " + context.getAuthenticatedAccount().getPrincipal().getName(), IoCallback.END_EXCHANGE);
                     }
                 }, identityManager))
                 .build();

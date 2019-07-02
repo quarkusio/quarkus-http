@@ -25,7 +25,7 @@ public class ExceptionHandlerTestCase {
                 .addExactPath("/", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.response().end("expected");
+                        exchange.writeAsync("expected");
                     }
                 })
                 .addExactPath("/exceptionParent", new HttpHandler() {
@@ -57,19 +57,19 @@ public class ExceptionHandlerTestCase {
                 .addExceptionHandler(ChildException.class, new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.response().end("child exception handled");
+                        exchange.writeAsync("child exception handled");
                     }
                 })
                 .addExceptionHandler(ParentException.class, new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.response().end("parent exception handled");
+                        exchange.writeAsync("parent exception handled");
                     }
                 })
                 .addExceptionHandler(Throwable.class, new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.response().end("catch all throwables");
+                        exchange.writeAsync("catch all throwables");
                     }
                 });
         DefaultServer.setRootHandler(exceptionHandler);
@@ -145,7 +145,7 @@ public class ExceptionHandlerTestCase {
             .addExceptionHandler(IllegalArgumentException.class, new HttpHandler() {
                 @Override
                 public void handleRequest(HttpServerExchange exchange) throws Exception {
-                    exchange.response().end("exception handled");
+                    exchange.writeAsync("exception handled");
                 }
             });
 

@@ -46,6 +46,8 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.undertow.server.session.SecureRandomSessionIdGenerator;
 import io.undertow.servlet.api.InstanceHandle;
+import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.http.WebSocketBase;
 
 /**
  * {@link Session} implementation which makes use of the high-level WebSocket API of undertow under the hood.
@@ -55,7 +57,7 @@ import io.undertow.servlet.api.InstanceHandle;
 public final class UndertowSession implements Session {
 
     private final String sessionId;
-    private Channel channel;
+    private ServerWebSocket channel;
     private FrameHandler frameHandler;
     private final ServerWebSocketContainer container;
     private final Principal user;
@@ -81,7 +83,7 @@ public final class UndertowSession implements Session {
     private ConfiguredServerEndpoint configuredServerEndpoint;
     private final WebsocketConnectionBuilder clientConnectionBuilder;
 
-    public UndertowSession(Channel channel, URI requestUri, Map<String, String> pathParameters,
+    public UndertowSession(ServerWebSocket channel, URI requestUri, Map<String, String> pathParameters,
                            Map<String, List<String>> requestParameterMap, EndpointSessionHandler handler, Principal user,
                            InstanceHandle<Endpoint> endpoint, EndpointConfig config, final String queryString,
                            final Encoding encoding, final SessionContainer openSessions, final String subProtocol,
@@ -109,7 +111,7 @@ public final class UndertowSession implements Session {
         setupWebSocketChannel(channel);
     }
 
-    public Channel getChannel() {
+    public ServerWebSocket getChannel() {
         return channel;
     }
 
@@ -158,12 +160,12 @@ public final class UndertowSession implements Session {
 
     @Override
     public boolean isSecure() {
-        return channel.pipeline().get(SslHandler.class) != null;
+        return channel.sslSession() != null;
     }
 
     @Override
     public boolean isOpen() {
-        return channel.isOpen();
+        return channel.();
     }
 
     @Override
@@ -199,13 +201,7 @@ public final class UndertowSession implements Session {
 
     public void closeInternal(CloseReason closeReason) throws IOException {
         if (closed.compareAndSet(false, true)) {
-            channel.writeAndFlush(new CloseWebSocketFrame(closeReason.getCloseCode().getCode(), closeReason.getReasonPhrase()))
-                    .addListener(new GenericFutureListener<Future<? super Void>>() {
-                        @Override
-                        public void operationComplete(Future<? super Void> future) throws Exception {
-                            channel.close();
-                        }
-                    });
+            channel.close((short) closeReason.getCloseCode().getCode(), closeReason.getReasonPhrase());
             getContainer().invokeEndpointMethod(getExecutor(), new Runnable() {
                 @Override
                 public void run() {
@@ -246,11 +242,7 @@ public final class UndertowSession implements Session {
     }
 
     public void forceClose() {
-        try {
-            channel.close().sync();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        channel.close();
     }
 
     @Override
@@ -355,8 +347,9 @@ public final class UndertowSession implements Session {
         return encoding;
     }
 
-    private void setupWebSocketChannel(Channel webSocketChannel) {
+    private void setupWebSocketChannel(WebSocketBase webSocketChannel) {
         this.frameHandler = new FrameHandler(this, this.endpoint.getInstance());
+        webSocketChannel.frameHandler(frameHandler)
         webSocketChannel.pipeline().addLast(frameHandler);
 
     }

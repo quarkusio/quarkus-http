@@ -27,6 +27,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.testutils.DefaultServer;
@@ -78,7 +79,7 @@ public class QueryParametersTestCase {
 
                 }
                 sb.append("}");
-                exchange.response().end(sb.toString());
+                exchange.writeAsync(sb.toString());
             }
         });
     }
@@ -133,7 +134,7 @@ public class QueryParametersTestCase {
         out.append((char)0xb1);
         out.append((char)0xdb);
         String s = "p=" + out.toString();
-        HttpServerExchange exchange = new HttpServerExchange(null, null, null, -1);
+        HttpServerExchange exchange = new HttpServerExchange(null, null, new DefaultHttpHeaders(), new DefaultHttpHeaders(), -1);
         URLUtils.parseQueryString(s, exchange, "MS949", true, 1000);
         Assert.assertEquals("한 글", exchange.getQueryParameters().get("p").getFirst());
 

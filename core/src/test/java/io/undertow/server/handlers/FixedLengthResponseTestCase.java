@@ -63,7 +63,7 @@ public class FixedLengthResponseTestCase {
             @Override
             public void handleRequest(final HttpServerExchange exchange) throws Exception {
                 exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LENGTH, message.length() + "");
-                exchange.response().end(message);
+                exchange.writeAsync(message);
             }
         });
     }

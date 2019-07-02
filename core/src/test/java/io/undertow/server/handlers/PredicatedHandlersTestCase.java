@@ -59,7 +59,7 @@ public class PredicatedHandlersTestCase {
                                         "regex('^/path/([^/]+)/(.*)/?$') -> rewrite('/newpath'); set(attribute='%{o,result}', value='param1=$1&param2=$2'); done()", getClass().getClassLoader()), new HttpHandler() {
                             @Override
                             public void handleRequest(HttpServerExchange exchange) throws Exception {
-                                exchange.response().end(exchange.getRelativePath());
+                                exchange.writeAsync(exchange.getRelativePath());
                             }
                         }));
 

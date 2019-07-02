@@ -16,23 +16,23 @@
  *  limitations under the License.
  */
 
-package io.undertow.io;
+package io.undertow.iocore;
 
 import java.io.IOException;
 
-import io.undertow.UndertowLogger;
-import io.undertow.server.HttpServerExchange;
-import io.undertow.util.IoUtils;
+import org.jboss.logging.Logger;
 
 /**
  * @author Stuart Douglas
  */
 public interface IoCallback<T> {
 
-    void onComplete(final HttpServerExchange exchange, final T context);
+    static final Logger log = Logger.getLogger("io.undertow.request.io");
 
-    default void onException(final HttpServerExchange exchange, final T context, final IOException exception) {
-        UndertowLogger.REQUEST_IO_LOGGER.ioException(exception);
+    void onComplete(final HttpExchange exchange, final T context);
+
+    default void onException(final HttpExchange exchange, final T context, final IOException exception) {
+        log.debugf(exception, "IO Exception");
         exchange.endExchange();
     }
 
@@ -41,7 +41,7 @@ public interface IoCallback<T> {
      */
     IoCallback END_EXCHANGE = new IoCallback<Object>() {
         @Override
-        public void onComplete(HttpServerExchange exchange, Object context) {
+        public void onComplete(HttpExchange exchange, Object context) {
             exchange.endExchange();
         }
     };

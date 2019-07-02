@@ -86,7 +86,7 @@ public class ChunkedResponseTrailersTestCase {
                     exchange.putAttachment(HttpAttachments.RESPONSE_TRAILERS, trailers);
                     trailers.set("foo", "fooVal");
                     trailers.set("bar", "barVal");
-                    exchange.response().end(message);
+                    exchange.writeAsync(message);
 
                 } catch (IOException e) {
                     throw new RuntimeException(e);

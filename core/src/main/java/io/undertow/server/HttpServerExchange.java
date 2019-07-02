@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -38,12 +39,14 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
+import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
-import io.undertow.io.IoCallback;
+import io.undertow.iocore.HttpExchange;
+import io.undertow.iocore.IoCallback;
+import io.undertow.iocore.OutputChannel;
 import io.undertow.security.api.SecurityContext;
 import io.undertow.server.handlers.Cookie;
 import io.undertow.util.AbstractAttachable;
@@ -61,6 +64,7 @@ import io.undertow.util.StatusCodes;
 import io.undertow.util.UndertowOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.http.ServerWebSocket;
 
 /**
  * An HTTP server request/response exchange.  An instance of this class is constructed as soon as the request headers are
@@ -68,7 +72,7 @@ import io.vertx.core.http.HttpServerResponse;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class HttpServerExchange extends AbstractAttachable implements BufferAllocator {
+public final class HttpServerExchange extends AbstractAttachable implements BufferAllocator, OutputChannel, HttpExchange {
 
     // immutable state
     private static final String HTTPS = "https";
@@ -85,17 +89,17 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
 
     private static final IoCallback<ByteBuf> DRAIN_CALLBACK = new IoCallback<ByteBuf>() {
         @Override
-        public void onComplete(HttpServerExchange exchange, ByteBuf context) {
+        public void onComplete(HttpExchange exchange, ByteBuf context) {
             if (context != null) {
                 context.release();
-                exchange.readAsync(this);
+                ((HttpServerExchange)exchange).readAsync(this);
             }
 
         }
 
         @Override
-        public void onException(HttpServerExchange exchange, ByteBuf context, IOException exception) {
-            exchange.getConnection().close(exchange);
+        public void onException(HttpExchange exchange, ByteBuf context, IOException exception) {
+            ((HttpServerExchange)exchange).getConnection().close(((HttpServerExchange)exchange));
         }
     };
 
@@ -278,20 +282,21 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     private InetSocketAddress destinationAddress;
 
     private final HttpServerRequest request;
-    private final HttpServerResponse response;
     private SSLSessionInfo sslSessionInfo;
 
-    public HttpServerExchange(final ServerConnection connection, final HttpServerRequest request, HttpServerResponse response, long maxEntitySize) {
+    public HttpServerExchange(final ServerConnection connection, final HttpServerRequest request, HttpHeaders requestHeaders, HttpHeaders responseHeaders, long maxEntitySize) {
         this.connection = connection;
         this.maxEntitySize = maxEntitySize;
         this.request = request;
-        this.response = response;
-        this.requestHeaders = (HttpHeaders) request.headers();
-        this.responseHeaders = (HttpHeaders) response.headers();
+        this.requestHeaders = requestHeaders;
+        this.responseHeaders = responseHeaders;
     }
-
-    public HttpServerResponse response() {
-        return response;
+    public HttpServerExchange(final ServerConnection connection, final HttpServerRequest request, long maxEntitySize) {
+        this.connection = connection;
+        this.maxEntitySize = maxEntitySize;
+        this.request = request;
+        this.requestHeaders = (HttpHeaders) request.headers();
+        this.responseHeaders = (HttpHeaders) request.response().headers();
     }
 
     public HttpServerRequest request() {
@@ -1103,6 +1108,33 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
 
+    /**
+     * Writes the given UTF-8 data and ends the exchange
+     *
+     * @param data The data to write
+     */
+    public void writeAsync(String data) {
+        writeAsync(Unpooled.copiedBuffer(data, StandardCharsets.UTF_8), true, IoCallback.END_EXCHANGE, null);
+    }
+
+    /**
+     * Writes the given  data in the provided charset and ends the exchange
+     *
+     * @param data The data to write
+     */
+    public void writeAsync(String data, Charset charset) {
+        writeAsync(Unpooled.copiedBuffer(data, charset), true, IoCallback.END_EXCHANGE, null);
+    }
+
+    /**
+     * Writes the given data in the provided charset and invokes the provided callback on completion
+     *
+     * @param data The data to write
+     */
+    public <T> void writeAsync(String data, Charset charset, boolean last, IoCallback<T> callback, T context) {
+        writeAsync(Unpooled.copiedBuffer(data, charset), last, callback, context);
+    }
+
     public <T> void writeAsync(ByteBuf data, boolean last, IoCallback<T> callback, T context) {
         if (data == null && !last) {
             throw new IllegalArgumentException("cannot call write with a null buffer and last being false");
@@ -1244,19 +1276,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     /**
-     * Change the status code for this response.  If not specified, the code will be a {@code 200}.  Setting
-     * the status code after the response headers have been transmitted has no effect.
-     *
-     * @param statusCode the new code
-     * @throws IllegalStateException if a response or upgrade was already sent
-     * @see #setStatusCode(int)
-     */
-    @Deprecated
-    public HttpServerExchange setResponseCode(final int statusCode) {
-        return setStatusCode(statusCode);
-    }
-
-    /**
      * Get the status code.
      *
      * @return the status code
@@ -1272,7 +1291,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @param statusCode the new code
      * @throws IllegalStateException if a response or upgrade was already sent
      */
-    public HttpServerExchange setStatusCode(final int statusCode) {
+    public HttpExchange setStatusCode(final int statusCode) {
         if (statusCode < 0 || statusCode > 999) {
             throw new IllegalArgumentException("Invalid response code");
         }
@@ -1394,7 +1413,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * <p>
      * If the exchange is already complete this method is a noop
      */
-    public HttpServerExchange endExchange() {
+    public HttpExchange endExchange() {
         final int state = this.state;
         if (allAreSet(state, FLAG_REQUEST_TERMINATED | FLAG_RESPONSE_TERMINATED)) {
             if (blockingHttpExchange != null) {
@@ -1439,7 +1458,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
                         endExchange();
                     }
                 });
-                return this;
+                return this ;
             }
             IoUtils.safeClose(blockingHttpExchange);
 
@@ -1580,7 +1599,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @throws IllegalStateException if a response or upgrade was already sent, or if the request body is already being
      *                               read
      */
-    public HttpServerExchange upgradeChannel(final Consumer<ChannelHandlerContext> listener) {
+    public HttpServerExchange upgradeChannel(final Consumer<ServerWebSocket> listener) {
         if (!connection.isUpgradeSupported()) {
             throw UndertowMessages.MESSAGES.upgradeNotSupported();
         }
@@ -1588,9 +1607,11 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             throw UndertowMessages.MESSAGES.notAnUpgradeRequest();
         }
         UndertowLogger.REQUEST_LOGGER.debugf("Upgrading request %s", this);
-        connection.setUpgradeListener(listener);
+
         setStatusCode(StatusCodes.SWITCHING_PROTOCOLS);
         responseHeaders().get(HttpHeaderNames.CONNECTION, HttpHeaderNames.UPGRADE);
+        connection.setUpgradeListener(listener);
+        terminateResponse();
         return this;
     }
 
@@ -1603,7 +1624,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @throws IllegalStateException if a response or upgrade was already sent, or if the request body is already being
      *                               read
      */
-    public HttpServerExchange upgradeChannel(String productName, final Consumer<ChannelHandlerContext> listener) {
+    public HttpServerExchange upgradeChannel(String productName, final Consumer<ServerWebSocket> listener) {
         if (!connection.isUpgradeSupported()) {
             throw UndertowMessages.MESSAGES.upgradeNotSupported();
         }
@@ -1629,6 +1650,11 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             return connection.getSslSessionInfo();
         }
         return sslSessionInfo;
+    }
+
+    @Override
+    public void close()  {
+        endExchange();
     }
 
     private static class DefaultBlockingHttpExchange implements BlockingHttpExchange {

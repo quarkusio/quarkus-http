@@ -25,13 +25,13 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowMessages;
-import io.undertow.io.IoCallback;
+import io.undertow.iocore.IoCallback;
 import io.undertow.util.AbstractAttachable;
 import io.undertow.util.UndertowOptionMap;
+import io.vertx.core.http.ServerWebSocket;
 
 /**
  * A server connection. This is a representation of the underlying IO layer. It is not necessarily scoped to the life of
@@ -210,7 +210,7 @@ public abstract class ServerConnection extends AbstractAttachable {
     public abstract void writeFileBlocking(RandomAccessFile file, long position, long count, HttpServerExchange exchange) throws IOException;
 
 
-    protected  void setUpgradeListener(Consumer<ChannelHandlerContext> listener) {
+    protected  void setUpgradeListener(Consumer<ServerWebSocket> listener) {
         throw UndertowMessages.MESSAGES.upgradeNotSupported();
     }
 

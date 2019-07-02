@@ -5,7 +5,7 @@ import java.io.IOException;
 
 import io.netty.channel.EventLoop;
 import io.undertow.UndertowLogger;
-import io.undertow.io.IoCallback;
+import io.undertow.iocore.IoCallback;
 
 /**
  * Represents the task executor that maintains the '1 thread at a time' rules for Undertow, while also

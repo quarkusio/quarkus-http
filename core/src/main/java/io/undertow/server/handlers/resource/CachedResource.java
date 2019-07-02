@@ -26,15 +26,19 @@ import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.undertow.UndertowLogger;
-import io.undertow.io.IoCallback;
+import io.undertow.iocore.HttpExchange;
+import io.undertow.iocore.IoCallback;
+import io.undertow.iocore.OutputChannel;
 import io.undertow.server.HttpServerExchange;
+import io.undertow.server.WriteFunction;
 import io.undertow.server.handlers.cache.DirectBufferCache;
+import io.undertow.server.handlers.cache.LimitedBufferSlicePool;
 import io.undertow.util.DateUtils;
 import io.undertow.util.ETag;
 import io.undertow.util.MimeMappings;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.streams.WriteStream;
 
 /**
  * @author Stuart Douglas
@@ -113,12 +117,125 @@ public class CachedResource implements Resource, RangeAwareResource {
 
     @Override
     public void serveBlocking(OutputStream outputStream, HttpServerExchange exchange) throws IOException {
+        final DirectBufferCache dataCache = cachingResourceManager.getDataCache();
+        if (dataCache == null) {
+            underlyingResource.serveBlocking(outputStream, exchange);
+            return;
+        }
 
+        final DirectBufferCache.CacheEntry existing = dataCache.get(cacheKey);
+        final Long length = getContentLength();
+        //if it is not eligible to be served from the cache
+        if (length == null || length > cachingResourceManager.getMaxFileSize()) {
+            underlyingResource.serveBlocking(outputStream, exchange);
+            return;
+        }
+        //it is not cached yet, install a wrapper to grab the data
+        if (existing == null || !existing.enabled() || !existing.reference()) {
+
+            final DirectBufferCache.CacheEntry entry;
+            if (existing == null) {
+                entry = dataCache.add(cacheKey, length.intValue(), cachingResourceManager.getMaxAge());
+            } else {
+                entry = existing;
+            }
+
+            if (entry != null && entry.buffers().length != 0 && entry.claimEnable()) {
+                if (entry.reference()) {
+                    final DirectBufferCache.CacheEntry cacheEntry = entry;
+                    exchange.addWriteFunction(new CachingWriteFunction(cacheEntry, length));
+                } else {
+                    entry.disable();
+                }
+            }
+            underlyingResource.serveBlocking(outputStream, exchange);
+        } else {
+            UndertowLogger.REQUEST_LOGGER.tracef("Serving resource %s from the buffer cache to %s", name, exchange);
+            //serve straight from the cache
+            ByteBuf[] buffers;
+            boolean ok = false;
+            try {
+                LimitedBufferSlicePool.PooledByteBuffer[] pooled = existing.buffers();
+                buffers = new ByteBuf[pooled.length];
+                for (int i = 0; i < buffers.length; i++) {
+                    // Keep position from mutating
+                    buffers[i] = pooled[i].getBuffer().duplicate();
+                }
+                ok = true;
+            } finally {
+                if (!ok) {
+                    existing.dereference();
+                }
+            }
+            try {
+                //TODO: performance
+                for (ByteBuf i : buffers) {
+                    while (i.isReadable()) {
+                        outputStream.write(i.readByte());
+                    }
+                }
+                outputStream.close();
+            } finally {
+                existing.dereference();
+            }
+        }
     }
 
     @Override
-    public void serveAsync(WriteStream<Buffer> stream, HttpServerExchange exchange) {
+    public void serveAsync(OutputChannel stream, HttpServerExchange exchange) {
+        final DirectBufferCache dataCache = cachingResourceManager.getDataCache();
+        if (dataCache == null) {
+            underlyingResource.serveAsync(stream, exchange);
+            return;
+        }
 
+        final DirectBufferCache.CacheEntry existing = dataCache.get(cacheKey);
+        final Long length = getContentLength();
+        //if it is not eligible to be served from the cache
+        if (length == null || length > cachingResourceManager.getMaxFileSize()) {
+            underlyingResource.serveAsync(stream, exchange);
+            return;
+        }
+        //it is not cached yet, install a wrapper to grab the data
+        if (existing == null || !existing.enabled() || !existing.reference()) {
+
+            final DirectBufferCache.CacheEntry entry;
+            if (existing == null) {
+                entry = dataCache.add(cacheKey, length.intValue(), cachingResourceManager.getMaxAge());
+            } else {
+                entry = existing;
+            }
+
+            if (entry != null && entry.buffers().length != 0 && entry.claimEnable()) {
+                if (entry.reference()) {
+                    final DirectBufferCache.CacheEntry cacheEntry = entry;
+                    exchange.addWriteFunction(new CachingWriteFunction(cacheEntry, length));
+                } else {
+                    entry.disable();
+                }
+            }
+            underlyingResource.serveAsync(stream, exchange);
+        } else {
+            UndertowLogger.REQUEST_LOGGER.tracef("Serving resource %s from the buffer cache to %s", name, exchange);
+            //serve straight from the cache
+            ByteBuf[] buffers;
+            boolean ok = false;
+            try {
+                LimitedBufferSlicePool.PooledByteBuffer[] pooled = existing.buffers();
+                buffers = new ByteBuf[pooled.length];
+                for (int i = 0; i < buffers.length; i++) {
+                    // Keep position from mutating
+                    buffers[i] = pooled[i].getBuffer().duplicate();
+                }
+                ok = true;
+            } finally {
+                if (!ok) {
+                    existing.dereference();
+                }
+            }
+            stream.writeAsync(Unpooled.wrappedBuffer(buffers), true, new DereferenceCallback<>(existing, IoCallback.END_EXCHANGE), null);
+
+        }
     }
 
     public void invalidate() {
@@ -140,62 +257,6 @@ public class CachedResource implements Resource, RangeAwareResource {
         }
         return true;
     }
-//
-//    @Override
-//    public void serve(final Sender sender, final HttpServerExchange exchange, final IoCallback completionCallback) {
-//        final DirectBufferCache dataCache = cachingResourceManager.getDataCache();
-//        if (dataCache == null) {
-//            underlyingResource.serve(sender, exchange, completionCallback);
-//            return;
-//        }
-//
-//        final DirectBufferCache.CacheEntry existing = dataCache.get(cacheKey);
-//        final Long length = getContentLength();
-//        //if it is not eligible to be served from the cache
-//        if (length == null || length > cachingResourceManager.getMaxFileSize()) {
-//            underlyingResource.serve(sender, exchange, completionCallback);
-//            return;
-//        }
-//        //it is not cached yet, install a wrapper to grab the data
-//        if (existing == null || !existing.enabled() || !existing.reference()) {
-//            Sender newSender = sender;
-//
-//            final DirectBufferCache.CacheEntry entry;
-//            if (existing == null) {
-//                entry = dataCache.add(cacheKey, length.intValue(), cachingResourceManager.getMaxAge());
-//            } else {
-//                entry = existing;
-//            }
-//
-//            if (entry != null && entry.buffers().length != 0 && entry.claimEnable()) {
-//                if (entry.reference()) {
-//                    newSender = new ResponseCachingSender(sender, entry, length);
-//                } else {
-//                    entry.disable();
-//                }
-//            }
-//            underlyingResource.serve(newSender, exchange, completionCallback);
-//        } else {
-//            UndertowLogger.REQUEST_LOGGER.tracef("Serving resource %s from the buffer cache to %s", name, exchange);
-//            //serve straight from the cache
-//            ByteBuf[] buffers;
-//            boolean ok = false;
-//            try {
-//                LimitedBufferSlicePool.PooledByteBuffer[] pooled = existing.buffers();
-//                buffers = new ByteBuf[pooled.length];
-//                for (int i = 0; i < buffers.length; i++) {
-//                    // Keep position from mutating
-//                    buffers[i] = pooled[i].getBuffer().duplicate();
-//                }
-//                ok = true;
-//            } finally {
-//                if (!ok) {
-//                    existing.dereference();
-//                }
-//            }
-//            sender.send(buffers, new DereferenceCallback(existing, completionCallback));
-//        }
-//    }
 
     @Override
     public Long getContentLength() {
@@ -313,7 +374,7 @@ public class CachedResource implements Resource, RangeAwareResource {
     }
 
     @Override
-    public void serveRangeAsync(WriteStream<Buffer> outputStream, HttpServerExchange exchange, long start, long end) {
+    public void serveRangeAsync(OutputChannel outputStream, HttpServerExchange exchange, long start, long end) {
 
     }
 
@@ -335,7 +396,7 @@ public class CachedResource implements Resource, RangeAwareResource {
         }
 
         @Override
-        public void onComplete(final HttpServerExchange exchange, final T sender) {
+        public void onComplete(final HttpExchange exchange, final T sender) {
             try {
                 entry.dereference();
             } finally {
@@ -344,7 +405,7 @@ public class CachedResource implements Resource, RangeAwareResource {
         }
 
         @Override
-        public void onException(final HttpServerExchange exchange, final T sender, final IOException exception) {
+        public void onException(final HttpExchange exchange, final T sender, final IOException exception) {
             UndertowLogger.REQUEST_IO_LOGGER.ioException(exception);
             try {
                 entry.dereference();
@@ -385,4 +446,37 @@ public class CachedResource implements Resource, RangeAwareResource {
         }
     }
 
+    private static class CachingWriteFunction implements WriteFunction {
+
+        private final DirectBufferCache.CacheEntry cacheEntry;
+        private final Long length;
+        int written;
+
+        public CachingWriteFunction(DirectBufferCache.CacheEntry cacheEntry, Long length) {
+            this.cacheEntry = cacheEntry;
+            this.length = length;
+        }
+
+        @Override
+        public ByteBuf preWrite(ByteBuf data, boolean last) {
+            ByteBuf copy = data.duplicate();
+            LimitedBufferSlicePool.PooledByteBuffer[] pooled = cacheEntry.buffers();
+            ByteBuf[] buffers = new ByteBuf[pooled.length];
+            for (int i = 0; i < buffers.length; i++) {
+                ByteBuf buf = pooled[i].getBuffer();
+                if (buf.isWritable()) {
+                    int write = Math.min(buf.writableBytes(), copy.readableBytes());
+                    written += write;
+                    buf.writeBytes(copy);
+                }
+                if (!copy.isReadable()) {
+                    break;
+                }
+            }
+            if (written == length) {
+                cacheEntry.enable();
+            }
+            return data;
+        }
+    }
 }

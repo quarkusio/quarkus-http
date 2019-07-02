@@ -19,7 +19,8 @@ import java.io.IOException;
 
 import io.netty.buffer.ByteBuf;
 import io.undertow.UndertowLogger;
-import io.undertow.io.IoCallback;
+import io.undertow.iocore.HttpExchange;
+import io.undertow.iocore.IoCallback;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.HttpHeaderNames;
@@ -222,17 +223,17 @@ public class FormEncodedDataDefinition implements FormParserFactory.ParserDefini
         }
 
         @Override
-        public void onComplete(HttpServerExchange exchange, ByteBuf buffer) {
+        public void onComplete(HttpExchange exchange, ByteBuf buffer) {
             doParse(buffer);
             if (state != 4) {
                 exchange.readAsync(this);
             } else {
-                exchange.dispatch(SameThreadExecutor.INSTANCE, handler);
+                ((HttpServerExchange)exchange).dispatch(SameThreadExecutor.INSTANCE, handler);
             }
         }
 
         @Override
-        public void onException(HttpServerExchange exchange, ByteBuf context, IOException exception) {
+        public void onException(HttpExchange exchange, ByteBuf context, IOException exception) {
             UndertowLogger.REQUEST_IO_LOGGER.ioExceptionReadingFromChannel(exception);
             exchange.endExchange();
         }

@@ -71,7 +71,7 @@ public class AccessLogFileTestCase {
     private static final HttpHandler HELLO_HANDLER = new HttpHandler() {
         @Override
         public void handleRequest(final HttpServerExchange exchange) throws Exception {
-            exchange.response().end("Hello");
+            exchange.writeAsync("Hello");
         }
     };
 

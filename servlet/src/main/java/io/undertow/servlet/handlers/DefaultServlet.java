@@ -36,7 +36,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import io.undertow.io.IoCallback;
+import io.undertow.iocore.HttpExchange;
+import io.undertow.iocore.IoCallback;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.resource.DefaultResourceSupplier;
 import io.undertow.server.handlers.resource.DirectoryUtils;
@@ -353,17 +354,6 @@ public class DefaultServlet extends HttpServlet {
         }
         final boolean include = req.getDispatcherType() == DispatcherType.INCLUDE;
         if (!req.getMethod().equals(HttpMethodNames.HEAD)) {
-            IoCallback callback = include ? new IoCallback() {
-                @Override
-                public void onComplete(HttpServerExchange exchange, Object context) {
-
-                }
-
-                @Override
-                public void onException(HttpServerExchange exchange, Object context, IOException exception) {
-
-                }
-            } : IoCallback.END_EXCHANGE;
             if (rangeResponse == null) {
                 resource.serveBlocking(exchange.getOutputStream(), exchange);
             } else {

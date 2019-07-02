@@ -55,7 +55,7 @@ public class SessionServer {
 
                 exchange.getResponseHeaders().add(Headers.CONTENT_TYPE,
                         "text/html;");
-                exchange.response().end(sb.toString());
+                exchange.writeAsync(sb.toString());
             }
         });
         pathHandler.addPrefixPath("/addToSession", new HttpHandler() {

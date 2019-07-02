@@ -47,18 +47,18 @@ public class PathTemplateHandlerTestCase {
                 .add("/foo", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.response().end("foo");
+                        exchange.writeAsync("foo");
                     }
                 }).add("/foo/", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.response().end("foo/");
+                        exchange.writeAsync("foo/");
                     }
                 })
                 .add("/foo/{bar}", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
-                        exchange.response().end("foo-path" + exchange.getQueryParameters().get("bar"));
+                        exchange.writeAsync("foo-path" + exchange.getQueryParameters().get("bar"));
                     }
                 }));
     }

@@ -61,10 +61,10 @@ public class HeadTestCase {
                 if (connection == null) {
                     connection = exchange.getConnection();
                 } else if (!DefaultServer.isAjp() && !DefaultServer.isProxy() && connection != exchange.getConnection()) {
-                    //exchange.response().end("Connection not persistent");
+                    //exchange.writeAsync("Connection not persistent");
                 }
                 exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LENGTH, message.length() + "");
-                exchange.response().end(message);
+                exchange.writeAsync(message);
             }
         });
     }

@@ -67,7 +67,7 @@ public class ChunkedResponseTransferCodingTestCase {
                         outputStream.close();
                         return;
                     }
-                    exchange.response().end(message);
+                    exchange.writeAsync(message);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

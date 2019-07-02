@@ -35,6 +35,7 @@ import io.undertow.servlet.util.ImmediateInstanceHandle;
 import io.undertow.websockets.jsr.annotated.AnnotatedEndpoint;
 import io.undertow.websockets.jsr.handshake.HandshakeUtil;
 import io.undertow.websockets.jsr.handshake.WebSocketHttpExchange;
+import io.vertx.core.http.ServerWebSocket;
 
 /**
  * {@link WebSocketConnectionCallback} implementation which will setuo the {@link UndertowSession} and notify
@@ -56,7 +57,7 @@ public final class EndpointSessionHandler {
         return container;
     }
 
-    public UndertowSession connected(ChannelHandlerContext context, ConfiguredServerEndpoint config, WebSocketHttpExchange exchange, String subprotocol) {
+    public UndertowSession connected(ServerWebSocket context, ConfiguredServerEndpoint config, WebSocketHttpExchange exchange, String subprotocol) {
         try {
             if (container.isClosed()) {
                 //if the underlying container is closed we just reject
@@ -115,7 +116,7 @@ public final class EndpointSessionHandler {
                 endpointInstance = (InstanceHandle<Endpoint>) instance;
             }
 
-            UndertowSession session = new UndertowSession(context.channel(), URI.create(exchange.getRequestURI()),
+            UndertowSession session = new UndertowSession(context, URI.create(exchange.getRequestURI()),
                     exchange.getAttachment(HandshakeUtil.PATH_PARAMS), exchange.getRequestParameters(),
                     this, principal, endpointInstance, config.getEndpointConfiguration(), exchange.getQueryString(),
                     config.getEncodingFactory().createEncoding(config.getEndpointConfiguration()), config, subprotocol,

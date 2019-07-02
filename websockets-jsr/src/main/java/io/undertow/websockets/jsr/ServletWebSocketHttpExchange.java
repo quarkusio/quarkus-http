@@ -37,6 +37,7 @@ import io.undertow.servlet.handlers.ServletRequestContext;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.IoUtils;
 import io.undertow.websockets.jsr.handshake.WebSocketHttpExchange;
+import io.vertx.core.http.ServerWebSocket;
 
 /**
  * @author Stuart Douglas
@@ -120,7 +121,7 @@ public class ServletWebSocketHttpExchange implements WebSocketHttpExchange {
     }
 
     @Override
-    public void upgradeChannel(Consumer<ChannelHandlerContext> listener) {
+    public void upgradeChannel(Consumer<ServerWebSocket> listener) {
         exchange.upgradeChannel(listener);
     }
 

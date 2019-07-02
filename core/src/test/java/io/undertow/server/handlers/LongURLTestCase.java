@@ -52,7 +52,7 @@ public class LongURLTestCase {
         blockingHandler.setRootHandler(new HttpHandler() {
             @Override
             public void handleRequest(final HttpServerExchange exchange) {
-                exchange.response().end(exchange.getRelativePath());
+                exchange.writeAsync(exchange.getRelativePath());
             }
         });
     }

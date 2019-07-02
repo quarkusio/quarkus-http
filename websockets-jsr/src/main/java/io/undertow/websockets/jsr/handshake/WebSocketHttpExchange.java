@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.undertow.util.AttachmentKey;
+import io.vertx.core.http.ServerWebSocket;
 
 
 /**
@@ -94,7 +95,7 @@ public interface WebSocketHttpExchange extends Closeable {
      *
      * @param upgradeCallback
      */
-    void upgradeChannel(Consumer<ChannelHandlerContext> listener);
+    void upgradeChannel(Consumer<ServerWebSocket> listener);
 
     /**
      * End the exchange normally. If this is a blocking exchange this may be a noop, and the exchange

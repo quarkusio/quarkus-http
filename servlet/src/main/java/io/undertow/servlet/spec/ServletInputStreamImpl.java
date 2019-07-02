@@ -29,7 +29,8 @@ import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 
 import io.netty.buffer.ByteBuf;
-import io.undertow.io.IoCallback;
+import io.undertow.iocore.HttpExchange;
+import io.undertow.iocore.IoCallback;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.UndertowServletMessages;
 
@@ -80,7 +81,7 @@ public class ServletInputStreamImpl extends ServletInputStream {
             if (anyAreClear(state, FLAG_ON_DATA_READ_CALLED)) {
                 exchange.scheduleIoCallback(new IoCallback<Object>() {
                     @Override
-                    public void onComplete(HttpServerExchange exchange, Object context) {
+                    public void onComplete(HttpExchange exchange, Object context) {
                         setFlags(FLAG_ON_DATA_READ_CALLED);
                         request.getServletContext().invokeOnAllDataRead(request.getExchange(), listener);
                     }
@@ -224,7 +225,7 @@ public class ServletInputStreamImpl extends ServletInputStream {
 
 
         @Override
-        public void onComplete(HttpServerExchange exchange, ByteBuf context) {
+        public void onComplete(HttpExchange ex, ByteBuf context) {
             try {
                 if (asyncContext.isDispatched()) {
                     //this is no longer an async request
@@ -289,7 +290,7 @@ public class ServletInputStreamImpl extends ServletInputStream {
         }
 
         @Override
-        public void onException(HttpServerExchange exchange, ByteBuf context, IOException exception) {
+        public void onException(HttpExchange ex, ByteBuf context, IOException exception) {
 
             try {
                 request.getServletContext().invokeRunnable(request.getExchange(), new Runnable() {

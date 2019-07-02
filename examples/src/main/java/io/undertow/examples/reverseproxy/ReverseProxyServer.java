@@ -43,7 +43,7 @@ public class ReverseProxyServer {
                         @Override
                         public void handleRequest(HttpServerExchange exchange) throws Exception {
                             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                            exchange.response().end("Server1");
+                            exchange.writeAsync("Server1");
                         }
                     })
                     .build();
@@ -56,7 +56,7 @@ public class ReverseProxyServer {
                         @Override
                         public void handleRequest(HttpServerExchange exchange) throws Exception {
                             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                            exchange.response().end("Server2");
+                            exchange.writeAsync("Server2");
                         }
                     })
                     .build();
@@ -68,7 +68,7 @@ public class ReverseProxyServer {
                         @Override
                         public void handleRequest(HttpServerExchange exchange) throws Exception {
                             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                            exchange.response().end("Server3");
+                            exchange.writeAsync("Server3");
                         }
                     })
                     .build();

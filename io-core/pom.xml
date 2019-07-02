@@ -29,10 +29,10 @@
     </parent>
 
     <groupId>io.undertow</groupId>
-    <artifactId>undertow-core</artifactId>
+    <artifactId>undertow-io-core</artifactId>
     <version>3.0.0.Alpha1-SNAPSHOT</version>
 
-    <name>Undertow Core</name>
+    <name>Undertow IO Core</name>
 
     <properties>
         <test.level>INFO</test.level>
@@ -49,17 +49,6 @@
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>io.vertx</groupId>
-            <artifactId>vertx-web</artifactId>
-            <version>3.7.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-io-core</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>org.jboss.logging</groupId>
@@ -69,12 +58,6 @@
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging-processor</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.eclipse.jetty.alpn</groupId>
-            <artifactId>alpn-api</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -96,12 +79,12 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-
+        
         <dependency>
             <groupId>org.apache.directory.server</groupId>
             <artifactId>apacheds-all</artifactId>
             <scope>test</scope>
-        </dependency>
+        </dependency>        
 
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -262,9 +245,7 @@
         <profile>
             <id>openssl</id>
             <activation>
-                <property>
-                    <name>test.openssl</name>
-                </property>
+                <property><name>test.openssl</name></property>
             </activation>
             <properties>
                 <libraryPath>-Djava.library.path=${java.library.path}</libraryPath>
@@ -274,9 +255,7 @@
         <profile>
             <id>jetty-alpn</id>
             <activation>
-                <property>
-                    <name>jetty-alpn</name>
-                </property>
+                <property><name>jetty-alpn</name></property>
             </activation>
             <dependencies>
                 <dependency>
@@ -337,14 +316,12 @@
                                         <test.bufferSize>${bufferSize}</test.bufferSize>
                                         <default.server.address>localhost</default.server.address>
                                         <default.server.port>7777</default.server.port>
-                                        <java.util.logging.manager>org.jboss.logmanager.LogManager
-                                        </java.util.logging.manager>
+                                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
                                         <test.level>${test.level}</test.level>
                                         <java.net.preferIPv6Addresses>${test.ipv6}</java.net.preferIPv6Addresses>
                                         <sun.net.useExclusiveBind>false</sun.net.useExclusiveBind>
                                     </systemPropertyVariables>
-                                    <reportsDirectory>${project.build.directory}/surefire-proxy-reports
-                                    </reportsDirectory>
+                                    <reportsDirectory>${project.build.directory}/surefire-proxy-reports</reportsDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -392,8 +369,7 @@
                                         <java.net.preferIPv6Addresses>${test.ipv6}</java.net.preferIPv6Addresses>
                                         <sun.net.useExclusiveBind>false</sun.net.useExclusiveBind>
                                     </systemPropertyVariables>
-                                    <reportsDirectory>${project.build.directory}/surefire-https-reports
-                                    </reportsDirectory>
+                                    <reportsDirectory>${project.build.directory}/surefire-https-reports</reportsDirectory>
                                 </configuration>
                             </execution>
                             <execution>
@@ -466,8 +442,7 @@
                                         <java.net.preferIPv6Addresses>${test.ipv6}</java.net.preferIPv6Addresses>
                                         <sun.net.useExclusiveBind>false</sun.net.useExclusiveBind>
                                     </systemPropertyVariables>
-                                    <reportsDirectory>${project.build.directory}/surefire-h2c-upgrade-reports
-                                    </reportsDirectory>
+                                    <reportsDirectory>${project.build.directory}/surefire-h2c-upgrade-reports</reportsDirectory>
                                 </configuration>
                             </execution>
                         </executions>
@@ -506,11 +481,11 @@
                                 <phase>compile</phase>
                                 <configuration>
                                     <tasks>
-                                        <mkdir dir="${java9.build.outputDirectory}"/>
+                                        <mkdir dir="${java9.build.outputDirectory}" />
                                         <javac srcdir="${java9.sourceDirectory}"
-                                               destdir="${java9.build.outputDirectory}"
-                                               classpath="${project.build.outputDirectory}"
-                                               includeantruntime="false"
+                                            destdir="${java9.build.outputDirectory}"
+                                            classpath="${project.build.outputDirectory}"
+                                            includeantruntime="false" 
                                         />
                                     </tasks>
                                 </configuration>
@@ -556,8 +531,7 @@
                                     <goal>copy-resources</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${project.build.outputDirectory}/META-INF/versions/9
-                                    </outputDirectory>
+                                    <outputDirectory>${project.build.outputDirectory}/META-INF/versions/9</outputDirectory>
                                     <resources>
                                         <resource>
                                             <directory>${java9.build.outputDirectory}</directory>

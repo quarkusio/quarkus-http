@@ -26,7 +26,7 @@ import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 
-import io.undertow.io.IoCallback;
+import io.undertow.iocore.OutputChannel;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.server.handlers.resource.RangeAwareResource;
@@ -107,7 +107,7 @@ public class TestResourceLoader extends ClassPathResourceManager {
         }
 
         @Override
-        public void serveAsync(WriteStream<Buffer> stream, HttpServerExchange exchange) {
+        public void serveAsync(OutputChannel stream, HttpServerExchange exchange) {
             delegate.serveAsync(stream, exchange);
         }
 
@@ -152,7 +152,7 @@ public class TestResourceLoader extends ClassPathResourceManager {
         }
 
         @Override
-        public void serveRangeAsync(WriteStream<Buffer> outputStream, HttpServerExchange exchange, long start, long end) {
+        public void serveRangeAsync(OutputChannel outputStream, HttpServerExchange exchange, long start, long end) {
             ((RangeAwareResource)delegate).serveRangeAsync(outputStream, exchange, start, end);
         }
 

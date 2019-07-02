@@ -69,7 +69,7 @@ public class FormAuthTestCase extends AuthenticationTestBase {
         final PredicateHandler handler = new PredicateHandler(Predicates.path("/login"), new HttpHandler() {
             @Override
             public void handleRequest(HttpServerExchange exchange) throws Exception {
-                exchange.response().end("Login Page");
+                exchange.writeAsync("Login Page");
             }
         }, current);
         super.setRootHandler(new SessionAttachmentHandler(handler, new InMemorySessionManager("test"), new SessionCookieConfig()));

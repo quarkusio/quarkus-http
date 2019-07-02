@@ -22,12 +22,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 
-import io.undertow.io.IoCallback;
+import io.undertow.iocore.OutputChannel;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.ETag;
 import io.undertow.util.MimeMappings;
@@ -92,7 +91,7 @@ public interface Resource {
     /**
      * @param exchange The exchange
      */
-    void serveAsync(WriteStream<Buffer> stream, final HttpServerExchange exchange);
+    void serveAsync(OutputChannel stream, final HttpServerExchange exchange);
 
     /**
      * @return The content length, or null if it is unknown

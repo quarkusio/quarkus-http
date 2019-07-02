@@ -37,8 +37,6 @@ import org.junit.runner.RunWith;
 
 import io.undertow.server.handlers.CanonicalPathHandler;
 import io.undertow.server.handlers.PathHandler;
-import io.undertow.server.handlers.cache.CacheHandler;
-import io.undertow.server.handlers.cache.DirectBufferCache;
 import io.undertow.server.handlers.resource.PathResourceManager;
 import io.undertow.server.handlers.resource.ResourceHandler;
 import io.undertow.testutils.AjpIgnore;
@@ -65,9 +63,8 @@ public class FileHandlerStressTestCase {
             Path rootPath = Paths.get(getClass().getResource("page.html").toURI()).getParent();
             final ResourceHandler handler = new ResourceHandler(new PathResourceManager(rootPath, 10485760));
 
-            final CacheHandler cacheHandler = new CacheHandler(new DirectBufferCache(1024, 10, 10480), handler);
             final PathHandler path = new PathHandler();
-            path.addPrefixPath("/path", cacheHandler);
+            path.addPrefixPath("/path", handler);
             final CanonicalPathHandler root = new CanonicalPathHandler();
             root.setNext(path);
             DefaultServer.setRootHandler(root);

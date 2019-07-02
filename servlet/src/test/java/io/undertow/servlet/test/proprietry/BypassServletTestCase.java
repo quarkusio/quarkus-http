@@ -29,7 +29,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import io.undertow.io.IoCallback;
 import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -78,7 +77,7 @@ public class BypassServletTestCase {
                             @Override
                             public void handleRequest(final HttpServerExchange exchange) throws Exception {
                                 if (exchange.getRelativePath().equals("/async")) {
-                                    exchange.response().end("This is not a servlet");
+                                    exchange.writeAsync("This is not a servlet");
                                 } else {
                                     handler.handleRequest(exchange);
                                 }

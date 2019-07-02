@@ -33,7 +33,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import io.undertow.UndertowLogger;
-import io.undertow.io.IoCallback;
 import io.undertow.predicate.Predicate;
 import io.undertow.predicate.Predicates;
 import io.undertow.server.HandlerWrapper;
@@ -41,7 +40,6 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
 import io.undertow.server.handlers.builder.HandlerBuilder;
-import io.undertow.server.handlers.cache.ResponseCache;
 import io.undertow.util.ByteRange;
 import io.undertow.util.CanonicalPathUtils;
 import io.undertow.util.DateUtils;
@@ -90,21 +88,9 @@ public class ResourceHandler implements HttpHandler {
      * The mime mappings that are used to determine the content type.
      */
     private volatile MimeMappings mimeMappings = MimeMappings.DEFAULT;
-    private volatile Predicate cachable = Predicates.truePredicate();
     private volatile Predicate allowed = Predicates.truePredicate();
     private volatile ResourceSupplier resourceSupplier;
     private volatile ResourceManager resourceManager;
-    /**
-     * If this is set this will be the maximum time (in seconds) the client will cache the resource.
-     * <p/>
-     * Note: Do not set this for private resources, as it will cause a Cache-Control: public
-     * to be sent.
-     * <p/>
-     * TODO: make this more flexible
-     * <p/>
-     * This will only be used if the {@link #cachable} predicate returns true
-     */
-    private volatile Integer cacheTime;
 
     /**
      * Handler that is called if no resource is found
@@ -168,23 +154,6 @@ public class ResourceHandler implements HttpHandler {
             exchange.setStatusCode(StatusCodes.FORBIDDEN);
             exchange.endExchange();
             return;
-        }
-
-        ResponseCache cache = exchange.getAttachment(ResponseCache.ATTACHMENT_KEY);
-        final boolean cachable = this.cachable.resolve(exchange);
-
-        //we set caching headers before we try and serve from the cache
-        if (cachable && cacheTime != null) {
-            exchange.responseHeaders().set(HttpHeaderNames.CACHE_CONTROL, "public, max-age=" + cacheTime);
-            long date = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(cacheTime);
-            String dateHeader = DateUtils.toDateString(new Date(date));
-            exchange.responseHeaders().set(HttpHeaderNames.EXPIRES, dateHeader);
-        }
-
-        if (cache != null && cachable) {
-            if (cache.tryServeResponse()) {
-                return;
-            }
         }
 
         //we now dispatch to a worker thread
@@ -307,9 +276,9 @@ public class ResourceHandler implements HttpHandler {
                 if (!sendContent) {
                     exchange.endExchange();
                 } else if (rangeResponse != null) {
-                    ((RangeAwareResource) resource).serveRangeAsync(exchange.response(), exchange, start, end);
+                    ((RangeAwareResource) resource).serveRangeAsync(exchange, exchange, start, end);
                 } else {
-                    resource.serveAsync(exchange.response(), exchange);
+                    resource.serveAsync(exchange, exchange);
                 }
             }
         };
@@ -377,15 +346,6 @@ public class ResourceHandler implements HttpHandler {
         return this;
     }
 
-    public Predicate getCachable() {
-        return cachable;
-    }
-
-    public ResourceHandler setCachable(final Predicate cachable) {
-        this.cachable = cachable;
-        return this;
-    }
-
     public Predicate getAllowed() {
         return allowed;
     }
@@ -412,15 +372,6 @@ public class ResourceHandler implements HttpHandler {
     public ResourceHandler setResourceManager(final ResourceManager resourceManager) {
         this.resourceManager = resourceManager;
         this.resourceSupplier = new DefaultResourceSupplier(resourceManager);
-        return this;
-    }
-
-    public Integer getCacheTime() {
-        return cacheTime;
-    }
-
-    public ResourceHandler setCacheTime(final Integer cacheTime) {
-        this.cacheTime = cacheTime;
         return this;
     }
 

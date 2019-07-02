@@ -142,7 +142,7 @@ public class VertxHttpServerInitializer implements Closeable  {
 
                 VertxHttpServerConnection con = new VertxHttpServerConnection(request, allocator, blockingExecutor);
 
-                HttpServerExchange exchange = new HttpServerExchange(con, request, request.response(), -1);
+                HttpServerExchange exchange = new HttpServerExchange(con, request,  -1);
                 Connectors.setExchangeRequestPath(exchange, request.uri(), "UTF-8", true, false, new StringBuilder());
                 exchange.requestMethod(request.rawMethod());
                 exchange.setRequestScheme(request.scheme());

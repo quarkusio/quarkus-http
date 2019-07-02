@@ -32,7 +32,8 @@ import javax.servlet.WriteListener;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.undertow.UndertowMessages;
-import io.undertow.io.IoCallback;
+import io.undertow.iocore.HttpExchange;
+import io.undertow.iocore.IoCallback;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.UndertowServletMessages;
 import io.undertow.servlet.handlers.ServletRequestContext;
@@ -336,7 +337,7 @@ public class ServletOutputStreamImpl extends ServletOutputStream {
     private class ListenerCallback implements IoCallback<Void> {
 
         @Override
-        public void onComplete(HttpServerExchange exchange, Void context) {
+        public void onComplete(HttpExchange  ex, Void context) {
             clearFlags(FLAG_PENDING_DATA);
             if (allAreClear(state, FLAG_CLOSED)) {
                 //TODO: better way to avoid recursive invocation
@@ -367,7 +368,7 @@ public class ServletOutputStreamImpl extends ServletOutputStream {
         }
 
         @Override
-        public void onException(HttpServerExchange exchange, Void context,
+        public void onException(HttpExchange ex, Void context,
                                 IOException exception) {
             try {
                 servletRequestContext.getCurrentServletContext().invokeRunnable(servletRequestContext.getExchange(), new Runnable() {

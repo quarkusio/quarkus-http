@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import io.undertow.iocore.OutputChannel;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.CopyOnWriteMap;
 import io.undertow.util.ETag;
@@ -130,7 +131,7 @@ public class PreCompressedResourceSupplier implements ResourceSupplier {
                             }
 
                             @Override
-                            public void serveAsync(WriteStream<Buffer> stream, HttpServerExchange exchange) {
+                            public void serveAsync(OutputChannel stream, HttpServerExchange exchange) {
                                 exchange.responseHeaders().set(HttpHeaderNames.CONTENT_ENCODING, value.getValue());
                                 resource.serveAsync(stream, exchange);
                             }

@@ -44,7 +44,7 @@ public class HttpServerExchangeTestCase {
         DefaultServer.setRootHandler(new HttpHandler() {
             @Override
             public void handleRequest(HttpServerExchange exchange) throws Exception {
-                exchange.response().end(exchange.getHostName()
+                exchange.writeAsync(exchange.getHostName()
                         + ":" + exchange.protocol()
                         + ":" + exchange.requestMethod()
                         + ":" + exchange.getHostPort()

@@ -527,16 +527,18 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
 
     @Override
     public <T extends HttpUpgradeHandler> T upgrade(final Class<T> handlerClass) throws IOException {
-        try {
-            InstanceFactory<T> factory = servletContext.getDeployment().getDeploymentInfo().getClassIntrospecter().createInstanceFactory(handlerClass);
-            final InstanceHandle<T> instance = factory.createInstance();
-            exchange.upgradeChannel(new ServletUpgradeListener(instance, servletContext.getDeployment(), exchange));
-            return instance.getInstance();
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
+        throw new IOException("NYI");
+//
+//        try {
+//            InstanceFactory<T> factory = servletContext.getDeployment().getDeploymentInfo().getClassIntrospecter().createInstanceFactory(handlerClass);
+//            final InstanceHandle<T> instance = factory.createInstance();
+//            //exchange.upgradeChannel(new ServletUpgradeListener(instance, servletContext.getDeployment(), exchange));
+//            return instance.getInstance();
+//        } catch (InstantiationException e) {
+//            throw new RuntimeException(e);
+//        } catch (NoSuchMethodException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     private void loadParts() throws IOException, ServletException {

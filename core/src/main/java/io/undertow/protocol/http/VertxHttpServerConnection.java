@@ -6,14 +6,12 @@ import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowLogger;
-import io.undertow.io.IoCallback;
+import io.undertow.iocore.IoCallback;
 import io.undertow.server.BufferAllocator;
 import io.undertow.server.ConnectionSSLSessionInfo;
 import io.undertow.server.Connectors;
@@ -26,6 +24,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.net.impl.ConnectionBase;
 
 public class VertxHttpServerConnection extends ServerConnection implements Handler<Buffer> {
@@ -359,8 +358,14 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
         return null;
     }
 
-    protected void setUpgradeListener(Consumer<ChannelHandlerContext> listener) {
-        request.upgrade();
+    protected void setUpgradeListener(Consumer<ServerWebSocket> listener) {
+        ServerWebSocket sebsocket = request.upgrade();
+        getIoThread().execute(new Runnable() {
+            @Override
+            public void run() {
+                listener.accept(sebsocket);
+            }
+        });
     }
 
     @Override

@@ -52,7 +52,6 @@ public class FixedLengthRequestTestCase {
 
     private static volatile String message;
 
-    private static volatile ServerConnection connection;
 
     @BeforeClass
     public static void setup() {
@@ -62,15 +61,6 @@ public class FixedLengthRequestTestCase {
             @Override
             public void handleRequest(final HttpServerExchange exchange) {
                 try {
-                    if (connection == null) {
-                        connection = exchange.getConnection();
-                    } else if (!DefaultServer.isAjp()  && !DefaultServer.isProxy() && connection != exchange.getConnection()) {
-                        exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                        final OutputStream outputStream = exchange.getOutputStream();
-                        outputStream.write("Connection not persistent".getBytes());
-                        outputStream.close();
-                        return;
-                    }
                     final OutputStream outputStream = exchange.getOutputStream();
                     final InputStream inputStream =  exchange.getInputStream();
                     String m = HttpClientUtils.readResponse(inputStream);
@@ -88,7 +78,6 @@ public class FixedLengthRequestTestCase {
 
     @Test
     public void testFixedLengthRequest() throws IOException {
-        connection = null;
         HttpPost post = new HttpPost(DefaultServer.getDefaultServerURL() + "/path");
         TestHttpClient client = new TestHttpClient();
         try {
@@ -113,7 +102,6 @@ public class FixedLengthRequestTestCase {
     @Test
     @Ignore("sometimes the client attempts to re-use the same connection after the failure, but the server has already closed it")
     public void testMaxRequestSizeFixedLengthRequest() throws IOException {
-        connection = null;
         UndertowOptionMap existing = DefaultServer.getUndertowOptions();
         HttpPost post = new HttpPost(DefaultServer.getDefaultServerURL() + "/path");
         post.setHeader(org.apache.http.HttpHeaders.CONNECTION, "close");
@@ -125,7 +113,6 @@ public class FixedLengthRequestTestCase {
             HttpResponse result = client.execute(post);
             Assert.assertEquals(StatusCodes.INTERNAL_SERVER_ERROR, result.getStatusLine().getStatusCode());
             HttpClientUtils.readResponse(result);
-            connection = null;
             DefaultServer.setUndertowOptions(UndertowOptionMap.create(UndertowOptions.MAX_ENTITY_SIZE, (long) message.length()));
             result = client.execute(post);
             Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());

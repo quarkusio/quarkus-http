@@ -14,12 +14,12 @@ import java.util.Date;
 import java.util.List;
 
 import io.netty.buffer.ByteBuf;
+import io.undertow.UndertowLogger;
+import io.undertow.iocore.OutputChannel;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.DateUtils;
 import io.undertow.util.ETag;
 import io.undertow.util.MimeMappings;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.streams.WriteStream;
 
 /**
  * A path resource
@@ -115,9 +115,21 @@ public class PathResource implements RangeAwareResource {
     }
 
     @Override
-    public void serveAsync(WriteStream<Buffer> stream, HttpServerExchange exchange) {
+    public void serveAsync(OutputChannel stream, HttpServerExchange exchange) {
         //TODO: do this properly
-        exchange.response().sendFile(file.toAbsolutePath().toString());
+        //todo implement non blocking IO
+        exchange.dispatch(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    exchange.startBlocking();
+                    serveBlocking(exchange.getOutputStream(), exchange);
+                } catch (IOException e) {
+                    UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
+                    exchange.endExchange();
+                }
+            }
+        });
     }
 
     @Override
@@ -164,13 +176,57 @@ public class PathResource implements RangeAwareResource {
     }
 
     @Override
-    public void serveRangeBlocking(OutputStream outputStream, HttpServerExchange exchange, long start, long end) throws IOException {
-        throw new IOException("NYI");
+    public void serveRangeBlocking(OutputStream sender, HttpServerExchange exchange, long start, long end) throws IOException {
+        ByteBuf buffer = exchange.allocateBuffer(false);
+        int pos = 0;
+        try (InputStream in = Files.newInputStream(file)) {
+            int r;
+            while ((r = in.read(buffer.array(), buffer.arrayOffset(), buffer.writableBytes())) > 0) {
+                int sw, ew;
+                if (pos < start) {
+                    int toEat = (int) (start - pos);
+                    if (toEat > r) {
+                        sw = -1;
+                    } else {
+                        sw = toEat;
+                    }
+                } else {
+                    sw = 0;
+                }
+                int rem = (int) (end - Math.max(pos, start)) + 1;
+                if (rem <= 0) {
+                    sender.close();
+                    return;
+                } else if (r > rem) {
+                    ew = rem;
+                } else {
+                    ew = r;
+                }
+                if (sw != -1) {
+                    sender.write(buffer.array(), buffer.arrayOffset() + sw, ew);
+                }
+                pos += r;
+            }
+        } finally {
+            buffer.release();
+        }
     }
 
     @Override
-    public void serveRangeAsync(WriteStream<Buffer> outputStream, HttpServerExchange exchange, long start, long end) {
-        exchange.response().sendFile(file.toAbsolutePath().toString(), start, end - start);
+    public void serveRangeAsync(OutputChannel outputStream, HttpServerExchange exchange, long start, long end) {
+        //todo implement non blocking IO
+        exchange.dispatch(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    exchange.startBlocking();
+                    serveRangeBlocking(exchange.getOutputStream(), exchange, start, end);
+                } catch (IOException e) {
+                    UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
+                    exchange.endExchange();
+                }
+            }
+        });
     }
 
     @Override

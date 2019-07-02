@@ -63,7 +63,7 @@ public class SimpleErrorPageHandler implements HttpHandler {
                 final String errorPage = "<html><head><title>Error</title></head><body>" + exchange.getStatusCode() + " - " + StatusCodes.getReason(exchange.getStatusCode()) + "</body></html>";
                 exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LENGTH, "" + errorPage.length());
                 exchange.responseHeaders().set(HttpHeaderNames.CONTENT_TYPE, "text/html");
-                exchange.response().end(errorPage);
+                exchange.writeAsync(errorPage);
                 return true;
             }
             return false;

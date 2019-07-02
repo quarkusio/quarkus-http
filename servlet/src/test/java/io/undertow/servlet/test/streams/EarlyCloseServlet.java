@@ -35,16 +35,10 @@ import io.undertow.testutils.DefaultServer;
  */
 public class EarlyCloseServlet extends HttpServlet {
 
-    private volatile ServerConnection connection;
 
     @Override
     protected void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
         req.getInputStream().close();
         HttpServletRequestImpl request = ServletRequestContext.requireCurrent().getOriginalRequest();
-        if(connection == null) {
-            connection = request.getExchange().getConnection();
-        } else if(!DefaultServer.isAjp()  && !DefaultServer.isProxy() && connection != request.getExchange().getConnection()) {
-            throw new RuntimeException("Connection not persistent");
-        }
     }
 }

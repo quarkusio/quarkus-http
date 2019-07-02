@@ -49,7 +49,7 @@ public class NewlineInHeadersTestCase {
             public void handleRequest(HttpServerExchange exchange) throws Exception {
                 String message = FileUtils.readFile(exchange.getInputStream());
                 exchange.responseHeaders().set(ECHO, message);
-                exchange.response().end(RESPONSE);
+                exchange.writeAsync(RESPONSE);
             }
         }));
         final TestHttpClient client = new TestHttpClient();

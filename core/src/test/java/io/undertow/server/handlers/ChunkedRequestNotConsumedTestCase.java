@@ -29,6 +29,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import io.undertow.iocore.HttpExchange;
+import io.undertow.iocore.IoCallback;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.testutils.DefaultServer;
@@ -55,7 +57,12 @@ public class ChunkedRequestNotConsumedTestCase {
             @Override
             public void handleRequest(final HttpServerExchange exchange) throws InterruptedException {
                 exchange.setResponseContentLength("message".length());
-                exchange.response().write("message");
+                exchange.writeAsync("message", StandardCharsets.UTF_8, false, new IoCallback<Object>() {
+                    @Override
+                    public void onComplete(HttpExchange exchange, Object context) {
+
+                    }
+                }, null);
                 exchange.getIoThread().schedule(new Runnable() {
                     @Override
                     public void run() {

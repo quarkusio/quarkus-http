@@ -118,6 +118,7 @@ public class FileHandlerTestCase {
             client.getConnectionManager().shutdown();
         }
     }
+
     @Test
     public void testFileTransfer() throws IOException, URISyntaxException {
         TestHttpClient client = new TestHttpClient();
@@ -147,7 +148,7 @@ public class FileHandlerTestCase {
         TestHttpClient client = new TestHttpClient();
         Path tmp = Paths.get(System.getProperty("java.io.tmpdir"));
         StringBuilder message = new StringBuilder();
-        for(int i = 0; i < 100000; ++i) {
+        for (int i = 0; i < 100000; ++i) {
             message.append("Hello World");
         }
         Path large = Files.createTempFile(null, ".txt");

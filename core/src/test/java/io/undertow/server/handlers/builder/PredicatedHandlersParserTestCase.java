@@ -193,7 +193,7 @@ public class PredicatedHandlersParserTestCase {
 
         List<PredicatedHandler> ret = PredicatedHandlersParser.parse(value, getClass().getClassLoader());
         Assert.assertEquals(1, ret.size());
-        HttpServerExchange exchange = new HttpServerExchange(null, null, null, -1);
+        HttpServerExchange exchange = new HttpServerExchange(null, null, new DefaultHttpHeaders(), new DefaultHttpHeaders(), -1);
         exchange.getRequestHeaders().put(Headers.USER_AGENT, "firefox");
         ret.get(0).getHandler().wrap(ResponseCodeHandler.HANDLE_200).handleRequest(exchange);
         Assert.assertNull(exchange.getRequestHeaders().get(Headers.USER_AGENT));

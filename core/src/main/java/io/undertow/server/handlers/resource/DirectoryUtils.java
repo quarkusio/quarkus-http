@@ -28,7 +28,7 @@ import java.util.Locale;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.undertow.protocol.http.VertxBufferImpl;
+import io.undertow.iocore.IoCallback;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.DateUtils;
 import io.undertow.util.ETag;
@@ -81,7 +81,7 @@ public class DirectoryUtils {
                 exchange.endExchange();
                 return true;
             }
-            exchange.response().end(new VertxBufferImpl(buffer));
+            exchange.writeAsync(buffer.duplicate(), true, IoCallback.END_EXCHANGE, null);
 
             return true;
         }
@@ -163,7 +163,7 @@ public class DirectoryUtils {
         exchange.responseHeaders().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
         exchange.responseHeaders().set(HttpHeaderNames.LAST_MODIFIED, DateUtils.toDateString(new Date()));
         exchange.responseHeaders().set(HttpHeaderNames.CACHE_CONTROL, "must-revalidate");
-        exchange.response().end(builder.toString());
+        exchange.writeAsync(builder.toString());
 
         exchange.endExchange();
     }

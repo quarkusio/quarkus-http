@@ -35,7 +35,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
-import io.undertow.io.IoCallback;
+import io.undertow.iocore.HttpExchange;
+import io.undertow.iocore.IoCallback;
 import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -368,13 +369,13 @@ public class MultiPartParserDefinition implements FormParserFactory.ParserDefini
 
 
             @Override
-            public void onComplete(HttpServerExchange exchange, ByteBuf context) {
+            public void onComplete(HttpExchange exchange, ByteBuf context) {
                 buffer = context;
                 executor.execute(this);
             }
 
             @Override
-            public void onException(HttpServerExchange exchange, ByteBuf context, IOException exception) {
+            public void onException(HttpExchange exchange, ByteBuf context, IOException exception) {
                 UndertowLogger.REQUEST_IO_LOGGER.debug("Exception parsing data", exception);
                 exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
                 exchange.endExchange();
