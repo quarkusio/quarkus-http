@@ -55,7 +55,6 @@ import io.undertow.server.handlers.Cookie;
 import io.undertow.util.AbstractAttachable;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.Cookies;
-import io.undertow.util.HeaderMap;
 import io.undertow.util.HttpHeaderNames;
 import io.undertow.util.HttpMethodNames;
 import io.undertow.util.HttpProtocolNames;
@@ -917,25 +916,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     /**
-     * Get the response headers.
-     *
-     * @return the response headers
-     */
-    @Deprecated
-    public HeaderMap getResponseHeaders() {
-        return new HeaderMap(responseHeaders);
-    }
-
-    /**
-     * Get the response headers.
-     *
-     * @return the response headers
-     */
-    public io.netty.handler.codec.http.HttpHeaders responseHeaders() {
-        return responseHeaders;
-    }
-
-    /**
      * @return The content length of the response, or <code>-1</code> if it has not been set
      */
     public long getResponseContentLength() {
@@ -1302,6 +1282,51 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         requestHeaders.add(name, value);
     }
 
+    @Override
+    public void clearRequestHeaders() {
+        request.headers().clear();
+    }
+
+    @Override
+    public void clearResponseHeaders() {
+        request.response().headers().clear();
+    }
+
+    @Override
+    public String getResponseHeader(String name) {
+        return responseHeaders.get(name);
+    }
+
+    @Override
+    public List<String> getResponseHeaders(String name) {
+        return responseHeaders.getAll(name);
+    }
+
+    @Override
+    public boolean containsResponseHeader(String name) {
+        return responseHeaders.contains(name);
+    }
+
+    @Override
+    public void removeResponseHeader(String name) {
+        responseHeaders.remove(name);
+    }
+
+    @Override
+    public void setResponseHeader(String name, String value) {
+        responseHeaders.set(name, value);
+    }
+
+    @Override
+    public Collection<String> getResponseHeaderNames() {
+        return responseHeaders.names();
+    }
+
+    @Override
+    public void addResponseHeader(String name, String value) {
+        responseHeaders.add(name, value);
+    }
+
     /**
      * Change the status code for this response.  If not specified, the code will be a {@code 200}.  Setting
      * the status code after the response headers have been transmitted has no effect.
@@ -1627,7 +1652,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         UndertowLogger.REQUEST_LOGGER.debugf("Upgrading request %s", this);
 
         setStatusCode(StatusCodes.SWITCHING_PROTOCOLS);
-        responseHeaders().get(HttpHeaderNames.CONNECTION, HttpHeaderNames.UPGRADE);
+        responseHeaders.get(HttpHeaderNames.CONNECTION, HttpHeaderNames.UPGRADE);
         connection.setUpgradeListener(listener);
         terminateResponse();
         return this;
@@ -1649,7 +1674,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         UndertowLogger.REQUEST_LOGGER.debugf("Upgrading request %s", this);
         connection.setUpgradeListener(listener);
         setStatusCode(StatusCodes.SWITCHING_PROTOCOLS);
-        final io.netty.handler.codec.http.HttpHeaders headers = responseHeaders();
+        final io.netty.handler.codec.http.HttpHeaders headers = responseHeaders;
         headers.set(HttpHeaderNames.UPGRADE, productName);
         headers.set(HttpHeaderNames.CONNECTION, HttpHeaderNames.UPGRADE);
         return this;

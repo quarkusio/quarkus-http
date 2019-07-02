@@ -60,7 +60,7 @@ public class LotsOfQueryParametersTestCase {
             @Override
             public void handleRequest(final HttpServerExchange exchange) {
                 for (Map.Entry<String, Deque<String>> entry : exchange.getQueryParameters().entrySet()) {
-                    exchange.responseHeaders().set(entry.getKey(), entry.getValue().getFirst());
+                    exchange.setResponseHeader(entry.getKey(), entry.getValue().getFirst());
                 }
             }
         });

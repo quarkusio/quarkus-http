@@ -154,7 +154,7 @@ public class FormAuthenticationMechanism implements AuthenticationMechanism {
                 exchange.addDefaultResponseListener(new DefaultResponseListener() {
                     @Override
                     public boolean handleDefaultResponse(final HttpServerExchange exchange) {
-                        exchange.responseHeaders().set(HttpHeaderNames.LOCATION, location);
+                        exchange.setResponseHeader(HttpHeaderNames.LOCATION, location);
                         exchange.setStatusCode(StatusCodes.FOUND);
                         exchange.endExchange();
                         return true;
@@ -197,6 +197,6 @@ public class FormAuthenticationMechanism implements AuthenticationMechanism {
     static void sendRedirect(final HttpServerExchange exchange, final String location) {
         // TODO - String concatenation to construct URLS is extremely error prone - switch to a URI which will better handle this.
         String loc = exchange.getRequestScheme() + "://" + exchange.getHostAndPort() + location;
-        exchange.responseHeaders().set(HttpHeaderNames.LOCATION, loc);
+        exchange.setResponseHeader(HttpHeaderNames.LOCATION, loc);
     }
 }

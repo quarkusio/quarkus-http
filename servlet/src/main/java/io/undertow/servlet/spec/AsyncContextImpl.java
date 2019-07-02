@@ -406,7 +406,7 @@ public class AsyncContextImpl implements AsyncContext {
         if (!dispatched) {
             if (!exchange.isResponseStarted()) {
                 exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                exchange.responseHeaders().clear();
+                exchange.clearResponseHeaders();
             }
             servletRequest.setAttribute(RequestDispatcher.ERROR_EXCEPTION, error);
             if (!exchange.isResponseStarted()) {
@@ -511,7 +511,7 @@ public class AsyncContextImpl implements AsyncContext {
                                             if (!getResponse().isCommitted()) {
                                                 //close the connection on timeout
                                                 exchange.setPersistent(false);
-                                                exchange.responseHeaders().set(HttpHeaderNames.CONNECTION, HttpHeaderNames.CLOSE.toString());
+                                                exchange.setResponseHeader(HttpHeaderNames.CONNECTION, HttpHeaderNames.CLOSE.toString());
                                                 Connectors.executeRootHandler(new HttpHandler() {
                                                     @Override
                                                     public void handleRequest(HttpServerExchange exchange) throws Exception {

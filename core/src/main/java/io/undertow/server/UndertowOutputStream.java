@@ -167,9 +167,9 @@ public class UndertowOutputStream extends OutputStream {
         state |= FLAG_CLOSED;
         if (anyAreClear(state, FLAG_WRITE_STARTED)) {
             if (pooledBuffer == null) {
-                exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LENGTH, "0");
+                exchange.setResponseHeader(HttpHeaderNames.CONTENT_LENGTH, "0");
             } else {
-                exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LENGTH, "" + pooledBuffer.readableBytes());
+                exchange.setResponseHeader(HttpHeaderNames.CONTENT_LENGTH, "" + pooledBuffer.readableBytes());
             }
         }
         try {

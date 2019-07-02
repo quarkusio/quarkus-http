@@ -55,13 +55,13 @@ public class DateHandler implements HttpHandler {
         // better method is used in DateUtils#addDateHeaderIfRequired
         long time = System.nanoTime();
         if(time < nextUpdateTime) {
-            exchange.responseHeaders().set(HttpHeaderNames.DATE, cachedDateString);
+            exchange.setResponseHeader(HttpHeaderNames.DATE, cachedDateString);
         } else {
             long realTime = System.currentTimeMillis();
             String dateString = DateUtils.toDateString(new Date(realTime));
             cachedDateString = dateString;
             nextUpdateTime = time + 1000000000;
-            exchange.responseHeaders().set(HttpHeaderNames.DATE, dateString);
+            exchange.setResponseHeader(HttpHeaderNames.DATE, dateString);
         }
         next.handleRequest(exchange);
     }

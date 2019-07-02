@@ -54,7 +54,7 @@ public class LotsOfHeadersResponseTestCase {
             @Override
             public void handleRequest(final HttpServerExchange exchange) {
                 for (int i = 0; i < COUNT; ++i) {
-                    exchange.responseHeaders().set(HEADER + i, MESSAGE + i);
+                    exchange.setResponseHeader(HEADER + i, MESSAGE + i);
                 }
             }
         });

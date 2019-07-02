@@ -468,12 +468,11 @@ public class DigestAuthenticationMechanism implements AuthenticationMechanism {
         }
 
         String theChallenge = rb.toString();
-        HttpHeaders responseHeader = exchange.responseHeaders();
         if (supportedAlgorithms.isEmpty()) {
-            responseHeader.add(WWW_AUTHENTICATE, theChallenge);
+            exchange.addResponseHeader(WWW_AUTHENTICATE, theChallenge);
         } else {
             for (DigestAlgorithm current : supportedAlgorithms) {
-                responseHeader.add(WWW_AUTHENTICATE, String.format(theChallenge, current.getToken()));
+                exchange.addResponseHeader(WWW_AUTHENTICATE, String.format(theChallenge, current.getToken()));
             }
         }
 
@@ -505,8 +504,7 @@ public class DigestAuthenticationMechanism implements AuthenticationMechanism {
                 sb.append(",").append(HttpHeaderNames.NONCE_COUNT.toString()).append("=").append(parsedHeader.get(DigestAuthorizationToken.NONCE_COUNT));
             }
 
-            HttpHeaders responseHeader = exchange.responseHeaders();
-            responseHeader.add(AUTHENTICATION_INFO, sb.toString());
+            exchange.addResponseHeader(AUTHENTICATION_INFO, sb.toString());
         }
 
         exchange.removeAttachment(DigestContext.ATTACHMENT_KEY);

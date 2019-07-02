@@ -239,7 +239,7 @@ public class ETagUtils {
      * @return The ETag for the exchange, or null if the etag is not set
      */
     public static ETag getETag(final HttpServerExchange exchange) {
-        final String tag = exchange.responseHeaders().get(HttpHeaderNames.ETAG);
+        final String tag = exchange.getResponseHeader(HttpHeaderNames.ETAG);
         if (tag == null) {
             return null;
         }

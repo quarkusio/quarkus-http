@@ -67,7 +67,7 @@ public class InMemorySessionTestCase {
                         session.setAttribute(COUNT, 0);
                     }
                     Integer count = (Integer) session.getAttribute(COUNT);
-                    exchange.responseHeaders().add(COUNT, count.toString());
+                    exchange.addResponseHeader(COUNT, count.toString());
                     session.setAttribute(COUNT, ++count);
                 }
             });
@@ -123,7 +123,7 @@ public class InMemorySessionTestCase {
                         session.setAttribute(COUNT, 0);
                     }
                     Integer count = (Integer) session.getAttribute(COUNT);
-                    exchange.responseHeaders().add(COUNT, count.toString());
+                    exchange.addResponseHeader(COUNT, count.toString());
                     session.setAttribute(COUNT, ++count);
                 }
             });

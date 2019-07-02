@@ -57,7 +57,7 @@ public class AccessLogTestCase {
     private static final HttpHandler HELLO_HANDLER = new HttpHandler() {
         @Override
         public void handleRequest(final HttpServerExchange exchange) throws Exception {
-            exchange.responseHeaders().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
+            exchange.setResponseHeader(HttpHeaderNames.CONTENT_TYPE, "text/plain");
             exchange.writeAsync("HelloResponse");
         }
     };

@@ -59,8 +59,8 @@ public class RangeRequestTestCase {
         path.addPrefixPath("/path", new ByteRangeHandler(new HttpHandler() {
             @Override
             public void handleRequest(HttpServerExchange exchange) throws Exception {
-                exchange.responseHeaders().set(HttpHeaderNames.LAST_MODIFIED, DateUtils.toDateString(new Date(10000)));
-                exchange.responseHeaders().set(HttpHeaderNames.ETAG, "\"someetag\"");
+                exchange.setResponseHeader(HttpHeaderNames.LAST_MODIFIED, DateUtils.toDateString(new Date(10000)));
+                exchange.setResponseHeader(HttpHeaderNames.ETAG, "\"someetag\"");
                 exchange.setResponseContentLength("0123456789".length());
                 exchange.writeAsync(Unpooled.copiedBuffer("0123456789", StandardCharsets.UTF_8), true, IoCallback.END_EXCHANGE, null);
             }

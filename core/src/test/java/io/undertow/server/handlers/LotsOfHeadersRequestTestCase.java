@@ -91,7 +91,7 @@ public class LotsOfHeadersRequestTestCase {
                 Collection<String> headers = exchange.getRequestHeaderNames();
                 for (String header : headers) {
                     for (String val : exchange.getRequestHeaders(header)) {
-                        exchange.responseHeaders().set(header, val);
+                        exchange.setResponseHeader(header, val);
                     }
                 }
             }

@@ -126,16 +126,16 @@ public class RequestDumpingHandler implements HttpHandler {
                     }
                 }
                 sb.append("     contentLength=" + exchange.getResponseContentLength() + "\n");
-                sb.append("       contentType=" + exchange.responseHeaders().get(HttpHeaderNames.CONTENT_TYPE) + "\n");
+                sb.append("       contentType=" + exchange.getResponseHeader(HttpHeaderNames.CONTENT_TYPE) + "\n");
                 Map<String, Cookie> cookies = exchange.getResponseCookies();
                 if (cookies != null) {
                     for (Cookie cookie : cookies.values()) {
                         sb.append("            cookie=" + cookie.getName() + "=" + cookie.getValue() + "; domain=" + cookie.getDomain() + "; path=" + cookie.getPath() + "\n");
                     }
                 }
-                for (Map.Entry<String, String> header : exchange.responseHeaders()) {
-                    for (String value : exchange.responseHeaders().getAll(header.getKey())) {
-                        sb.append("            header=" + header.getKey() + "=" + value + "\n");
+                for (String header : exchange.getResponseHeaderNames()) {
+                    for (String value : exchange.getResponseHeaders(header)) {
+                        sb.append("            header=" + header + "=" + value + "\n");
                     }
                 }
                 sb.append("            status=" + exchange.getStatusCode() + "\n");

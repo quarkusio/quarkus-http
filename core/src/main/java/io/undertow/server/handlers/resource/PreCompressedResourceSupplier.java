@@ -126,13 +126,13 @@ public class PreCompressedResourceSupplier implements ResourceSupplier {
 
                             @Override
                             public void serveBlocking(OutputStream outputStream, HttpServerExchange exchange) throws IOException {
-                                exchange.responseHeaders().set(HttpHeaderNames.CONTENT_ENCODING, value.getValue());
+                                exchange.setResponseHeader(HttpHeaderNames.CONTENT_ENCODING, value.getValue());
                                 resource.serveBlocking(outputStream, exchange);
                             }
 
                             @Override
                             public void serveAsync(OutputChannel stream, HttpServerExchange exchange) {
-                                exchange.responseHeaders().set(HttpHeaderNames.CONTENT_ENCODING, value.getValue());
+                                exchange.setResponseHeader(HttpHeaderNames.CONTENT_ENCODING, value.getValue());
                                 resource.serveAsync(stream, exchange);
                             }
 

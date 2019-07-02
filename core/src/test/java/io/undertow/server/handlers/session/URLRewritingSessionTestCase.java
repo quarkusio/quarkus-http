@@ -69,11 +69,11 @@ public class URLRewritingSessionTestCase {
                     Assert.assertEquals("/notamatchingpath;jsessionid=" + session.getId(), exchange.getRequestURI());
                 }
                 Integer count = (Integer) session.getAttribute(COUNT);
-                exchange.responseHeaders().add(COUNT, count.toString());
+                exchange.addResponseHeader(COUNT, count.toString());
                 session.setAttribute(COUNT, ++count);
 
                 for (Map.Entry<String, Deque<String>> qp : exchange.getQueryParameters().entrySet()) {
-                    exchange.responseHeaders().add(qp.getKey(), qp.getValue().getFirst());
+                    exchange.addResponseHeader(qp.getKey(), qp.getValue().getFirst());
                 }
                 if (exchange.getQueryString().isEmpty()) {
                     exchange.writeAsync(sessionConfig.rewriteUrl(DefaultServer.getDefaultServerURL() + "/notamatchingpath", session.getId()));

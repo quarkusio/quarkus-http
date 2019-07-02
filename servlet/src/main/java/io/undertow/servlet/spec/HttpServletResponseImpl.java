@@ -109,7 +109,7 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
 
     @Override
     public boolean containsHeader(final String name) {
-        return exchange.responseHeaders().contains(name);
+        return exchange.containsResponseHeader(name);
     }
 
     @Override
@@ -189,7 +189,7 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
         setStatus(StatusCodes.FOUND);
         String realPath;
         if (isAbsoluteUrl(location)) {//absolute url
-            exchange.responseHeaders().set(HttpHeaderNames.LOCATION, location);
+            exchange.setResponseHeader(HttpHeaderNames.LOCATION, location);
         } else {
             if (location.startsWith("/")) {
                 realPath = location;
@@ -202,7 +202,7 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
                 realPath = CanonicalPathUtils.canonicalize(servletContext.getContextPath() + current + location);
             }
             String loc = exchange.getRequestScheme() + "://" + exchange.getHostAndPort() + realPath;
-            exchange.responseHeaders().set(HttpHeaderNames.LOCATION, loc);
+            exchange.setResponseHeader(HttpHeaderNames.LOCATION, loc);
         }
         responseDone();
     }
@@ -227,7 +227,7 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
         if(name.equals(HttpHeaderNames.CONTENT_TYPE)) {
             setContentType(value);
         } else {
-            exchange.responseHeaders().set(name, value);
+            exchange.setResponseHeader(name, value);
         }
     }
 
@@ -238,10 +238,10 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
         if (insideInclude || ignoredFlushPerformed || treatAsCommitted) {
             return;
         }
-        if(name.equals(HttpHeaderNames.CONTENT_TYPE) && !exchange.responseHeaders().contains(HttpHeaderNames.CONTENT_TYPE)) {
+        if(name.equals(HttpHeaderNames.CONTENT_TYPE) && !exchange.containsResponseHeader(HttpHeaderNames.CONTENT_TYPE)) {
             setContentType(value);
         } else {
-            exchange.responseHeaders().add(name, value);
+            exchange.addResponseHeader(name, value);
         }
     }
 
@@ -278,12 +278,12 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
 
     @Override
     public String getHeader(final String name) {
-        return exchange.responseHeaders().get(name);
+        return exchange.getResponseHeader(name);
     }
 
     @Override
     public Collection<String> getHeaders(final String name) {
-        List<String> headers = exchange.responseHeaders().getAll(name);
+        List<String> headers = exchange.getResponseHeaders(name);
         if(headers == null) {
             return Collections.emptySet();
         }
@@ -292,10 +292,7 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
 
     @Override
     public Collection<String> getHeaderNames() {
-        final Set<String> headers = new HashSet<>();
-        for (final Map.Entry<String, String> i : exchange.responseHeaders()) {
-            headers.add(i.getKey());
-        }
+        final Set<String> headers = new HashSet<>(exchange.getResponseHeaderNames());
         return headers;
     }
 
@@ -365,7 +362,7 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
         charsetSet = charset != null;
         this.charset = charset;
         if (contentType != null) {
-            exchange.responseHeaders().set(HttpHeaderNames.CONTENT_TYPE, getContentType());
+            exchange.setResponseHeader(HttpHeaderNames.CONTENT_TYPE, getContentType());
         }
     }
 
@@ -380,9 +377,9 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
             return;
         }
         if(len >= 0) {
-            exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LENGTH, Long.toString(len));
+            exchange.setResponseHeader(HttpHeaderNames.CONTENT_LENGTH, Long.toString(len));
         } else {
-            exchange.responseHeaders().remove(HttpHeaderNames.CONTENT_LENGTH);
+            exchange.removeResponseHeader(HttpHeaderNames.CONTENT_LENGTH);
         }
         this.contentLength = len;
     }
@@ -413,11 +410,11 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
             useCharset = true;
         }
         if(useCharset || !charsetSet) {
-            exchange.responseHeaders().set(HttpHeaderNames.CONTENT_TYPE, ct.getHeader());
+            exchange.setResponseHeader(HttpHeaderNames.CONTENT_TYPE, ct.getHeader());
         } else if(ct.getCharset() == null) {
-            exchange.responseHeaders().set(HttpHeaderNames.CONTENT_TYPE, ct.getHeader() + "; charset=" + charset);
+            exchange.setResponseHeader(HttpHeaderNames.CONTENT_TYPE, ct.getHeader() + "; charset=" + charset);
         }else {
-            exchange.responseHeaders().set(HttpHeaderNames.CONTENT_TYPE, ct.getContentType() + "; charset=" + charset);
+            exchange.setResponseHeader(HttpHeaderNames.CONTENT_TYPE, ct.getContentType() + "; charset=" + charset);
         }
     }
 
@@ -501,7 +498,7 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
         }
         writer = null;
         responseState = ResponseState.NONE;
-        exchange.responseHeaders().clear();
+        exchange.clearResponseHeaders();
         exchange.setStatusCode(StatusCodes.OK);
         treatAsCommitted = false;
     }
@@ -512,7 +509,7 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
             return;
         }
         this.locale = loc;
-        exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LANGUAGE, loc.getLanguage() + "-" + loc.getCountry());
+        exchange.setResponseHeader(HttpHeaderNames.CONTENT_LANGUAGE, loc.getLanguage() + "-" + loc.getCountry());
         if (!charsetSet && writer == null) {
             final Map<String, String> localeCharsetMapping = servletContext.getDeployment().getDeploymentInfo().getLocaleCharsetMapping();
             // Match full language_country_variant first, then language_country,
@@ -528,7 +525,7 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
             if (charset != null) {
                 this.charset = charset;
                 if (contentType != null) {
-                    exchange.responseHeaders().set(HttpHeaderNames.CONTENT_TYPE, getContentType());
+                    exchange.setResponseHeader(HttpHeaderNames.CONTENT_TYPE, getContentType());
                 }
             }
         }
@@ -762,7 +759,7 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
         if(exchange.protocol().equals(HttpProtocolNames.HTTP_1_0)) {
             throw UndertowServletMessages.MESSAGES.trailersNotSupported("HTTP/1.0 request");
         } else if(exchange.protocol().equals(HttpProtocolNames.HTTP_1_1)) {
-            if(exchange.responseHeaders().contains(HttpHeaderNames.CONTENT_LENGTH)) {
+            if(exchange.containsResponseHeader(HttpHeaderNames.CONTENT_LENGTH)) {
                 throw UndertowServletMessages.MESSAGES.trailersNotSupported("not chunked");
             }
         }

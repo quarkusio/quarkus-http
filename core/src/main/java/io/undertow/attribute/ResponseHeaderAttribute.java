@@ -43,7 +43,7 @@ public class ResponseHeaderAttribute implements ExchangeAttribute {
 
     @Override
     public String readAttribute(final HttpServerExchange exchange) {
-        List<String> header = exchange.responseHeaders().getAll(responseHeader);
+        List<String> header = exchange.getResponseHeaders(responseHeader);
         if (header.isEmpty()) {
             return null;
         } else if(header.size() == 1) {
@@ -64,9 +64,9 @@ public class ResponseHeaderAttribute implements ExchangeAttribute {
     @Override
     public void writeAttribute(final HttpServerExchange exchange, final String newValue) throws ReadOnlyAttributeException {
         if(newValue == null) {
-            exchange.responseHeaders().remove(responseHeader);
+            exchange.removeResponseHeader(responseHeader);
         } else {
-            exchange.responseHeaders().set(responseHeader, newValue);
+            exchange.setResponseHeader(responseHeader, newValue);
         }
     }
 

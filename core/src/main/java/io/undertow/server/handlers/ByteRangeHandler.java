@@ -57,11 +57,11 @@ public class ByteRangeHandler implements HttpHandler {
     private static final ResponseCommitListener ACCEPT_RANGE_LISTENER = new ResponseCommitListener() {
         @Override
         public void beforeCommit(HttpServerExchange exchange) {
-            if (!exchange.responseHeaders().contains(HttpHeaderNames.ACCEPT_RANGES)) {
-                if (exchange.responseHeaders().contains(HttpHeaderNames.CONTENT_LENGTH)) {
-                    exchange.responseHeaders().set(HttpHeaderNames.ACCEPT_RANGES, "bytes");
+            if (!exchange.containsResponseHeader(HttpHeaderNames.ACCEPT_RANGES)) {
+                if (exchange.containsResponseHeader(HttpHeaderNames.CONTENT_LENGTH)) {
+                    exchange.setResponseHeader(HttpHeaderNames.ACCEPT_RANGES, "bytes");
                 } else {
-                    exchange.responseHeaders().set(HttpHeaderNames.ACCEPT_RANGES, "none");
+                    exchange.setResponseHeader(HttpHeaderNames.ACCEPT_RANGES, "none");
                 }
             }
         }
@@ -92,19 +92,19 @@ public class ByteRangeHandler implements HttpHandler {
                     if (exchange.getStatusCode() != StatusCodes.OK) {
                         return;
                     }
-                    String length = exchange.responseHeaders().get(HttpHeaderNames.CONTENT_LENGTH);
+                    String length = exchange.getResponseHeader(HttpHeaderNames.CONTENT_LENGTH);
                     if (length == null) {
                         return;
                     }
                     long responseLength = Long.parseLong(length);
-                    String lastModified = exchange.responseHeaders().get(HttpHeaderNames.LAST_MODIFIED);
+                    String lastModified = exchange.getResponseHeader(HttpHeaderNames.LAST_MODIFIED);
                     ByteRange.RangeResponseResult rangeResponse = range.getResponseResult(responseLength, exchange.getRequestHeader(HttpHeaderNames.IF_RANGE),
-                            lastModified == null ? null : DateUtils.parseDate(lastModified), exchange.responseHeaders().get(HttpHeaderNames.ETAG));
+                            lastModified == null ? null : DateUtils.parseDate(lastModified), exchange.getResponseHeader(HttpHeaderNames.ETAG));
                     if (rangeResponse != null) {
                         long start = rangeResponse.getStart();
                         long end = rangeResponse.getEnd();
                         exchange.setStatusCode(rangeResponse.getStatusCode());
-                        exchange.responseHeaders().set(HttpHeaderNames.CONTENT_RANGE, rangeResponse.getContentRange());
+                        exchange.setResponseHeader(HttpHeaderNames.CONTENT_RANGE, rangeResponse.getContentRange());
                         exchange.setResponseContentLength(rangeResponse.getContentLength());
                         if (rangeResponse.getStatusCode() == StatusCodes.REQUEST_RANGE_NOT_SATISFIABLE) {
                             exchange.addWriteFunction(new WriteFunction() {

@@ -73,7 +73,7 @@ public class ExtendedAccessLogFileTestCase {
     private static final HttpHandler HELLO_HANDLER = new HttpHandler() {
         @Override
         public void handleRequest(final HttpServerExchange exchange) throws Exception {
-            exchange.responseHeaders().set("aa", "bb");
+            exchange.setResponseHeader("aa", "bb");
             exchange.writeAsync("Hello");
         }
     };

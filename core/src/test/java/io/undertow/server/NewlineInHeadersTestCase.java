@@ -48,7 +48,7 @@ public class NewlineInHeadersTestCase {
             @Override
             public void handleRequest(HttpServerExchange exchange) throws Exception {
                 String message = FileUtils.readFile(exchange.getInputStream());
-                exchange.responseHeaders().set(ECHO, message);
+                exchange.setResponseHeader(ECHO, message);
                 exchange.writeAsync(RESPONSE);
             }
         }));

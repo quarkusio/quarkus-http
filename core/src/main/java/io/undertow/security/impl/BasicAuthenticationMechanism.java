@@ -198,7 +198,7 @@ public class BasicAuthenticationMechanism implements AuthenticationMechanism {
                 return ChallengeResult.NOT_SENT;
             }
         }
-        exchange.responseHeaders().add(WWW_AUTHENTICATE, challenge);
+        exchange.addResponseHeader(WWW_AUTHENTICATE, challenge);
         UndertowLogger.SECURITY_LOGGER.debugf("Sending basic auth challenge %s for %s", challenge, exchange);
         return new ChallengeResult(true, UNAUTHORIZED);
     }

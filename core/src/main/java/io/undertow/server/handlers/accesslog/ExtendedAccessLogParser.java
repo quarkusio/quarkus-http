@@ -426,7 +426,7 @@ public class ExtendedAccessLogParser {
             return new QuotingExchangeAttribute(new ExchangeAttribute() {
                 @Override
                 public String readAttribute(HttpServerExchange exchange) {
-                    List<String> values = exchange.responseHeaders().getAll(parameter);
+                    List<String> values = exchange.getResponseHeaders(parameter);
                     if (values != null && values.size() > 0) {
                         StringBuilder buffer = new StringBuilder();
                         for (int i = 0; i < values.size(); i++) {

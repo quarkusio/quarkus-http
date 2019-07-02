@@ -64,7 +64,7 @@ public class FormDataParserTestCase {
                     while (it.hasNext()) {
                         String fd = it.next();
                         for (FormData.FormValue val : data.get(fd)) {
-                            exchange.responseHeaders().add("res", fd + ":" + val.getValue());
+                            exchange.addResponseHeader("res", fd + ":" + val.getValue());
                         }
                     }
                 } catch (IOException e) {
@@ -92,7 +92,7 @@ public class FormDataParserTestCase {
                         while (it.hasNext()) {
                             String fd = it.next();
                             for (FormData.FormValue val : data.get(fd)) {
-                                exchange.responseHeaders().add("res", fd + ":" + val.getValue());
+                                exchange.addResponseHeader("res", fd + ":" + val.getValue());
                             }
                         }
                     }

@@ -41,7 +41,7 @@ public class MinContentSizePredicate implements Predicate {
 
     @Override
     public boolean resolve(final HttpServerExchange value) {
-        final String length = value.responseHeaders().get(HttpHeaderNames.CONTENT_LENGTH);
+        final String length = value.getResponseHeader(HttpHeaderNames.CONTENT_LENGTH);
         if (length == null) {
             return false;
         }

@@ -19,6 +19,7 @@ import io.undertow.server.HttpContinue;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.SSLSessionInfo;
 import io.undertow.server.ServerConnection;
+import io.undertow.util.HttpHeaderNames;
 import io.undertow.util.UndertowOptionMap;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
@@ -194,16 +195,16 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
             request.response().setStatusCode(exchange.getStatusCode());
             if (last) {
                 if (data == null) {
-                    if (!exchange.responseHeaders().contains(HttpHeaders.CONTENT_LENGTH)) {
-                        request.response().headers().add(HttpHeaders.CONTENT_LENGTH, "0");
+                    if (!exchange.containsResponseHeader(HttpHeaderNames.CONTENT_LENGTH)) {
+                        request.response().headers().add(HttpHeaderNames.CONTENT_LENGTH, "0");
                     }
                 } else {
-                    if (!exchange.responseHeaders().contains(HttpHeaders.CONTENT_LENGTH)) {
-                        request.response().headers().add(HttpHeaders.CONTENT_LENGTH, Integer.toString(data.readableBytes()));
+                    if (!exchange.containsResponseHeader(HttpHeaderNames.CONTENT_LENGTH)) {
+                        request.response().headers().add(HttpHeaderNames.CONTENT_LENGTH, Integer.toString(data.readableBytes()));
                     }
                 }
             } else {
-                if (!exchange.responseHeaders().contains(HttpHeaders.CONTENT_LENGTH)) {
+                if (!exchange.containsResponseHeader(HttpHeaderNames.CONTENT_LENGTH)) {
                     request.response().setChunked(true);
                 }
             }

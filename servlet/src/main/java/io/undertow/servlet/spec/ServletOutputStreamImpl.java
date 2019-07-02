@@ -225,9 +225,9 @@ public class ServletOutputStreamImpl extends ServletOutputStream {
         setFlags(FLAG_CLOSED);
         if (anyAreClear(state, FLAG_WRITE_STARTED) && servletRequestContext.getOriginalResponse().getHeader(HttpHeaderNames.CONTENT_LENGTH) == null) {
             if (pooledBuffer == null) {
-                exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LENGTH, "0");
+                exchange.setResponseHeader(HttpHeaderNames.CONTENT_LENGTH, "0");
             } else {
-                exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LENGTH, "" + pooledBuffer.readableBytes());
+                exchange.setResponseHeader(HttpHeaderNames.CONTENT_LENGTH, "" + pooledBuffer.readableBytes());
             }
         }
         try {

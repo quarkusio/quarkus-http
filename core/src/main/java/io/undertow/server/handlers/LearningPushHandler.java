@@ -158,8 +158,8 @@ public class LearningPushHandler implements HttpHandler {
         public void exchangeEvent(HttpServerExchange exchange) {
             if (exchange.getStatusCode() == 200 && referer != null) {
                 //for now only cache 200 response codes
-                String lmString = exchange.responseHeaders().get(HttpHeaderNames.LAST_MODIFIED);
-                String etag = exchange.responseHeaders().get(HttpHeaderNames.ETAG);
+                String lmString = exchange.getResponseHeader(HttpHeaderNames.LAST_MODIFIED);
+                String etag = exchange.getResponseHeader(HttpHeaderNames.ETAG);
                 long lastModified = -1;
                 if(lmString != null) {
                     Date dt = DateUtils.parseDate(lmString);

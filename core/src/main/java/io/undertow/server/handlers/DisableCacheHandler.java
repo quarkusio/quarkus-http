@@ -27,9 +27,9 @@ public class DisableCacheHandler implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        exchange.responseHeaders().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate");
-        exchange.responseHeaders().add(HttpHeaderNames.PRAGMA, "no-cache");
-        exchange.responseHeaders().add(HttpHeaderNames.EXPIRES, "0");
+        exchange.addResponseHeader(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate");
+        exchange.addResponseHeader(HttpHeaderNames.PRAGMA, "no-cache");
+        exchange.addResponseHeader(HttpHeaderNames.EXPIRES, "0");
         next.handleRequest(exchange);
     }
 

@@ -172,7 +172,7 @@ public class GSSAPIAuthenticationMechanism implements AuthenticationMechanism {
             }
         }
 
-        exchange.responseHeaders().add(WWW_AUTHENTICATE, header);
+        exchange.addResponseHeader(WWW_AUTHENTICATE, header);
 
         UndertowLogger.SECURITY_LOGGER.debugf("Sending GSSAPI challenge for %s", exchange);
         return new ChallengeResult(true, UNAUTHORIZED);
@@ -249,7 +249,7 @@ public class GSSAPIAuthenticationMechanism implements AuthenticationMechanism {
 
                 if (respToken != null) {
                     // There will be no further challenge but we do have a token so set it here.
-                    exchange.responseHeaders().add(WWW_AUTHENTICATE,
+                    exchange.addResponseHeader(WWW_AUTHENTICATE,
                             NEGOTIATE_PREFIX + FlexBase64.encodeString(respToken, false));
                 }
                 IdentityManager identityManager = securityContext.getIdentityManager();

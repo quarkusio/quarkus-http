@@ -85,7 +85,7 @@ public class SetHeaderHandler implements HttpHandler {
     }
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        exchange.responseHeaders().set(header, value.readAttribute(exchange));
+        exchange.setResponseHeader(header, value.readAttribute(exchange));
         next.handleRequest(exchange);
     }
 

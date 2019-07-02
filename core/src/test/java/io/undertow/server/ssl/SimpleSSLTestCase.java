@@ -57,7 +57,7 @@ public class SimpleSSLTestCase {
         DefaultServer.setRootHandler(new HttpHandler() {
             @Override
             public void handleRequest(final HttpServerExchange exchange) throws Exception {
-                exchange.responseHeaders().set("scheme", exchange.getRequestScheme());
+                exchange.setResponseHeader("scheme", exchange.getRequestScheme());
                 exchange.endExchange();
             }
         });
@@ -84,8 +84,8 @@ public class SimpleSSLTestCase {
         DefaultServer.setRootHandler(new HttpHandler() {
             @Override
             public void handleRequest(final HttpServerExchange exchange) throws Exception {
-                exchange.responseHeaders().set("scheme", exchange.getRequestScheme());
-                exchange.responseHeaders().set(HttpHeaderNames.CONNECTION, "close");
+                exchange.setResponseHeader("scheme", exchange.getRequestScheme());
+                exchange.setResponseHeader(HttpHeaderNames.CONNECTION, "close");
                 exchange.endExchange();
             }
         });
@@ -114,7 +114,7 @@ public class SimpleSSLTestCase {
         runTest(32, new HttpHandler() {
             @Override
             public void handleRequest(final HttpServerExchange exchange) throws Exception {
-                exchange.responseHeaders().set("scheme", exchange.getRequestScheme());
+                exchange.setResponseHeader("scheme", exchange.getRequestScheme());
                 exchange.endExchange();
             }
         });
@@ -126,7 +126,7 @@ public class SimpleSSLTestCase {
             @Override
             public void handleRequest(final HttpServerExchange exchange) throws Exception {
                 exchange.dispatch(() -> {
-                    exchange.responseHeaders().set("scheme", exchange.getRequestScheme());
+                    exchange.setResponseHeader("scheme", exchange.getRequestScheme());
                     exchange.endExchange();
                 });
             }
@@ -143,7 +143,7 @@ public class SimpleSSLTestCase {
                     return;
                 }
                 exchange.startBlocking();
-                exchange.responseHeaders().set("scheme", exchange.getRequestScheme());
+                exchange.setResponseHeader("scheme", exchange.getRequestScheme());
                 exchange.endExchange();
             }
         });

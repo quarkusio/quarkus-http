@@ -32,6 +32,27 @@ public interface HttpExchange {
     void setRequestHeader(String name, String value);
     Collection<String> getRequestHeaderNames();
     void addRequestHeader(String name, String value);
+    void clearRequestHeaders();
+
+    /**
+     * Gets the first response header with the given name
+     * @param name The header name
+     * @return The header value, or null if it is not present
+     */
+    String getResponseHeader(String name);
+
+    /**
+     * Gets response headers with the given name
+     * @param name The header name
+     * @return The header value, or an empty list if none are present
+     */
+    List<String> getResponseHeaders(String name);
+    boolean containsResponseHeader(String name);
+    void removeResponseHeader(String name);
+    void setResponseHeader(String name, String value);
+    Collection<String> getResponseHeaderNames();
+    void addResponseHeader(String name, String value);
+    void clearResponseHeaders();
 
     /**
      * Get the HTTP request method
@@ -49,4 +70,6 @@ public interface HttpExchange {
     InputStream getInputStream();
 
     OutputStream getOutputStream();
+
+
 }

@@ -62,7 +62,7 @@ public class RedirectHandler implements HttpHandler {
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
         exchange.setStatusCode(StatusCodes.FOUND);
-        exchange.responseHeaders().set(HttpHeaderNames.LOCATION, attribute.readAttribute(exchange));
+        exchange.setResponseHeader(HttpHeaderNames.LOCATION, attribute.readAttribute(exchange));
         exchange.endExchange();
     }
 

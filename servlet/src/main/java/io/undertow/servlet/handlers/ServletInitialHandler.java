@@ -142,7 +142,7 @@ public class ServletInitialHandler implements HttpHandler, ServletDispatcher {
             } else {
                 exchange.setStatusCode(StatusCodes.TEMPORARY_REDIRECT);
             }
-            exchange.responseHeaders().set(HttpHeaderNames.LOCATION, RedirectBuilder.redirect(exchange, exchange.getRelativePath() + "/", true));
+            exchange.setResponseHeader(HttpHeaderNames.LOCATION, RedirectBuilder.redirect(exchange, exchange.getRelativePath() + "/", true));
             return;
         } else if (info.getType() == ServletPathMatch.Type.REWRITE) {
             //this can only happen if the path ends with a /
@@ -293,7 +293,7 @@ public class ServletInitialHandler implements HttpHandler, ServletDispatcher {
                 if (!exchange.isResponseStarted()) {
                     response.reset();                       //reset the response
                     exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                    exchange.responseHeaders().clear();
+                    exchange.clearResponseHeaders();
                     String location = servletContext.getDeployment().getErrorPages().getErrorLocation(t);
                     if (location == null) {
                         location = servletContext.getDeployment().getErrorPages().getErrorLocation(StatusCodes.INTERNAL_SERVER_ERROR);

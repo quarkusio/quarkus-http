@@ -28,7 +28,6 @@ import io.netty.buffer.ByteBuf;
 import io.undertow.UndertowLogger;
 import io.undertow.server.handlers.Cookie;
 import io.undertow.util.DateUtils;
-import io.undertow.util.HeaderMap;
 import io.undertow.util.HeaderValues;
 import io.undertow.util.HttpHeaderNames;
 import io.undertow.util.LegacyCookieSupport;
@@ -58,7 +57,7 @@ public class Connectors {
         boolean enableRfc6265Validation = exchange.getConnection().getUndertowOptions().get(UndertowOptions.ENABLE_RFC6265_COOKIE_VALIDATION, UndertowOptions.DEFAULT_ENABLE_RFC6265_COOKIE_VALIDATION);
         if (cookies != null) {
             for (Map.Entry<String, Cookie> entry : cookies.entrySet()) {
-                exchange.responseHeaders().add(HttpHeaderNames.SET_COOKIE, getCookieString(entry.getValue(), enableRfc6265Validation));
+                exchange.addResponseHeader(HttpHeaderNames.SET_COOKIE, getCookieString(entry.getValue(), enableRfc6265Validation));
             }
         }
     }
@@ -439,22 +438,5 @@ public class Connectors {
 
     public static void updateResponseBytesSent(HttpServerExchange exchange, long bytes) {
         exchange.updateBytesSent(bytes);
-    }
-
-    /**
-     * Verifies that the provided request headers are valid according to rfc7230. In particular:
-     * - At most one content-length or transfer encoding
-     */
-    public static boolean areRequestHeadersValid(HeaderMap headers) {
-        HeaderValues te = headers.get(HttpHeaderNames.TRANSFER_ENCODING);
-        HeaderValues cl = headers.get(HttpHeaderNames.CONTENT_LENGTH);
-        if (te != null && cl != null) {
-            return false;
-        } else if (te != null && te.size() > 1) {
-            return false;
-        } else if (cl != null && cl.size() > 1) {
-            return false;
-        }
-        return true;
     }
 }

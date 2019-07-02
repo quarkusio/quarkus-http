@@ -135,9 +135,9 @@ public class ServletFormAuthenticationMechanism extends FormAuthenticationMechan
         ServletResponse resp = servletRequestContext.getServletResponse();
         RequestDispatcher disp = req.getRequestDispatcher(location);
         //make sure the login page is never cached
-        exchange.responseHeaders().add(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate");
-        exchange.responseHeaders().add(HttpHeaderNames.PRAGMA, "no-cache");
-        exchange.responseHeaders().add(HttpHeaderNames.EXPIRES, "0");
+        exchange.addResponseHeader(HttpHeaderNames.CACHE_CONTROL, "no-cache, no-store, must-revalidate");
+        exchange.addResponseHeader(HttpHeaderNames.PRAGMA, "no-cache");
+        exchange.addResponseHeader(HttpHeaderNames.EXPIRES, "0");
 
         final FormResponseWrapper respWrapper = exchange.getStatusCode() != OK && resp instanceof HttpServletResponse
                 ? new FormResponseWrapper((HttpServletResponse) resp) : null;

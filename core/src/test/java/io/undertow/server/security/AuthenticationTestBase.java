@@ -327,11 +327,10 @@ public abstract class AuthenticationTestBase {
 
         @Override
         public void handleRequest(HttpServerExchange exchange) throws Exception {
-            HttpHeaders responseHeader = exchange.responseHeaders();
-            responseHeader.add(PROCESSED_BY, "ResponseHandler");
+            exchange.addResponseHeader(PROCESSED_BY, "ResponseHandler");
             String user = getAuthenticatedUser(exchange);
             if (user != null) {
-                responseHeader.add(AUTHENTICATED_USER, user);
+                exchange.addResponseHeader(AUTHENTICATED_USER, user);
             }
             if(exchange.getQueryParameters().get("logout") != null) {
                 exchange.getSecurityContext().logout();

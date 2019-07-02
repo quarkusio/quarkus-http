@@ -74,9 +74,9 @@ public class DirectoryUtils {
                 return true;
             }
 
-            exchange.responseHeaders().set(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(buffer.readableBytes()));
-            exchange.responseHeaders().set(HttpHeaderNames.CONTENT_TYPE, type);
-            exchange.responseHeaders().set(HttpHeaderNames.ETAG, quotedEtag);
+            exchange.setResponseHeader(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(buffer.readableBytes()));
+            exchange.setResponseHeader(HttpHeaderNames.CONTENT_TYPE, type);
+            exchange.setResponseHeader(HttpHeaderNames.ETAG, quotedEtag);
             if (HttpMethodNames.HEAD.equals(exchange.getRequestMethod())) {
                 exchange.endExchange();
                 return true;
@@ -153,16 +153,16 @@ public class DirectoryUtils {
         String requestPath = exchange.getRequestPath();
         if (!requestPath.endsWith("/")) {
             exchange.setStatusCode(StatusCodes.FOUND);
-            exchange.responseHeaders().set(HttpHeaderNames.LOCATION, RedirectBuilder.redirect(exchange, exchange.getRelativePath() + "/", true));
+            exchange.setResponseHeader(HttpHeaderNames.LOCATION, RedirectBuilder.redirect(exchange, exchange.getRelativePath() + "/", true));
             exchange.endExchange();
             return;
         }
 
         StringBuilder builder = renderDirectoryListing(requestPath, resource);
 
-        exchange.responseHeaders().set(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
-        exchange.responseHeaders().set(HttpHeaderNames.LAST_MODIFIED, DateUtils.toDateString(new Date()));
-        exchange.responseHeaders().set(HttpHeaderNames.CACHE_CONTROL, "must-revalidate");
+        exchange.setResponseHeader(HttpHeaderNames.CONTENT_TYPE, "text/html; charset=UTF-8");
+        exchange.setResponseHeader(HttpHeaderNames.LAST_MODIFIED, DateUtils.toDateString(new Date()));
+        exchange.setResponseHeader(HttpHeaderNames.CACHE_CONTROL, "must-revalidate");
         exchange.writeAsync(builder.toString());
 
         exchange.endExchange();
