@@ -18,7 +18,7 @@
 
 package io.undertow.websockets.jsr.test.annotated;
 
-import static io.undertow.util.HttpHeaderNames.SEC_WEB_SOCKET_PROTOCOL;
+import static io.undertow.httpcore.HttpHeaderNames.SEC_WEB_SOCKET_PROTOCOL;
 
 import java.util.Collections;
 import java.util.List;

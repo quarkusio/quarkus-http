@@ -27,6 +27,7 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.http.impl.Http1xServerConnection;
+import io.vertx.core.http.impl.VertxHttpRequestDecoder;
 import io.vertx.core.net.impl.ConnectionBase;
 
 public class VertxHttpServerConnection extends ServerConnection implements Handler<Buffer> {
@@ -367,10 +368,27 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
     protected void setUpgradeListener(Consumer<Object> listener) {
         Http1xServerConnection connection = (Http1xServerConnection) request.connection();
         ChannelHandlerContext context = connection.channelHandlerContext();
-        getIoThread().execute(new Runnable() {
+        request.response().endHandler(new Handler<Void>() {
             @Override
-            public void run() {
-                listener.accept(context);
+            public void handle(Void event) {
+                Runnable runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        Connectors.terminateResponse(exchange);
+                        context.pipeline().remove("httpDecoder");
+                        context.pipeline().remove("httpEncoder");
+                        context.pipeline().remove("websocketExtensionHandler");
+                        context.pipeline().remove("handler");
+                        System.out.println(context.pipeline());
+                        listener.accept(context);
+                    }
+                };
+                if(exchange.isInIoThread()) {
+                    runnable.run();
+                } else {
+                    getIoThread().execute(runnable);
+                }
+
             }
         });
     }

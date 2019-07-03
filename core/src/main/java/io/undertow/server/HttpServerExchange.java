@@ -1534,7 +1534,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         setStatusCode(StatusCodes.SWITCHING_PROTOCOLS);
         responseHeaders.get(HttpHeaderNames.CONNECTION, HttpHeaderNames.UPGRADE);
         connection.setUpgradeListener(listener);
-        terminateResponse();
         return this;
     }
 
