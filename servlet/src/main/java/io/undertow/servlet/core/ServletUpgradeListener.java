@@ -84,7 +84,7 @@ public class ServletUpgradeListener implements Consumer<ChannelHandlerContext> {
         });
         WebConnectionImpl connection = new WebConnectionImpl();
         context.pipeline().addLast(connection);
-        this.exchange.getConnection().getWorker().execute(new Runnable() {
+        this.exchange.getWorker().execute(new Runnable() {
             @Override
             public void run() {
                 try {

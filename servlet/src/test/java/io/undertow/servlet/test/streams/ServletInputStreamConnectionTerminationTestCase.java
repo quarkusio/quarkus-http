@@ -27,6 +27,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -45,6 +46,7 @@ import io.undertow.httpcore.StatusCodes;
 @RunWith(DefaultServer.class)
 @HttpOneOnly
 @ProxyIgnore
+@Ignore
 public class ServletInputStreamConnectionTerminationTestCase {
 
     public static final String HELLO_WORLD = "Hello World";

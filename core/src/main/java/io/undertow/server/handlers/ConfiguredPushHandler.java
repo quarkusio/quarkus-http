@@ -18,6 +18,11 @@
 
 package io.undertow.server.handlers;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.server.HttpHandler;
@@ -34,7 +39,7 @@ public class ConfiguredPushHandler implements HttpHandler {
 
     private final PathMatcher<String[]> pathMatcher = new PathMatcher<>();
     private final HttpHandler next;
-    private final HttpHeaders requestHeaders = new DefaultHttpHeaders();
+    private final Map<String, List<String>> requestHeaders = new HashMap<>();
 
     public ConfiguredPushHandler(HttpHandler next) {
         this.next = next;
@@ -42,12 +47,12 @@ public class ConfiguredPushHandler implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        if(exchange.getConnection().isPushSupported()) {
+        if(exchange.isPushSupported()) {
             PathMatcher.PathMatch<String[]> result = pathMatcher.match(exchange.getRelativePath());
             if(result != null) {
                 String[] value = result.getValue();
                 for(int i = 0; i < value.length; ++i) {
-                    exchange.getConnection().pushResource(value[i], HttpMethodNames.GET, requestHeaders);
+                    exchange.pushResource(value[i], HttpMethodNames.GET, requestHeaders);
                 }
             }
         }
@@ -55,7 +60,7 @@ public class ConfiguredPushHandler implements HttpHandler {
     }
 
     public ConfiguredPushHandler addRequestHeader(String name, String value) {
-        requestHeaders.set(name, value);
+        requestHeaders.computeIfAbsent(name, (a) -> new ArrayList<>()).add(value);
         return this;
     }
 

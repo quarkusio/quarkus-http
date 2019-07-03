@@ -235,7 +235,7 @@ public class DateUtils {
     }
 
     public static void addDateHeaderIfRequired(HttpServerExchange exchange) {
-        if (exchange.getConnection().getUndertowOptions().get(UndertowOptions.ALWAYS_SET_DATE, true) && !exchange.containsResponseHeader(HttpHeaderNames.DATE)) {
+        if (exchange.getUndertowOptions().get(UndertowOptions.ALWAYS_SET_DATE, true) && !exchange.containsResponseHeader(HttpHeaderNames.DATE)) {
             String dateString = getCurrentDateTime(exchange);
             exchange.setResponseHeader(HttpHeaderNames.DATE, dateString);
         }

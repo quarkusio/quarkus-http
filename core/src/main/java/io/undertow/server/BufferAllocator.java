@@ -26,4 +26,6 @@ public interface BufferAllocator {
     ByteBuf allocateBuffer(int bufferSize);
 
     ByteBuf allocateBuffer(boolean direct, int bufferSize);
+
+    int getBufferSize();
 }

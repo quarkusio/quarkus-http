@@ -88,7 +88,7 @@ public class MultiPartParserDefinition implements FormParserFactory.ParserDefini
                     IoUtils.safeClose(parser);
                 }
             });
-            Long sizeLimit = exchange.getConnection().getUndertowOptions().get(UndertowOptions.MULTIPART_MAX_ENTITY_SIZE);
+            Long sizeLimit = exchange.getUndertowOptions().get(UndertowOptions.MULTIPART_MAX_ENTITY_SIZE);
             if (sizeLimit != null) {
                 exchange.setMaxEntitySize(sizeLimit);
             }
@@ -164,7 +164,7 @@ public class MultiPartParserDefinition implements FormParserFactory.ParserDefini
             this.maxIndividualFileSize = maxIndividualFileSize;
             this.defaultEncoding = defaultEncoding;
             this.fileSizeThreshold = fileSizeThreshold;
-            this.data = new FormData(exchange.getConnection().getUndertowOptions().get(UndertowOptions.MAX_PARAMETERS, 1000));
+            this.data = new FormData(exchange.getUndertowOptions().get(UndertowOptions.MAX_PARAMETERS, 1000));
             String charset = defaultEncoding;
             String contentType = exchange.getRequestHeader(HttpHeaderNames.CONTENT_TYPE);
             if (contentType != null) {
@@ -190,7 +190,7 @@ public class MultiPartParserDefinition implements FormParserFactory.ParserDefini
 
             NonBlockingParseTask task;
             if (executor == null) {
-                task = new NonBlockingParseTask(exchange.getConnection().getWorker());
+                task = new NonBlockingParseTask(exchange.getWorker());
             } else {
                 task = new NonBlockingParseTask(executor);
             }
@@ -334,7 +334,7 @@ public class MultiPartParserDefinition implements FormParserFactory.ParserDefini
             IoUtils.safeClose(fileChannel);
             //we have to dispatch this, as it may result in file IO
             final List<Path> files = new ArrayList<>(getCreatedFiles());
-            exchange.getConnection().getWorker().execute(new Runnable() {
+            exchange.getWorker().execute(new Runnable() {
                 @Override
                 public void run() {
                     for (final Path file : files) {

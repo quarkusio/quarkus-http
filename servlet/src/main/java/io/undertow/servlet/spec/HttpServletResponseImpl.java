@@ -429,7 +429,7 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
     @Override
     public int getBufferSize() {
         if (bufferSize == null) {
-            return exchange.getConnection().getBufferSize();
+            return exchange.getBufferSize();
         }
         return bufferSize;
     }

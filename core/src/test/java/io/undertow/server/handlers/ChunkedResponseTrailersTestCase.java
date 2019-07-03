@@ -59,13 +59,6 @@ public class ChunkedResponseTrailersTestCase {
 
     private static volatile String message;
 
-    private static volatile ServerConnection connection;
-
-    @Before
-    public void reset() {
-        connection = null;
-    }
-
     @BeforeClass
     public static void setup() {
         final BlockingHandler blockingHandler = new BlockingHandler();
@@ -73,24 +66,11 @@ public class ChunkedResponseTrailersTestCase {
         blockingHandler.setRootHandler(new HttpHandler() {
             @Override
             public void handleRequest(final HttpServerExchange exchange) {
-                try {
-                    if (connection == null) {
-                        connection = exchange.getConnection();
-                    } else if (!DefaultServer.isAjp()  && !DefaultServer.isProxy() && connection != exchange.getConnection()) {
-                        final OutputStream outputStream = exchange.getOutputStream();
-                        outputStream.write("Connection not persistent".getBytes());
-                        outputStream.close();
-                        return;
-                    }
-                    HttpHeaders trailers = new DefaultHttpHeaders();
-                    exchange.putAttachment(HttpAttachments.RESPONSE_TRAILERS, trailers);
-                    trailers.set("foo", "fooVal");
-                    trailers.set("bar", "barVal");
-                    exchange.writeAsync(message);
-
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                HttpHeaders trailers = new DefaultHttpHeaders();
+                exchange.putAttachment(HttpAttachments.RESPONSE_TRAILERS, trailers);
+                trailers.set("foo", "fooVal");
+                trailers.set("bar", "barVal");
+                exchange.writeAsync(message);
             }
         });
     }

@@ -69,7 +69,7 @@ public class SavedRequest implements Serializable {
      * @return
      */
     public static int getMaxBufferSizeToSave(final HttpServerExchange exchange) {
-        int maxSize = exchange.getConnection().getUndertowOptions().get(UndertowOptions.MAX_BUFFERED_REQUEST_SIZE, UndertowOptions.DEFAULT_MAX_BUFFERED_REQUEST_SIZE);
+        int maxSize = exchange.getUndertowOptions().get(UndertowOptions.MAX_BUFFERED_REQUEST_SIZE, UndertowOptions.DEFAULT_MAX_BUFFERED_REQUEST_SIZE);
         return  maxSize;
     }
 
@@ -107,7 +107,7 @@ public class SavedRequest implements Serializable {
     }
 
     public static void trySaveRequest(final HttpServerExchange exchange, final byte[] buffer, int length) {
-        int maxSize = exchange.getConnection().getUndertowOptions().get(UndertowOptions.MAX_BUFFERED_REQUEST_SIZE, UndertowOptions.DEFAULT_MAX_BUFFERED_REQUEST_SIZE);
+        int maxSize = exchange.getUndertowOptions().get(UndertowOptions.MAX_BUFFERED_REQUEST_SIZE, UndertowOptions.DEFAULT_MAX_BUFFERED_REQUEST_SIZE);
         if (maxSize > 0) {
             if (length > maxSize) {
                 UndertowLogger.REQUEST_LOGGER.debugf("Request to %s was to large to save", exchange.getRequestURI());

@@ -125,7 +125,7 @@ public class JDBCLogHandler implements HttpHandler, Runnable {
         if (pattern.equals("combined")) {
             jdbcLogAttribute.pattern = pattern;
         }
-        jdbcLogAttribute.remoteHost = ((InetSocketAddress) exchange.getConnection().getPeerAddress()).getAddress().getHostAddress();
+        jdbcLogAttribute.remoteHost = ((InetSocketAddress) exchange.getSourceAddress()).getAddress().getHostAddress();
         SecurityContext sc = exchange.getSecurityContext();
         if (sc == null || !sc.isAuthenticated()) {
             jdbcLogAttribute.user = null;
@@ -152,7 +152,7 @@ public class JDBCLogHandler implements HttpHandler, Runnable {
         int state = stateUpdater.get(this);
         if (state == 0) {
             if (stateUpdater.compareAndSet(this, 0, 1)) {
-                this.executor = exchange.getConnection().getWorker();
+                this.executor = exchange.getWorker();
                 this.executor.execute(this);
             }
         }

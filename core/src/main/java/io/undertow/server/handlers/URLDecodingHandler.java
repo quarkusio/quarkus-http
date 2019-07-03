@@ -54,10 +54,10 @@ public class URLDecodingHandler implements HttpHandler {
 
     @Override
     public void handleRequest(final HttpServerExchange exchange) throws Exception {
-        boolean decodeDone = exchange.getConnection().getUndertowOptions().get(UndertowOptions.DECODE_URL, true);
+        boolean decodeDone = exchange.getUndertowOptions().get(UndertowOptions.DECODE_URL, true);
         if (!decodeDone) {
             final StringBuilder sb = new StringBuilder();
-            final boolean decodeSlash = exchange.getConnection().getUndertowOptions().get(UndertowOptions.ALLOW_ENCODED_SLASH, false);
+            final boolean decodeSlash = exchange.getUndertowOptions().get(UndertowOptions.ALLOW_ENCODED_SLASH, false);
             exchange.setRequestPath(URLUtils.decode(exchange.getRequestPath(), charset, decodeSlash, false, sb));
             exchange.setRelativePath(URLUtils.decode(exchange.getRelativePath(), charset, decodeSlash, false, sb));
             exchange.setResolvedPath(URLUtils.decode(exchange.getResolvedPath(), charset, decodeSlash, false, sb));

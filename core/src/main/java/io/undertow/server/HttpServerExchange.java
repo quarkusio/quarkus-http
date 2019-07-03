@@ -52,6 +52,7 @@ import io.undertow.httpcore.IoCallback;
 import io.undertow.httpcore.OutputChannel;
 import io.undertow.security.api.SecurityContext;
 import io.undertow.server.handlers.Cookie;
+import io.undertow.server.handlers.form.FormData;
 import io.undertow.util.AbstractAttachable;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.Cookies;
@@ -63,6 +64,7 @@ import io.undertow.util.IoUtils;
 import io.undertow.util.NetworkUtils;
 import io.undertow.util.Rfc6265CookieSupport;
 import io.undertow.httpcore.StatusCodes;
+import io.undertow.util.UndertowOptionMap;
 import io.undertow.util.UndertowOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.ServerWebSocket;
@@ -100,11 +102,11 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
 
         @Override
         public void onException(HttpExchange exchange, ByteBuf context, IOException exception) {
-            ((HttpServerExchange)exchange).getConnection().close(((HttpServerExchange)exchange));
+            ((HttpServerExchange)exchange).connection.close(((HttpServerExchange)exchange));
         }
     };
 
-    private final ServerConnection connection;
+    final ServerConnection connection;
     private final io.netty.handler.codec.http.HttpHeaders requestHeaders;
     private final io.netty.handler.codec.http.HttpHeaders responseHeaders;
 
@@ -546,16 +548,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         return StandardCharsets.ISO_8859_1.name();
     }
 
-
-    /**
-     * Get the underlying HTTP connection.
-     *
-     * @return the underlying HTTP connection
-     */
-    public ServerConnection getConnection() {
-        return connection;
-    }
-
     public boolean isPersistent() {
         return anyAreSet(state, FLAG_PERSISTENT);
     }
@@ -670,7 +662,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             this.dispatchTask = runnable;
         } else {
             if (executor == null) {
-                getConnection().getWorker().execute(runnable);
+                connection.getWorker().execute(runnable);
             } else {
                 executor.execute(runnable);
             }
@@ -875,8 +867,8 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     public Map<String, Cookie> getRequestCookies() {
         if (requestCookies == null) {
             requestCookies = Cookies.parseRequestCookies(
-                    getConnection().getUndertowOptions().get(UndertowOptions.MAX_COOKIES, 200),
-                    getConnection().getUndertowOptions().get(UndertowOptions.ALLOW_EQUALS_IN_COOKIE_VALUE, false),
+                    connection.getUndertowOptions().get(UndertowOptions.MAX_COOKIES, 200),
+                    connection.getUndertowOptions().get(UndertowOptions.ALLOW_EQUALS_IN_COOKIE_VALUE, false),
                     requestHeaders.getAll(HttpHeaderNames.COOKIE));
         }
         return requestCookies;
@@ -888,7 +880,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @param cookie The cookie
      */
     public HttpServerExchange setResponseCookie(final Cookie cookie) {
-        if (getConnection().getUndertowOptions().get(UndertowOptions.ENABLE_RFC6265_COOKIE_VALIDATION, UndertowOptions.DEFAULT_ENABLE_RFC6265_COOKIE_VALIDATION)) {
+        if (connection.getUndertowOptions().get(UndertowOptions.ENABLE_RFC6265_COOKIE_VALIDATION, UndertowOptions.DEFAULT_ENABLE_RFC6265_COOKIE_VALIDATION)) {
             if (cookie.getValue() != null && !cookie.getValue().isEmpty()) {
                 Rfc6265CookieSupport.validateCookieValue(cookie.getValue());
             }
@@ -1054,7 +1046,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     public <T> void scheduleIoCallback(IoCallback<T> callback, T context) {
-        getConnection().scheduleIoCallback(callback, context, this);
+        connection.scheduleIoCallback(callback, context, this);
     }
 
     /**
@@ -1501,6 +1493,11 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         return connection.allocateBuffer(direct, bufferSize);
     }
 
+    @Override
+    public int getBufferSize() {
+        return connection.getBufferSize();
+    }
+
     /**
      * Used to terminate the request in an async manner, the actual mechanism will depend on the underlying getProtocol,
      * for example HTTP/2 may send a RST_STREAM stream if there is more data coming.
@@ -1577,6 +1574,26 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     @Override
     public void close()  {
         endExchange();
+    }
+
+    public Executor getWorker() {
+        return connection.getWorker();
+    }
+
+    public UndertowOptionMap getUndertowOptions() {
+        return connection.getUndertowOptions();
+    }
+
+    public boolean isPushSupported() {
+        return connection.isPushSupported();
+    }
+
+    public void pushResource(String path, String method, Map<String, List<String>> requestHeaders) {
+
+    }
+
+    public boolean isRequestTrailerFieldsSupported() {
+        return connection.isRequestTrailerFieldsSupported();
     }
 
     private static class DefaultBlockingHttpExchange implements BlockingHttpExchange {

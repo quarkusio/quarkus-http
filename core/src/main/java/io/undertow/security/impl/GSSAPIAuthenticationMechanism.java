@@ -107,8 +107,7 @@ public class GSSAPIAuthenticationMechanism implements AuthenticationMechanism {
     @Override
     public AuthenticationMechanismOutcome authenticate(final HttpServerExchange exchange,
                                                        final SecurityContext securityContext) {
-        ServerConnection connection = exchange.getConnection();
-        NegotiationContext negContext = connection.getAttachment(NegotiationContext.ATTACHMENT_KEY);
+        NegotiationContext negContext = exchange.getAttachment(NegotiationContext.ATTACHMENT_KEY);
         if (negContext != null) {
 
             UndertowLogger.SECURITY_LOGGER.debugf("Existing negotiation context found for %s", exchange);
@@ -227,8 +226,6 @@ public class GSSAPIAuthenticationMechanism implements AuthenticationMechanism {
             if (negContext == null) {
                 negContext = new NegotiationContext();
                 exchange.putAttachment(NegotiationContext.ATTACHMENT_KEY, negContext);
-                // Also cache it on the connection for future calls.
-                exchange.getConnection().putAttachment(NegotiationContext.ATTACHMENT_KEY, negContext);
             }
 
             GSSContext gssContext = negContext.getGssContext();

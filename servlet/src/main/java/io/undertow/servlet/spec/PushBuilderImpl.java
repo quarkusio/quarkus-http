@@ -18,8 +18,10 @@
 
 package io.undertow.servlet.spec;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -181,14 +183,13 @@ public class PushBuilderImpl implements PushBuilder {
         if(path == null) {
             throw UndertowServletMessages.MESSAGES.pathWasNotSet();
         }
-        ServerConnection con = servletRequest.getExchange().getConnection();
-        if (con.isPushSupported()) {
-            HttpHeaders newHeaders = new DefaultHttpHeaders();
+        if (servletRequest.getExchange().isPushSupported()) {
+            Map<String, List<String>> newHeaders = new HashMap<>();
             for (Map.Entry<String, String> entry : headers) {
-                newHeaders.add(entry.getKey(), headers.getAll(entry.getKey()));
+                newHeaders.put(entry.getKey(), new ArrayList<>(headers.getAll(entry.getKey())));
             }
             if (sessionId != null) {
-                newHeaders.set(HttpHeaderNames.COOKIE, "JSESSIONID=" + sessionId); //TODO: do this properly, may be a different tracking method or a different cookie name
+                newHeaders.put(HttpHeaderNames.COOKIE, Collections.singletonList("JSESSIONID=" + sessionId)); //TODO: do this properly, may be a different tracking method or a different cookie name
             }
             String path = this.path;
             if(!path.startsWith("/")) {
@@ -201,7 +202,7 @@ public class PushBuilderImpl implements PushBuilder {
                     path += "?" + queryString;
                 }
             }
-            con.pushResource(path, method, newHeaders);
+            servletRequest.getExchange().pushResource(path, method, newHeaders);
         }
         path = null;
         for(String h : CONDITIONAL) {

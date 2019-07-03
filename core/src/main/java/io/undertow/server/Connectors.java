@@ -53,7 +53,7 @@ public class Connectors {
      */
     public static void flattenCookies(final HttpServerExchange exchange) {
         Map<String, Cookie> cookies = exchange.getResponseCookiesInternal();
-        boolean enableRfc6265Validation = exchange.getConnection().getUndertowOptions().get(UndertowOptions.ENABLE_RFC6265_COOKIE_VALIDATION, UndertowOptions.DEFAULT_ENABLE_RFC6265_COOKIE_VALIDATION);
+        boolean enableRfc6265Validation = exchange.connection.getUndertowOptions().get(UndertowOptions.ENABLE_RFC6265_COOKIE_VALIDATION, UndertowOptions.DEFAULT_ENABLE_RFC6265_COOKIE_VALIDATION);
         if (cookies != null) {
             for (Map.Entry<String, Cookie> entry : cookies.entrySet()) {
                 exchange.addResponseHeader(HttpHeaderNames.SET_COOKIE, getCookieString(entry.getValue(), enableRfc6265Validation));
@@ -62,7 +62,7 @@ public class Connectors {
     }
 
     public static boolean isRunningHandlerChain(HttpServerExchange exchange) {
-        return exchange.getConnection().isExecutingHandlerChain();
+        return exchange.connection.isExecutingHandlerChain();
     }
 
     /**
@@ -72,7 +72,7 @@ public class Connectors {
      * @param buffers  The buffers to attach
      */
     public static void ungetRequestBytes(final HttpServerExchange exchange, ByteBuf buffer) {
-        exchange.getConnection().ungetRequestBytes(buffer, exchange);
+        exchange.connection.ungetRequestBytes(buffer, exchange);
         exchange.resetRequestChannel();
     }
 
@@ -293,10 +293,10 @@ public class Connectors {
 
     public static void executeRootHandler(final HttpHandler handler, final HttpServerExchange exchange) {
         try {
-            exchange.getConnection().beginExecutingHandlerChain(exchange);
+            exchange.connection.beginExecutingHandlerChain(exchange);
             handler.handleRequest(exchange);
-            exchange.getConnection().endExecutingHandlerChain(exchange);
-            boolean resumed = exchange.getConnection().isIoOperationQueued();
+            exchange.connection.endExecutingHandlerChain(exchange);
+            boolean resumed = exchange.connection.isIoOperationQueued();
             if (exchange.isDispatched()) {
                 if (resumed) {
                     UndertowLogger.REQUEST_LOGGER.resumedAndDispatched();
@@ -309,7 +309,7 @@ public class Connectors {
                 exchange.setDispatchExecutor(null);
                 exchange.unDispatch();
                 if (dispatchTask != null) {
-                    executor = executor == null ? exchange.getConnection().getWorker() : executor;
+                    executor = executor == null ? exchange.connection.getWorker() : executor;
                     try {
                         executor.execute(dispatchTask);
                     } catch (RejectedExecutionException e) {
@@ -321,11 +321,11 @@ public class Connectors {
             } else if (!resumed) {
                 exchange.endExchange();
             } else {
-                exchange.getConnection().runResumeReadWrite();
+                exchange.connection.runResumeReadWrite();
             }
         } catch (Throwable t) {
             exchange.putAttachment(DefaultResponseListener.EXCEPTION, t);
-            exchange.getConnection().endExecutingHandlerChain(exchange);
+            exchange.connection.endExecutingHandlerChain(exchange);
             if (!exchange.isResponseStarted()) {
                 exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
             }
@@ -348,7 +348,7 @@ public class Connectors {
     @Deprecated
     public static void setExchangeRequestPath(final HttpServerExchange exchange, final String encodedPath, final String charset, boolean decode, final boolean allowEncodedSlash, StringBuilder decodeBuffer) {
         try {
-            setExchangeRequestPath(exchange, encodedPath, charset, decode, allowEncodedSlash, decodeBuffer, exchange.getConnection().getUndertowOptions().get(UndertowOptions.MAX_PARAMETERS, UndertowOptions.DEFAULT_MAX_PARAMETERS));
+            setExchangeRequestPath(exchange, encodedPath, charset, decode, allowEncodedSlash, decodeBuffer, exchange.connection.getUndertowOptions().get(UndertowOptions.MAX_PARAMETERS, UndertowOptions.DEFAULT_MAX_PARAMETERS));
         } catch (ParameterLimitException e) {
             throw new RuntimeException(e);
         }

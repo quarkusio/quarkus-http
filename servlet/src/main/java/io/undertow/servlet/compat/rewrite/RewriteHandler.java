@@ -226,7 +226,7 @@ public class RewriteHandler implements HttpHandler {
                 if (queryString != null) {
                     exchange.setQueryString(queryString);
                     exchange.getQueryParameters().clear();
-                    exchange.getQueryParameters().putAll(QueryParameterUtils.parseQueryString(queryString, exchange.getConnection().getUndertowOptions().get(UndertowOptions.URL_CHARSET, StandardCharsets.UTF_8.name())));
+                    exchange.getQueryParameters().putAll(QueryParameterUtils.parseQueryString(queryString, exchange.getUndertowOptions().get(UndertowOptions.URL_CHARSET, StandardCharsets.UTF_8.name())));
                 }
                 // Set the new host if it changed
                 if (!host.equals(request.getServerName())) {

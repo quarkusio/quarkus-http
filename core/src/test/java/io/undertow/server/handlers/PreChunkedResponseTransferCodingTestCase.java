@@ -16,7 +16,6 @@
 package io.undertow.server.handlers;
 
 import java.io.IOException;
-import java.io.OutputStream;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -27,16 +26,15 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.StatusCodes;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.ServerConnection;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.HttpOneOnly;
 import io.undertow.testutils.TestHttpClient;
 import io.undertow.util.HttpAttachments;
-import io.undertow.httpcore.HttpHeaderNames;
-import io.undertow.httpcore.StatusCodes;
 
 /**
  * @author Stuart Douglas
@@ -50,8 +48,6 @@ public class PreChunkedResponseTransferCodingTestCase {
     private static volatile String message;
     private static volatile String chunkedMessage;
 
-    private static volatile ServerConnection connection;
-
     @BeforeClass
     public static void setup() {
         final BlockingHandler blockingHandler = new BlockingHandler();
@@ -59,21 +55,9 @@ public class PreChunkedResponseTransferCodingTestCase {
         blockingHandler.setRootHandler(new HttpHandler() {
             @Override
             public void handleRequest(final HttpServerExchange exchange) {
-                try {
-                    if(connection == null) {
-                        connection = exchange.getConnection();
-                    } else if(!DefaultServer.isAjp() && !DefaultServer.isProxy() && connection != exchange.getConnection()){
-                        final OutputStream outputStream = exchange.getOutputStream();
-                        outputStream.write("Connection not persistent".getBytes());
-                        outputStream.close();
-                        return;
-                    }
-                    exchange.setResponseHeader(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderNames.CHUNKED);
-                    exchange.putAttachment(HttpAttachments.PRE_CHUNKED_RESPONSE, true);
-                    exchange.writeAsync(chunkedMessage);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                exchange.setResponseHeader(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderNames.CHUNKED);
+                exchange.putAttachment(HttpAttachments.PRE_CHUNKED_RESPONSE, true);
+                exchange.writeAsync(chunkedMessage);
             }
         });
     }
@@ -82,7 +66,6 @@ public class PreChunkedResponseTransferCodingTestCase {
     @Ignore("UT3 - P4")
     public void sendHttpRequest() throws IOException {
         Assume.assumeFalse(DefaultServer.isH2()); //this test will still run under h2-upgrade, but will fail
-        connection = null;
         HttpGet get = new HttpGet(DefaultServer.getDefaultServerURL() + "/path");
         TestHttpClient client = new TestHttpClient();
         try {

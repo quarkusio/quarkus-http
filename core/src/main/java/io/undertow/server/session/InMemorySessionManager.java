@@ -178,7 +178,7 @@ public class InMemorySessionManager implements SessionManager, SessionManagerSta
         } else {
             evictionToken = null;
         }
-        final SessionImpl session = new SessionImpl(this, sessionID, config, serverExchange.getIoThread(), serverExchange.getConnection().getWorker(), evictionToken, defaultSessionTimeout);
+        final SessionImpl session = new SessionImpl(this, sessionID, config, serverExchange.getIoThread(), serverExchange.getWorker(), evictionToken, defaultSessionTimeout);
 
         UndertowLogger.SESSION_LOGGER.debugf("Created session with id %s for exchange %s", sessionID, serverExchange);
         sessions.put(sessionID, session);

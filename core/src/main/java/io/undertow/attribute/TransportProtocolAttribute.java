@@ -37,7 +37,7 @@ public class TransportProtocolAttribute implements ExchangeAttribute {
 
     @Override
     public String readAttribute(final HttpServerExchange exchange) {
-        return exchange.getConnection().getTransportProtocol();
+        return exchange.getProtocol();
     }
 
     @Override

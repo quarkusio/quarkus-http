@@ -72,6 +72,11 @@ public class VertxHttpServerInitializer implements Closeable  {
                     return PooledByteBufAllocator.DEFAULT.heapBuffer(bufferSize);
                 }
             }
+
+            @Override
+            public int getBufferSize() {
+                return bufferSize;
+            }
         };
         CountDownLatch latch = new CountDownLatch(1);
         vertx.deployVerticle(new Supplier<Verticle>() {

@@ -109,7 +109,7 @@ public class UndertowOutputStream extends OutputStream {
         ByteBuf buffer = pooledBuffer;
         try {
             if (buffer == null) {
-                pooledBuffer = buffer = exchange.getConnection().allocateBuffer();
+                pooledBuffer = buffer = exchange.allocateBuffer();
             }
             while (rem > 0) {
                 int toWrite = Math.min(rem, buffer.writableBytes());
@@ -118,7 +118,7 @@ public class UndertowOutputStream extends OutputStream {
                 idx += toWrite;
                 if (!buffer.isWritable()) {
                     exchange.writeBlocking(buffer, false);
-                    this.pooledBuffer = buffer = exchange.getConnection().allocateBuffer();
+                    this.pooledBuffer = buffer = exchange.allocateBuffer();
                 }
             }
         } catch (Exception e) {

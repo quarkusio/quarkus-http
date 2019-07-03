@@ -53,9 +53,7 @@ public class ConnectionTerminationServlet extends HttpServlet{
         });
         HttpServerExchange exchange = ServletRequestContext.current().getExchange();
         try {
-            Method method = exchange.getConnection().getClass().getDeclaredMethod("close", HttpServerExchange.class);
-            method.setAccessible(true);
-            method.invoke(exchange.getConnection(), exchange);
+            exchange.close();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

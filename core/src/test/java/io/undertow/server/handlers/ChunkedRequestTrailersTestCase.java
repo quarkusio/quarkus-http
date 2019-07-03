@@ -49,8 +49,6 @@ import io.undertow.util.UndertowOptions;
 @Ignore("UT3 - P3")
 public class ChunkedRequestTrailersTestCase {
 
-    private static volatile ServerConnection connection;
-
     private static UndertowOptionMap existing;
 
     @BeforeClass
@@ -63,15 +61,6 @@ public class ChunkedRequestTrailersTestCase {
             @Override
             public void handleRequest(final HttpServerExchange exchange) {
                 try {
-                    if (connection == null) {
-                        connection = exchange.getConnection();
-                    } else if (!DefaultServer.isProxy() && connection != exchange.getConnection()) {
-                        exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                        final OutputStream outputStream = exchange.getOutputStream();
-                        outputStream.write("Connection not persistent".getBytes());
-                        outputStream.close();
-                        return;
-                    }
                     final OutputStream outputStream = exchange.getOutputStream();
                     final InputStream inputStream = exchange.getInputStream();
                     String m = HttpClientUtils.readResponse(inputStream);
@@ -109,7 +98,6 @@ public class ChunkedRequestTrailersTestCase {
      */
     @Test
     public void testChunkedRequestsWithTrailers() throws IOException {
-        connection = null;
         String request = "POST / HTTP/1.1\r\nHost: default\r\nTrailer:foo, bar\r\nTransfer-Encoding: chunked\r\n\r\n9\r\nabcdefghi\r\n0\r\nfoo: fooVal\r\n bar: barVal\r\n\r\n";
         String response1 = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nContent-Length: 26\r\n\r\nfoo: fooVal\r\nbar: barVal\r\n"; //header order is not guaranteed, we really should be parsing this properly
         String response2 = "HTTP/1.1 200 OK\r\nConnection: keep-alive\r\nContent-Length: 26\r\n\r\nfoo: fooVal\r\nbar: barVal\r\n"; //TODO: parse the response properly, or better yet ues a client that supports trailers

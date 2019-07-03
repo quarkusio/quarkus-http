@@ -160,7 +160,7 @@ public class QueryParameterUtils {
 
     public static String getQueryParamEncoding(HttpServerExchange exchange) {
         String encoding = null;
-        UndertowOptionMap undertowOptions = exchange.getConnection().getUndertowOptions();
+        UndertowOptionMap undertowOptions = exchange.getUndertowOptions();
         if(undertowOptions.get(UndertowOptions.DECODE_URL, true)) {
             encoding = undertowOptions.get(UndertowOptions.URL_CHARSET, StandardCharsets.UTF_8.name());
         }

@@ -21,6 +21,7 @@ package io.undertow.server.handlers;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -92,7 +93,7 @@ public class LearningPushHandler implements HttpHandler {
     }
 
     private void doPush(HttpServerExchange exchange, String fullPath) {
-        if (exchange.getConnection().isPushSupported()) {
+        if (exchange.isPushSupported()) {
             Map<String, PushedRequest> toPush = cache.get(fullPath);
             if (toPush != null) {
                 Session session = getSession(exchange);
@@ -115,7 +116,7 @@ public class LearningPushHandler implements HttpHandler {
                         }
                     }
                     if (doPush) {
-                        exchange.getConnection().pushResource(request.getPath(), HttpMethodNames.GET, request.getRequestHeaders());
+                        exchange.pushResource(request.getPath(), HttpMethodNames.GET, request.getRequestHeaders());
                         if(request.getEtag() != null) {
                             pushed.put(request.getPath(), request.getEtag());
                         } else {
@@ -176,25 +177,25 @@ public class LearningPushHandler implements HttpHandler {
                         }
                     }
                 }
-                pushes.put(fullPath, new PushedRequest(new DefaultHttpHeaders(), requestPath, etag, lastModified));
+                pushes.put(fullPath, new PushedRequest(new HashMap<>(), requestPath, etag, lastModified));
             }
         }
     }
 
     private static class PushedRequest {
-        private final HttpHeaders requestHeaders;
+        private final Map<String, List<String>> requestHeaders;
         private final String path;
         private final String etag;
         private final long lastModified;
 
-        private PushedRequest(HttpHeaders requestHeaders, String path, String etag, long lastModified) {
+        private PushedRequest(Map<String, List<String>> requestHeaders, String path, String etag, long lastModified) {
             this.requestHeaders = requestHeaders;
             this.path = path;
             this.etag = etag;
             this.lastModified = lastModified;
         }
 
-        public HttpHeaders getRequestHeaders() {
+        public Map<String, List<String>> getRequestHeaders() {
             return requestHeaders;
         }
 

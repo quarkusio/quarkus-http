@@ -40,7 +40,7 @@ public class LocalIPAttribute implements ExchangeAttribute {
 
     @Override
     public String readAttribute(final HttpServerExchange exchange) {
-        InetSocketAddress localAddress = (InetSocketAddress) exchange.getConnection().getLocalAddress();
+        InetSocketAddress localAddress = exchange.getDestinationAddress();
         return localAddress.getAddress().getHostAddress();
     }
 

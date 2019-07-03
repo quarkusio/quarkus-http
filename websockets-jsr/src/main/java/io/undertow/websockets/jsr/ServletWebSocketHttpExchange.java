@@ -176,6 +176,6 @@ public class ServletWebSocketHttpExchange implements WebSocketHttpExchange {
 
     @Override
     public Executor getExecutor() {
-        return exchange.getConnection().getWorker();
+        return exchange.getWorker();
     }
 }

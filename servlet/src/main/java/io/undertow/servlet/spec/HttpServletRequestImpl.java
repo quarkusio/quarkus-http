@@ -1168,7 +1168,7 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
 
     @Override
     public PushBuilder newPushBuilder() {
-        if (exchange.getConnection().isPushSupported()) {
+        if (exchange.isPushSupported()) {
             return new PushBuilderImpl(this);
         }
         return null;
@@ -1192,6 +1192,6 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
         if (exchange.isRequestComplete()) {
             return true;
         }
-        return !exchange.getConnection().isRequestTrailerFieldsSupported();
+        return !exchange.isRequestTrailerFieldsSupported();
     }
 }

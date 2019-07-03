@@ -345,7 +345,7 @@ public class AsyncContextImpl implements AsyncContext {
             executor = servletRequestContext.getDeployment().getExecutor();
         }
         if (executor == null) {
-            executor = exchange.getConnection().getWorker();
+            executor = exchange.getWorker();
         }
         return executor;
     }

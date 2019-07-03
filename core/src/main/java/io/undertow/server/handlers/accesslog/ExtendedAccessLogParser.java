@@ -258,7 +258,7 @@ public class ExtendedAccessLogParser {
                 return new ExchangeAttribute() {
                     @Override
                     public String readAttribute(HttpServerExchange exchange) {
-                        final InetSocketAddress peerAddress = exchange.getConnection().getPeerAddress();
+                        final InetSocketAddress peerAddress = exchange.getSourceAddress();
 
                         try {
                             return peerAddress.getHostName();
