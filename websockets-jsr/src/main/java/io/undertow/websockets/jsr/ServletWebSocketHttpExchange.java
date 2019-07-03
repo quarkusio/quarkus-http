@@ -121,7 +121,7 @@ public class ServletWebSocketHttpExchange implements WebSocketHttpExchange {
     }
 
     @Override
-    public void upgradeChannel(Consumer<ServerWebSocket> listener) {
+    public void upgradeChannel(Consumer<Object> listener) {
         exchange.upgradeChannel(listener);
     }
 

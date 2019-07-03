@@ -21,7 +21,7 @@ package io.undertow.server;
 import java.util.concurrent.atomic.AtomicLongFieldUpdater;
 
 import io.undertow.util.ByteActivityCallback;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * @author Stuart Douglas

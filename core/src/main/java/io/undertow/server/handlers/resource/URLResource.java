@@ -37,16 +37,16 @@ import java.util.List;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.undertow.UndertowLogger;
-import io.undertow.iocore.HttpExchange;
-import io.undertow.iocore.IoCallback;
-import io.undertow.iocore.OutputChannel;
+import io.undertow.httpcore.HttpExchange;
+import io.undertow.httpcore.IoCallback;
+import io.undertow.httpcore.OutputChannel;
 import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.DateUtils;
 import io.undertow.util.ETag;
 import io.undertow.util.IoUtils;
 import io.undertow.util.MimeMappings;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * @author Stuart Douglas

@@ -116,7 +116,7 @@ public final class Undertow {
             channels = new ArrayList<>();
             listenerInfo = new ArrayList<>();
             for (ListenerConfig listener : listeners) {
-                UndertowLogger.ROOT_LOGGER.debugf("Configuring listener with protocol %s for interface %s and port %s", listener.type, listener.host, listener.port);
+                UndertowLogger.ROOT_LOGGER.debugf("Configuring listener with getProtocol %s for interface %s and port %s", listener.type, listener.host, listener.port);
                 final HttpHandler rootHandler = listener.rootHandler != null ? listener.rootHandler : this.rootHandler;
                 if (listener.type == ListenerType.HTTP) {
                     VertxHttpServerInitializer vertxHttpServerInitializer = new VertxHttpServerInitializer(worker, rootHandler, bufferSize, vertx, directBuffers, ioThreads);
@@ -343,7 +343,7 @@ public final class Undertow {
                 //use 16k buffers for best performance
                 //as 16k is generally the max amount of data that can be sent in a single write() call
                 directBuffers = true;
-                bufferSize = 1024 * 16 - 20; //the 20 is to allow some space for protocol headers, see UNDERTOW-1209
+                bufferSize = 1024 * 16 - 20; //the 20 is to allow some space for getProtocol headers, see UNDERTOW-1209
             }
 
         }

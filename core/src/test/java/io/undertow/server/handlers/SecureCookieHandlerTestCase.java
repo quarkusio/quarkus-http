@@ -33,7 +33,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.TestHttpClient;
 import io.undertow.util.FileUtils;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * @author Stuart Douglas

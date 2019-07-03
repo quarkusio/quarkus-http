@@ -16,33 +16,34 @@
  *  limitations under the License.
  */
 
-package io.undertow.util;
+package io.undertow.httpcore;
+
+import java.io.IOException;
+
+import org.jboss.logging.Logger;
 
 /**
- * Protocol version strings.
- *
- * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+ * @author Stuart Douglas
  */
-public final class HttpProtocolNames {
+public interface IoCallback<T> {
 
-    private HttpProtocolNames() {
+    Logger log = Logger.getLogger("io.undertow.request.io");
+
+    void onComplete(final HttpExchange exchange, final T context);
+
+    default void onException(final HttpExchange exchange, final T context, final IOException exception) {
+        log.debugf(exception, "IO Exception");
+        exchange.endExchange();
     }
 
     /**
-     * HTTP 0.9.
+     * A default callback that simply ends the exchange.
      */
-    public static final String HTTP_0_9 = "HTTP/0.9";
-    /**
-     * HTTP 1.0.
-     */
-    public static final String HTTP_1_0 = "HTTP/1.0";
-    /**
-     * HTTP 1.1.
-     */
-    public static final String HTTP_1_1 = "HTTP/1.1";
-    /**
-     * HTTP 1.1.
-     */
-    public static final String HTTP_2_0 = "HTTP/2.0";
+    IoCallback END_EXCHANGE = new IoCallback<Object>() {
+        @Override
+        public void onComplete(HttpExchange exchange, Object context) {
+            exchange.endExchange();
+        }
+    };
 
 }

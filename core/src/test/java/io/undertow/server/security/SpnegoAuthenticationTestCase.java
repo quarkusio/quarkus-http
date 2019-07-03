@@ -19,9 +19,9 @@
 package io.undertow.server.security;
 
 import static io.undertow.server.security.KerberosKDCUtil.login;
-import static io.undertow.util.HttpHeaderNames.AUTHORIZATION;
-import static io.undertow.util.HttpHeaderNames.NEGOTIATE;
-import static io.undertow.util.HttpHeaderNames.WWW_AUTHENTICATE;
+import static io.undertow.httpcore.HttpHeaderNames.AUTHORIZATION;
+import static io.undertow.httpcore.HttpHeaderNames.NEGOTIATE;
+import static io.undertow.httpcore.HttpHeaderNames.WWW_AUTHENTICATE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -58,7 +58,7 @@ import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
 import io.undertow.util.FlexBase64;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * A test case to test the SPNEGO authentication mechanism.

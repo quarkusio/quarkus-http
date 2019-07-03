@@ -191,7 +191,7 @@ public class NonStandardRequestWrapper implements HttpServletRequest {
 
 
     /**
-     * The default behavior of this method is to return protocol()
+     * The default behavior of this method is to return getProtocol()
      * on the wrapped request object.
      */
     public String getProtocol() {
@@ -855,7 +855,7 @@ public class NonStandardRequestWrapper implements HttpServletRequest {
 
     /**
      * Create an instance of <code>HttpUpgradeHandler</code> for an given
-     * class and uses it for the http protocol upgrade processing.
+     * class and uses it for the http getProtocol upgrade processing.
      *
      * @since Servlet 3.1
      */

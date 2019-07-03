@@ -32,7 +32,7 @@ import io.undertow.server.ServerConnection;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * @author Stuart Douglas
@@ -44,13 +44,6 @@ public class ChunkedResponseTransferCodingTestCase {
 
     private static volatile String message;
 
-    private static volatile ServerConnection connection;
-
-    @Before
-    public void reset() {
-        connection = null;
-    }
-
     @BeforeClass
     public static void setup() {
         final BlockingHandler blockingHandler = new BlockingHandler();
@@ -58,19 +51,7 @@ public class ChunkedResponseTransferCodingTestCase {
         blockingHandler.setRootHandler(new HttpHandler() {
             @Override
             public void handleRequest(final HttpServerExchange exchange) {
-                try {
-                    if(connection == null) {
-                        connection = exchange.getConnection();
-                    } else if(!DefaultServer.isAjp() && !DefaultServer.isProxy() && connection != exchange.getConnection()){
-                        final OutputStream outputStream = exchange.getOutputStream();
-                        outputStream.write("Connection not persistent".getBytes());
-                        outputStream.close();
-                        return;
-                    }
-                    exchange.writeAsync(message);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                exchange.writeAsync(message);
             }
         });
     }

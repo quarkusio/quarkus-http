@@ -29,9 +29,9 @@ import java.util.List;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.undertow.UndertowLogger;
-import io.undertow.iocore.HttpExchange;
-import io.undertow.iocore.IoCallback;
-import io.undertow.iocore.OutputChannel;
+import io.undertow.httpcore.HttpExchange;
+import io.undertow.httpcore.IoCallback;
+import io.undertow.httpcore.OutputChannel;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.WriteFunction;
 import io.undertow.server.handlers.cache.DirectBufferCache;
@@ -303,70 +303,6 @@ public class CachedResource implements Resource, RangeAwareResource {
     public URL getUrl() {
         return underlyingResource.getUrl();
     }
-//
-//    @Override
-//    public void serveRange(Sender sender, HttpServerExchange exchange, long start, long end, IoCallback completionCallback) {
-//        final DirectBufferCache dataCache = cachingResourceManager.getDataCache();
-//        if (dataCache == null) {
-//            ((RangeAwareResource) underlyingResource).serveRange(sender, exchange, start, end, completionCallback);
-//            return;
-//        }
-//
-//        final DirectBufferCache.CacheEntry existing = dataCache.get(cacheKey);
-//        final Long length = getContentLength();
-//        //if it is not eligible to be served from the cache
-//        if (length == null || length > cachingResourceManager.getMaxFileSize()) {
-//            ((RangeAwareResource) underlyingResource).serveRange(sender, exchange, start, end, completionCallback);
-//            return;
-//        }
-//        //it is not cached yet, just serve it directly
-//        if (existing == null || !existing.enabled() || !existing.reference()) {
-//            //it is not cached yet, we can't use a range request to establish the cached item
-//            //so we just serve it
-//            ((RangeAwareResource) underlyingResource).serveRange(sender, exchange, start, end, completionCallback);
-//        } else {
-//            //serve straight from the cache
-//            ByteBuf[] buffers;
-//            boolean ok = false;
-//            try {
-//                LimitedBufferSlicePool.PooledByteBuffer[] pooled = existing.buffers();
-//                buffers = new ByteBuf[pooled.length];
-//                for (int i = 0; i < buffers.length; i++) {
-//                    // Keep position from mutating
-//                    buffers[i] = pooled[i].getBuffer().duplicate();
-//                }
-//                ok = true;
-//            } finally {
-//                if (!ok) {
-//                    existing.dereference();
-//                }
-//            }
-//            if (start > 0) {
-//                long startDec = start;
-//                long endCount = 0;
-//                //handle the start of the range
-//                for (ByteBuf b : buffers) {
-//                    if (endCount == end) {
-//                        b.clear();
-//                        continue;
-//                    } else if (endCount + b.readableBytes() < end) {
-//                        endCount += b.readableBytes();
-//                    } else {
-//                        b.writerIndex((int) (b.readerIndex() + (end - endCount)));
-//                        endCount = end;
-//                    }
-//                    if (b.readableBytes() >= startDec) {
-//                        startDec = 0;
-//                        b.readerIndex((int) (b.readerIndex() + startDec));
-//                    } else {
-//                        startDec -= b.readableBytes();
-//                        b.clear();
-//                    }
-//                }
-//            }
-//            sender.send(buffers, new DereferenceCallback(existing, completionCallback));
-//        }
-//    }
 
     @Override
     public void serveRangeBlocking(OutputStream outputStream, HttpServerExchange exchange, long start, long end) throws IOException {
@@ -374,8 +310,67 @@ public class CachedResource implements Resource, RangeAwareResource {
     }
 
     @Override
-    public void serveRangeAsync(OutputChannel outputStream, HttpServerExchange exchange, long start, long end) {
+    public void serveRangeAsync(OutputChannel sender, HttpServerExchange exchange, long start, long end) {
+        final DirectBufferCache dataCache = cachingResourceManager.getDataCache();
+        if (dataCache == null) {
+            ((RangeAwareResource) underlyingResource).serveRangeAsync(sender, exchange, start, end);
+            return;
+        }
 
+        final DirectBufferCache.CacheEntry existing = dataCache.get(cacheKey);
+        final Long length = getContentLength();
+        //if it is not eligible to be served from the cache
+        if (length == null || length > cachingResourceManager.getMaxFileSize()) {
+            ((RangeAwareResource) underlyingResource).serveRangeAsync(sender, exchange, start, end);
+            return;
+        }
+        //it is not cached yet, just serve it directly
+        if (existing == null || !existing.enabled() || !existing.reference()) {
+            //it is not cached yet, we can't use a range request to establish the cached item
+            //so we just serve it
+            ((RangeAwareResource) underlyingResource).serveRangeAsync(sender, exchange, start, end);
+        } else {
+            //serve straight from the cache
+            ByteBuf[] buffers;
+            boolean ok = false;
+            try {
+                LimitedBufferSlicePool.PooledByteBuffer[] pooled = existing.buffers();
+                buffers = new ByteBuf[pooled.length];
+                for (int i = 0; i < buffers.length; i++) {
+                    // Keep position from mutating
+                    buffers[i] = pooled[i].getBuffer().duplicate();
+                }
+                ok = true;
+            } finally {
+                if (!ok) {
+                    existing.dereference();
+                }
+            }
+            if (start > 0) {
+                long startDec = start;
+                long endCount = 0;
+                //handle the start of the range
+                for (ByteBuf b : buffers) {
+                    if (endCount == end) {
+                        b.clear();
+                        continue;
+                    } else if (endCount + b.readableBytes() < end) {
+                        endCount += b.readableBytes();
+                    } else {
+                        b.writerIndex((int) (b.readerIndex() + (end - endCount)));
+                        endCount = end;
+                    }
+                    if (b.readableBytes() >= startDec) {
+                        startDec = 0;
+                        b.readerIndex((int) (b.readerIndex() + startDec));
+                    } else {
+                        startDec -= b.readableBytes();
+                        b.clear();
+                    }
+                }
+            }
+            sender.writeAsync(Unpooled.wrappedBuffer(buffers), true, new DereferenceCallback(existing, IoCallback.END_EXCHANGE), null);
+        }
     }
 
     @Override

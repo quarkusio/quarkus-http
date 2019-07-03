@@ -152,7 +152,7 @@ public interface UndertowConnectorLogger extends BasicLogger {
 //
 //    @LogMessage(level = INFO)
 //    @Message(id = 5026, value = "Jetty ALPN support not found on boot class path, %s client will not be available.")
-//    void jettyALPNNotFound(String protocol);
+//    void jettyALPNNotFound(String getProtocol);
 
     @LogMessage(level = ERROR)
     @Message(id = 5027, value = "Timing out request to %s")

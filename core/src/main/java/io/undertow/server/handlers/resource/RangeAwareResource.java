@@ -21,7 +21,7 @@ package io.undertow.server.handlers.resource;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import io.undertow.iocore.OutputChannel;
+import io.undertow.httpcore.OutputChannel;
 import io.undertow.server.HttpServerExchange;
 
 /**

@@ -29,7 +29,7 @@ import io.undertow.Handlers;
 import io.undertow.UndertowLogger;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 
 /**
  * A handler for the HTTP Origin (RFC 6454) header.

@@ -18,9 +18,9 @@
 
 package io.undertow.server.handlers;
 
-import static io.undertow.util.HttpHeaderNames.SSL_CIPHER;
-import static io.undertow.util.HttpHeaderNames.SSL_CLIENT_CERT;
-import static io.undertow.util.HttpHeaderNames.SSL_SESSION_ID;
+import static io.undertow.httpcore.HttpHeaderNames.SSL_CIPHER;
+import static io.undertow.httpcore.HttpHeaderNames.SSL_CLIENT_CERT;
+import static io.undertow.httpcore.HttpHeaderNames.SSL_SESSION_ID;
 
 import java.util.Collections;
 import java.util.Map;
@@ -28,10 +28,8 @@ import java.util.Set;
 
 import javax.security.cert.CertificateException;
 
-import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.UndertowLogger;
 import io.undertow.server.BasicSSLSessionInfo;
-import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;

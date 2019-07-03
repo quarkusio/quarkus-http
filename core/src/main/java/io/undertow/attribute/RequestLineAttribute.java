@@ -47,7 +47,7 @@ public class RequestLineAttribute implements ExchangeAttribute {
             sb.append(exchange.getQueryString());
         }
         sb.append(' ')
-                .append(exchange.protocol());
+                .append(exchange.getProtocol());
         return sb.toString();
     }
 

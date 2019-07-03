@@ -23,7 +23,7 @@ import java.io.OutputStream;
 
 import io.netty.buffer.ByteBuf;
 import io.undertow.UndertowMessages;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 
 /**
  * Buffering output stream that wraps a channel.

@@ -13,17 +13,14 @@
  * limitations under the License.
  */
 
-package io.undertow.util;
+package io.undertow.httpcore;
 
 /**
  * NOTE: If you add a new method here you must also add it to {@link io.undertow.server.protocol.http.HttpRequestParser}
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class HttpMethodNames {
-
-    private HttpMethodNames() {
-    }
+public interface HttpMethodNames {
 
     public static final String OPTIONS = "OPTIONS";
     public static final String GET = "GET";

@@ -38,8 +38,8 @@ import io.undertow.server.RoutingHandler;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
-import io.undertow.util.HttpMethodNames;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.HttpMethodNames;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * @author Stuart Douglas

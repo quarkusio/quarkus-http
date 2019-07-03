@@ -33,7 +33,7 @@ import io.undertow.server.handlers.builder.PredicatedHandlersParser;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * @author Stuart Douglas

@@ -57,7 +57,7 @@ import io.vertx.core.http.WebSocketBase;
 public final class UndertowSession implements Session {
 
     private final String sessionId;
-    private ServerWebSocket channel;
+    private Channel channel;
     private FrameHandler frameHandler;
     private final ServerWebSocketContainer container;
     private final Principal user;
@@ -83,7 +83,7 @@ public final class UndertowSession implements Session {
     private ConfiguredServerEndpoint configuredServerEndpoint;
     private final WebsocketConnectionBuilder clientConnectionBuilder;
 
-    public UndertowSession(ServerWebSocket channel, URI requestUri, Map<String, String> pathParameters,
+    public UndertowSession(Channel channel, URI requestUri, Map<String, String> pathParameters,
                            Map<String, List<String>> requestParameterMap, EndpointSessionHandler handler, Principal user,
                            InstanceHandle<Endpoint> endpoint, EndpointConfig config, final String queryString,
                            final Encoding encoding, final SessionContainer openSessions, final String subProtocol,
@@ -111,7 +111,7 @@ public final class UndertowSession implements Session {
         setupWebSocketChannel(channel);
     }
 
-    public ServerWebSocket getChannel() {
+    public Channel getChannel() {
         return channel;
     }
 
@@ -160,12 +160,12 @@ public final class UndertowSession implements Session {
 
     @Override
     public boolean isSecure() {
-        return channel.sslSession() != null;
+        return channel.pipeline().get(SslHandler.class) != null;
     }
 
     @Override
     public boolean isOpen() {
-        return channel.();
+        return channel.isOpen();
     }
 
     @Override
@@ -201,7 +201,13 @@ public final class UndertowSession implements Session {
 
     public void closeInternal(CloseReason closeReason) throws IOException {
         if (closed.compareAndSet(false, true)) {
-            channel.close((short) closeReason.getCloseCode().getCode(), closeReason.getReasonPhrase());
+            channel.writeAndFlush(new CloseWebSocketFrame(closeReason.getCloseCode().getCode(), closeReason.getReasonPhrase()))
+                    .addListener(new GenericFutureListener<Future<? super Void>>() {
+                        @Override
+                        public void operationComplete(Future<? super Void> future) throws Exception {
+                            channel.close();
+                        }
+                    });
             getContainer().invokeEndpointMethod(getExecutor(), new Runnable() {
                 @Override
                 public void run() {
@@ -242,7 +248,11 @@ public final class UndertowSession implements Session {
     }
 
     public void forceClose() {
-        channel.close();
+        try {
+            channel.close().sync();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -347,9 +357,8 @@ public final class UndertowSession implements Session {
         return encoding;
     }
 
-    private void setupWebSocketChannel(WebSocketBase webSocketChannel) {
+    private void setupWebSocketChannel(Channel webSocketChannel) {
         this.frameHandler = new FrameHandler(this, this.endpoint.getInstance());
-        webSocketChannel.frameHandler(frameHandler)
         webSocketChannel.pipeline().addLast(frameHandler);
 
     }

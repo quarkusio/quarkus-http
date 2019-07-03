@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package io.undertow.util;
+package io.undertow.httpcore;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -25,105 +25,102 @@ import java.net.URLDecoder;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class HttpHeaderNames {
-
-    private HttpHeaderNames() {
-    }
+public interface HttpHeaderNames {
 
     // Headers as strings
 
-    public static final String ACCEPT = "Accept";
-    public static final String ACCEPT_CHARSET = "Accept-Charset";
-    public static final String ACCEPT_ENCODING = "Accept-Encoding";
-    public static final String ACCEPT_LANGUAGE = "Accept-Language";
-    public static final String ACCEPT_RANGES = "Accept-Ranges";
-    public static final String AGE = "Age";
-    public static final String ALLOW = "Allow";
-    public static final String AUTHENTICATION_INFO = "Authentication-Info";
-    public static final String AUTHORIZATION = "Authorization";
-    public static final String CACHE_CONTROL = "Cache-Control";
-    public static final String COOKIE = "Cookie";
-    public static final String COOKIE2 = "Cookie2";
-    public static final String CONNECTION = "Connection";
-    public static final String CONTENT_DISPOSITION = "Content-Disposition";
-    public static final String CONTENT_ENCODING = "Content-Encoding";
-    public static final String CONTENT_LANGUAGE = "Content-Language";
-    public static final String CONTENT_LENGTH = "Content-Length";
-    public static final String CONTENT_LOCATION = "Content-Location";
-    public static final String CONTENT_MD5 = "Content-MD5";
-    public static final String CONTENT_RANGE = "Content-Range";
-    public static final String CONTENT_SECURITY_POLICY = "Content-Security-Policy";
-    public static final String CONTENT_TYPE = "Content-Type";
-    public static final String DATE = "Date";
-    public static final String ETAG = "ETag";
-    public static final String EXPECT = "Expect";
-    public static final String EXPIRES = "Expires";
-    public static final String FORWARDED = "Forwarded";
-    public static final String FROM = "From";
-    public static final String HOST = "Host";
-    public static final String IF_MATCH = "If-Match";
-    public static final String IF_MODIFIED_SINCE = "If-Modified-Since";
-    public static final String IF_NONE_MATCH = "If-None-Match";
-    public static final String IF_RANGE = "If-Range";
-    public static final String IF_UNMODIFIED_SINCE = "If-Unmodified-Since";
-    public static final String LAST_MODIFIED = "Last-Modified";
-    public static final String LOCATION = "Location";
-    public static final String MAX_FORWARDS = "Max-Forwards";
-    public static final String ORIGIN = "Origin";
-    public static final String PRAGMA = "Pragma";
-    public static final String PROXY_AUTHENTICATE = "Proxy-Authenticate";
-    public static final String PROXY_AUTHORIZATION = "Proxy-Authorization";
-    public static final String RANGE = "Range";
-    public static final String REFERER = "Referer";
-    public static final String REFERRER_POLICY = "Referrer-Policy";
-    public static final String REFRESH = "Refresh";
-    public static final String RETRY_AFTER = "Retry-After";
-    public static final String SEC_WEB_SOCKET_ACCEPT = "Sec-WebSocket-Accept";
-    public static final String SEC_WEB_SOCKET_EXTENSIONS = "Sec-WebSocket-Extensions";
-    public static final String SEC_WEB_SOCKET_KEY = "Sec-WebSocket-Key";
-    public static final String SEC_WEB_SOCKET_KEY1 = "Sec-WebSocket-Key1";
-    public static final String SEC_WEB_SOCKET_KEY2 = "Sec-WebSocket-Key2";
-    public static final String SEC_WEB_SOCKET_LOCATION = "Sec-WebSocket-Location";
-    public static final String SEC_WEB_SOCKET_ORIGIN = "Sec-WebSocket-Origin";
-    public static final String SEC_WEB_SOCKET_PROTOCOL = "Sec-WebSocket-Protocol";
-    public static final String SEC_WEB_SOCKET_VERSION = "Sec-WebSocket-Version";
-    public static final String SERVER = "Server";
-    public static final String SERVLET_ENGINE = "Servlet-Engine";
-    public static final String SET_COOKIE = "Set-Cookie";
-    public static final String SET_COOKIE2 = "Set-Cookie2";
-    public static final String SSL_CLIENT_CERT = "SSL_CLIENT_CERT";
-    public static final String SSL_CIPHER = "SSL_CIPHER";
-    public static final String SSL_SESSION_ID = "SSL_SESSION_ID";
-    public static final String SSL_CIPHER_USEKEYSIZE = "SSL_CIPHER_USEKEYSIZE";
-    public static final String STATUS = "Status";
-    public static final String STRICT_TRANSPORT_SECURITY = "Strict-Transport-Security";
-    public static final String TE = "TE";
-    public static final String TRAILER = "Trailer";
-    public static final String TRANSFER_ENCODING = "Transfer-Encoding";
-    public static final String UPGRADE = "Upgrade";
-    public static final String USER_AGENT = "User-Agent";
-    public static final String VARY = "Vary";
-    public static final String VIA = "Via";
-    public static final String WARNING = "Warning";
-    public static final String WWW_AUTHENTICATE = "WWW-Authenticate";
-    public static final String X_CONTENT_TYPE_OPTIONS = "X-Content-Type-Options";
-    public static final String X_DISABLE_PUSH = "X-Disable-Push";
-    public static final String X_FORWARDED_FOR = "X-Forwarded-For";
-    public static final String X_FORWARDED_PROTO = "X-Forwarded-Proto";
-    public static final String X_FORWARDED_HOST = "X-Forwarded-Host";
-    public static final String X_FORWARDED_PORT = "X-Forwarded-Port";
-    public static final String X_FORWARDED_SERVER = "X-Forwarded-Server";
-    public static final String X_FRAME_OPTIONS = "X-Frame-Options";
-    public static final String X_XSS_PROTECTION = "X-Xss-Protection";
+    String ACCEPT = "Accept";
+    String ACCEPT_CHARSET = "Accept-Charset";
+    String ACCEPT_ENCODING = "Accept-Encoding";
+    String ACCEPT_LANGUAGE = "Accept-Language";
+    String ACCEPT_RANGES = "Accept-Ranges";
+    String AGE = "Age";
+    String ALLOW = "Allow";
+    String AUTHENTICATION_INFO = "Authentication-Info";
+    String AUTHORIZATION = "Authorization";
+    String CACHE_CONTROL = "Cache-Control";
+    String COOKIE = "Cookie";
+    String COOKIE2 = "Cookie2";
+    String CONNECTION = "Connection";
+    String CONTENT_DISPOSITION = "Content-Disposition";
+    String CONTENT_ENCODING = "Content-Encoding";
+    String CONTENT_LANGUAGE = "Content-Language";
+    String CONTENT_LENGTH = "Content-Length";
+    String CONTENT_LOCATION = "Content-Location";
+    String CONTENT_MD5 = "Content-MD5";
+    String CONTENT_RANGE = "Content-Range";
+    String CONTENT_SECURITY_POLICY = "Content-Security-Policy";
+    String CONTENT_TYPE = "Content-Type";
+    String DATE = "Date";
+    String ETAG = "ETag";
+    String EXPECT = "Expect";
+    String EXPIRES = "Expires";
+    String FORWARDED = "Forwarded";
+    String FROM = "From";
+    String HOST = "Host";
+    String IF_MATCH = "If-Match";
+    String IF_MODIFIED_SINCE = "If-Modified-Since";
+    String IF_NONE_MATCH = "If-None-Match";
+    String IF_RANGE = "If-Range";
+    String IF_UNMODIFIED_SINCE = "If-Unmodified-Since";
+    String LAST_MODIFIED = "Last-Modified";
+    String LOCATION = "Location";
+    String MAX_FORWARDS = "Max-Forwards";
+    String ORIGIN = "Origin";
+    String PRAGMA = "Pragma";
+    String PROXY_AUTHENTICATE = "Proxy-Authenticate";
+    String PROXY_AUTHORIZATION = "Proxy-Authorization";
+    String RANGE = "Range";
+    String REFERER = "Referer";
+    String REFERRER_POLICY = "Referrer-Policy";
+    String REFRESH = "Refresh";
+    String RETRY_AFTER = "Retry-After";
+    String SEC_WEB_SOCKET_ACCEPT = "Sec-WebSocket-Accept";
+    String SEC_WEB_SOCKET_EXTENSIONS = "Sec-WebSocket-Extensions";
+    String SEC_WEB_SOCKET_KEY = "Sec-WebSocket-Key";
+    String SEC_WEB_SOCKET_KEY1 = "Sec-WebSocket-Key1";
+    String SEC_WEB_SOCKET_KEY2 = "Sec-WebSocket-Key2";
+    String SEC_WEB_SOCKET_LOCATION = "Sec-WebSocket-Location";
+    String SEC_WEB_SOCKET_ORIGIN = "Sec-WebSocket-Origin";
+    String SEC_WEB_SOCKET_PROTOCOL = "Sec-WebSocket-Protocol";
+    String SEC_WEB_SOCKET_VERSION = "Sec-WebSocket-Version";
+    String SERVER = "Server";
+    String SERVLET_ENGINE = "Servlet-Engine";
+    String SET_COOKIE = "Set-Cookie";
+    String SET_COOKIE2 = "Set-Cookie2";
+    String SSL_CLIENT_CERT = "SSL_CLIENT_CERT";
+    String SSL_CIPHER = "SSL_CIPHER";
+    String SSL_SESSION_ID = "SSL_SESSION_ID";
+    String SSL_CIPHER_USEKEYSIZE = "SSL_CIPHER_USEKEYSIZE";
+    String STATUS = "Status";
+    String STRICT_TRANSPORT_SECURITY = "Strict-Transport-Security";
+    String TE = "TE";
+    String TRAILER = "Trailer";
+    String TRANSFER_ENCODING = "Transfer-Encoding";
+    String UPGRADE = "Upgrade";
+    String USER_AGENT = "User-Agent";
+    String VARY = "Vary";
+    String VIA = "Via";
+    String WARNING = "Warning";
+    String WWW_AUTHENTICATE = "WWW-Authenticate";
+    String X_CONTENT_TYPE_OPTIONS = "X-Content-Type-Options";
+    String X_DISABLE_PUSH = "X-Disable-Push";
+    String X_FORWARDED_FOR = "X-Forwarded-For";
+    String X_FORWARDED_PROTO = "X-Forwarded-Proto";
+    String X_FORWARDED_HOST = "X-Forwarded-Host";
+    String X_FORWARDED_PORT = "X-Forwarded-Port";
+    String X_FORWARDED_SERVER = "X-Forwarded-Server";
+    String X_FRAME_OPTIONS = "X-Frame-Options";
+    String X_XSS_PROTECTION = "X-Xss-Protection";
 
     // Content codings
 
-    public static final String COMPRESS = "compress";
-    public static final String X_COMPRESS = "x-compress";
-    public static final String DEFLATE = "deflate";
-    public static final String IDENTITY = "identity";
-    public static final String GZIP = "gzip";
-    public static final String X_GZIP = "x-gzip";
+    String COMPRESS = "compress";
+    String X_COMPRESS = "x-compress";
+    String DEFLATE = "deflate";
+    String IDENTITY = "identity";
+    String GZIP = "gzip";
+    String X_GZIP = "x-gzip";
 
     // Transfer codings
 

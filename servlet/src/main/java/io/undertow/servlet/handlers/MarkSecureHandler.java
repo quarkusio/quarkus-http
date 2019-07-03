@@ -28,7 +28,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.builder.HandlerBuilder;
 
 /**
- * Handler that marks a request as secure, regardless of the underlying protocol.
+ * Handler that marks a request as secure, regardless of the underlying getProtocol.
  *
  * @author Stuart Douglas
  */

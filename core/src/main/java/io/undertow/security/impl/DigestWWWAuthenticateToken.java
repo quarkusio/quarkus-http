@@ -23,7 +23,7 @@ import java.util.Map;
 
 import io.undertow.util.HeaderToken;
 import io.undertow.util.HeaderTokenParser;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 
 /**
  * Enumeration of tokens expected in a HTTP Digest 'WWW_Authenticate' header.

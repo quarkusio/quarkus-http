@@ -26,15 +26,13 @@ import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 
-import io.undertow.iocore.OutputChannel;
+import io.undertow.httpcore.OutputChannel;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.resource.ClassPathResourceManager;
 import io.undertow.server.handlers.resource.RangeAwareResource;
 import io.undertow.server.handlers.resource.Resource;
 import io.undertow.util.ETag;
 import io.undertow.util.MimeMappings;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.streams.WriteStream;
 
 /**
  * @author Stuart Douglas

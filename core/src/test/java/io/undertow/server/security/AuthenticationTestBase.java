@@ -41,7 +41,6 @@ import org.ietf.jgss.GSSException;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.security.api.AuthenticationMode;
 import io.undertow.security.api.NotificationReceiver;
@@ -65,7 +64,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.TestHttpClient;
 import io.undertow.util.HexConverter;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * Base class for the authentication tests.

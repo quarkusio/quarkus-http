@@ -17,9 +17,9 @@
  */
 package io.undertow.server.security;
 
-import static io.undertow.util.HttpHeaderNames.AUTHORIZATION;
-import static io.undertow.util.HttpHeaderNames.DIGEST;
-import static io.undertow.util.HttpHeaderNames.WWW_AUTHENTICATE;
+import static io.undertow.httpcore.HttpHeaderNames.AUTHORIZATION;
+import static io.undertow.httpcore.HttpHeaderNames.DIGEST;
+import static io.undertow.httpcore.HttpHeaderNames.WWW_AUTHENTICATE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -49,7 +49,7 @@ import io.undertow.security.impl.SimpleNonceManager;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.TestHttpClient;
 import io.undertow.util.HexConverter;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * For Digest authentication we support RFC2617, however this includes a requirement to allow a fall back to RFC2069, this test

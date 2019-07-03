@@ -9,8 +9,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /**
- * verifies that the proxy protocol ip address parser correctly parses IP addresses as per the additional requirements
- * in the proxy protocol spec
+ * verifies that the proxy getProtocol ip address parser correctly parses IP addresses as per the additional requirements
+ * in the proxy getProtocol spec
  *
  * @author Stuart Douglas
  */

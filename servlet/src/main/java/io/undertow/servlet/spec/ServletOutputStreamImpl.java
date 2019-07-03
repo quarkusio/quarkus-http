@@ -32,12 +32,12 @@ import javax.servlet.WriteListener;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.undertow.UndertowMessages;
-import io.undertow.iocore.HttpExchange;
-import io.undertow.iocore.IoCallback;
+import io.undertow.httpcore.HttpExchange;
+import io.undertow.httpcore.IoCallback;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.UndertowServletMessages;
 import io.undertow.servlet.handlers.ServletRequestContext;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.util.IoUtils;
 
 /**

@@ -38,7 +38,7 @@ import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.ProxyIgnore;
 import io.undertow.testutils.TestHttpClient;
 import io.undertow.util.FileUtils;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * A simple test case to verify a redirect works.

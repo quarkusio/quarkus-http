@@ -22,21 +22,18 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-import io.undertow.iocore.OutputChannel;
+import io.undertow.httpcore.OutputChannel;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.CopyOnWriteMap;
 import io.undertow.util.ETag;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.util.MimeMappings;
 import io.undertow.util.QValueParser;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.streams.WriteStream;
 
 /**
  * A resource supplier that allows pre-compressed resources to be served if the client accepts the request.

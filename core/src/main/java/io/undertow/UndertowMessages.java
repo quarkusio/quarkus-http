@@ -539,10 +539,10 @@ public interface UndertowMessages {
     @Message(id = 178, value = "Buffer pool is too small, min size is %s")
     IllegalArgumentException bufferPoolTooSmall(int minSize);
 
-    @Message(id = 179, value = "Invalid PROXY protocol header")
+    @Message(id = 179, value = "Invalid PROXY getProtocol header")
     IOException invalidProxyHeader();
 
-    @Message(id = 180, value = "PROXY protocol header exceeded max size of 107 bytes")
+    @Message(id = 180, value = "PROXY getProtocol header exceeded max size of 107 bytes")
     IOException headerSizeToLarge();
 
     @Message(id = 181, value = "HTTP/2 trailers too large for single buffer")

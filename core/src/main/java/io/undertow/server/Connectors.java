@@ -28,11 +28,10 @@ import io.netty.buffer.ByteBuf;
 import io.undertow.UndertowLogger;
 import io.undertow.server.handlers.Cookie;
 import io.undertow.util.DateUtils;
-import io.undertow.util.HeaderValues;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.util.LegacyCookieSupport;
 import io.undertow.util.ParameterLimitException;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 import io.undertow.util.URLUtils;
 import io.undertow.util.UndertowOptions;
 

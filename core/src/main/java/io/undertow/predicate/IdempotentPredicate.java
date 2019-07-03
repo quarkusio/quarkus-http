@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpMethodNames;
+import io.undertow.httpcore.HttpMethodNames;
 
 /**
  * A predicate that returns true if the request is idempotent

@@ -53,7 +53,7 @@ import io.undertow.attribute.ResponseTimeAttribute;
 import io.undertow.attribute.SecureExchangeAttribute;
 import io.undertow.attribute.SubstituteEmptyWrapper;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 
 /**
  * Parser that transforms an extended access log format string into a
@@ -467,7 +467,7 @@ public class ExtendedAccessLogParser {
             return parser.parse("%{REQUEST_CHARACTER_ENCODING}");
         } else if ("locale".equals(parameter)) {
             return parser.parse("%{REQUEST_LOCALE}");
-        } else if ("protocol".equals(parameter)) {
+        } else if ("getProtocol".equals(parameter)) {
             return RequestProtocolAttribute.INSTANCE;
         } else if ("scheme".equals(parameter)) {
             return RequestSchemeAttribute.INSTANCE;

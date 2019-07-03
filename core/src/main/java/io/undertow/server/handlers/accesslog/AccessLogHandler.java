@@ -50,7 +50,7 @@ import io.undertow.server.handlers.builder.HandlerBuilder;
  * were sent
  * <li><b>%B</b> - Bytes sent, excluding HTTP headers
  * <li><b>%h</b> - Remote host name
- * <li><b>%H</b> - Request protocol
+ * <li><b>%H</b> - Request getProtocol
  * <li><b>%l</b> - Remote logical username from identd (always returns '-')
  * <li><b>%m</b> - Request method
  * <li><b>%p</b> - Local port

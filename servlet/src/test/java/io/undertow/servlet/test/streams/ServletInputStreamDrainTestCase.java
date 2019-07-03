@@ -28,12 +28,12 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import io.undertow.httpcore.StatusCodes;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.test.util.DeploymentUtils;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
-import io.undertow.util.StatusCodes;
 
 /**
  * Tests calling close on the input stream before all data has been read.
@@ -58,12 +58,8 @@ public class ServletInputStreamDrainTestCase {
     public void testServletInputStreamEarlyClose() throws Exception {
         StringBuilder builder = new StringBuilder(1000 * HELLO_WORLD.length());
         for (int i = 0; i < 10; ++i) {
-            try {
-                for (int j = 0; j < 1000; ++j) {
-                    builder.append(HELLO_WORLD);
-                }
-            } catch (Throwable e) {
-                throw new RuntimeException("test failed with i equal to " + i, e);
+            for (int j = 0; j < 1000; ++j) {
+                builder.append(HELLO_WORLD);
             }
         }
         String message = builder.toString();
@@ -74,15 +70,15 @@ public class ServletInputStreamDrainTestCase {
             post.setEntity(new StringEntity(message));
             HttpResponse result = client.execute(post);
             Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
-            Assert.assertEquals("close",HttpClientUtils.readResponse(result));
+            Assert.assertEquals("close", HttpClientUtils.readResponse(result));
 
             result = client.execute(post);
             Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
-            Assert.assertEquals("close",HttpClientUtils.readResponse(result));
+            Assert.assertEquals("close", HttpClientUtils.readResponse(result));
 
             result = client.execute(post);
             Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
-            Assert.assertEquals("close",HttpClientUtils.readResponse(result));
+            Assert.assertEquals("close", HttpClientUtils.readResponse(result));
         } finally {
             client.getConnectionManager().shutdown();
         }

@@ -32,7 +32,7 @@ import org.junit.runner.RunWith;
 
 import io.netty.buffer.Unpooled;
 import io.undertow.Handlers;
-import io.undertow.iocore.IoCallback;
+import io.undertow.httpcore.IoCallback;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.cache.DirectBufferCache;
@@ -42,15 +42,14 @@ import io.undertow.server.handlers.resource.ResourceHandler;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.TestHttpClient;
 import io.undertow.util.DateUtils;
-import io.undertow.util.HttpHeaderNames;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * @author Stuart Douglas
  */
 @RunWith(DefaultServer.class)
 public class RangeRequestTestCase {
-
 
     @BeforeClass
     public static void setup() throws URISyntaxException {

@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.undertow.httpcore.HttpHeaderNames;
+
 /**
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>

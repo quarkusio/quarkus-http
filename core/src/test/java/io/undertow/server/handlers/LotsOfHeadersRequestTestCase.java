@@ -17,7 +17,6 @@ package io.undertow.server.handlers;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Map;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -29,13 +28,12 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.testutils.AjpIgnore;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.TestHttpClient;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 import io.undertow.util.UndertowOptionMap;
 import io.undertow.util.UndertowOptions;
 

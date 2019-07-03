@@ -18,7 +18,7 @@
 
 package io.undertow.servlet.handlers.security;
 
-import static io.undertow.util.StatusCodes.OK;
+import static io.undertow.httpcore.StatusCodes.OK;
 
 import java.io.IOException;
 import java.security.AccessController;
@@ -46,7 +46,7 @@ import io.undertow.server.session.SessionManager;
 import io.undertow.servlet.handlers.ServletRequestContext;
 import io.undertow.servlet.spec.HttpSessionImpl;
 import io.undertow.servlet.util.SavedRequest;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.util.RedirectBuilder;
 
 /**

@@ -48,12 +48,12 @@ public class ServletRelativePathAttribute implements ExchangeAttribute {
     public String readAttribute(final HttpServerExchange exchange) {
         ServletRequestContext src = exchange.getAttachment(ServletRequestContext.ATTACHMENT_KEY);
         if(src == null) {
-            return RequestURLAttribute.INSTANCE.readAttribute(exchange);
+            return RelativePathAttribute.INSTANCE.readAttribute(exchange);
         }
         String path = (String) src.getServletRequest().getAttribute(RequestDispatcher.FORWARD_PATH_INFO);
         String sp = (String) src.getServletRequest().getAttribute(RequestDispatcher.FORWARD_SERVLET_PATH);
         if(path == null && sp == null) {
-            return RequestURLAttribute.INSTANCE.readAttribute(exchange);
+            return RelativePathAttribute.INSTANCE.readAttribute(exchange);
         }
         if(sp == null) {
             return path;

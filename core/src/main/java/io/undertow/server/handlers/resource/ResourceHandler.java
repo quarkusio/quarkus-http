@@ -44,11 +44,11 @@ import io.undertow.util.CanonicalPathUtils;
 import io.undertow.util.DateUtils;
 import io.undertow.util.ETag;
 import io.undertow.util.ETagUtils;
-import io.undertow.util.HttpHeaderNames;
-import io.undertow.util.HttpMethodNames;
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.HttpMethodNames;
 import io.undertow.util.MimeMappings;
 import io.undertow.util.RedirectBuilder;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * @author Stuart Douglas

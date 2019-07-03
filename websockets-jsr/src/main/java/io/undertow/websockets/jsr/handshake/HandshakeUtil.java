@@ -26,8 +26,8 @@ import java.util.Map;
 import javax.websocket.Extension;
 import javax.websocket.server.ServerEndpointConfig;
 
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.util.AttachmentKey;
-import io.undertow.util.HttpHeaderNames;
 import io.undertow.websockets.jsr.ConfiguredServerEndpoint;
 import io.undertow.websockets.jsr.UndertowSession;
 

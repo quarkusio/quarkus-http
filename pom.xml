@@ -108,7 +108,8 @@
         <module>servlet</module>
         <!--<module>examples</module>-->
         <module>websockets-jsr</module>
-        <module>io-core</module>
+        <module>http-core</module>
+        <module>vertx</module>
         <!--<module>tmp-tests</module>-->
         <!--<module>karaf</module>-->
     </modules>
@@ -336,6 +337,11 @@
                 <version>${version.netty}</version>
             </dependency>
 
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-buffer</artifactId>
+                <version>${version.netty}</version>
+            </dependency>
             <dependency>
                 <groupId>com.twitter</groupId>
                 <artifactId>hpack</artifactId>

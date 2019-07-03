@@ -45,10 +45,10 @@ import io.undertow.servlet.spec.HttpServletRequestImpl;
 import io.undertow.servlet.spec.HttpServletResponseImpl;
 import io.undertow.servlet.spec.RequestDispatcherImpl;
 import io.undertow.servlet.spec.ServletContextImpl;
-import io.undertow.util.HttpHeaderNames;
-import io.undertow.util.HttpMethodNames;
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.HttpMethodNames;
 import io.undertow.util.RedirectBuilder;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * This must be the initial handler in the blocking servlet chain. This sets up the request and response objects,
@@ -209,7 +209,7 @@ public class ServletInitialHandler implements HttpHandler, ServletDispatcher {
 //        HttpServerExchange exchange = new HttpServerExchange(connection);
 //        exchange.setRequestScheme(request.getScheme());
 //        exchange.getRequestMethod(new HttpString(request.getMethod()));
-//        exchange.protocol(Protocols.HTTP_1_0);
+//        exchange.getProtocol(Protocols.HTTP_1_0);
 //        exchange.setResolvedPath(request.getContextPath());
 //        String relative;
 //        if (request.getPathInfo() == null) {

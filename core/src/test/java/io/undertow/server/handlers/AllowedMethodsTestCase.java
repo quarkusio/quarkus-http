@@ -31,8 +31,8 @@ import org.junit.runner.RunWith;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
-import io.undertow.util.HttpMethodNames;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.HttpMethodNames;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * Tests that the allowed and disallowed method handlers work as expected

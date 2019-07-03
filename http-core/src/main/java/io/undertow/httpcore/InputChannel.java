@@ -1,4 +1,4 @@
-package io.undertow.iocore;
+package io.undertow.httpcore;
 
 import java.io.IOException;
 

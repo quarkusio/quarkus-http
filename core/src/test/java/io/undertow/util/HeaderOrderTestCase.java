@@ -29,6 +29,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.testutils.category.UnitTest;
 
 /**

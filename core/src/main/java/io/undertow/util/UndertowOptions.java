@@ -209,7 +209,7 @@ public class UndertowOptions {
      * HTTP/1.1
      * HTTP/2.0
      * <p>
-     * If this is false then requests that specify any other protocol will be rejected with a 400
+     * If this is false then requests that specify any other getProtocol will be rejected with a 400
      * <p>
      * Defaults to false
      */
@@ -447,7 +447,7 @@ public class UndertowOptions {
 //    public static final UndertowOption<Sequence<String>> SSL_SUPPORTED_CIPHER_SUITES = Option.sequence(Options.class, "SSL_SUPPORTED_CIPHER_SUITES", String.class);
 //
 //    /**
-//     * Specify the enabled protocols for an SSL/TLS session.  If a listed protocol is not supported, it is ignored; however, if you
+//     * Specify the enabled protocols for an SSL/TLS session.  If a listed getProtocol is not supported, it is ignored; however, if you
 //     * specify a list of protocols, none of which are supported, an exception will be thrown.
 //     *
 //     * @since 2.0
@@ -469,7 +469,7 @@ public class UndertowOptions {
     public static final UndertowOption<String> SSL_PROVIDER = UndertowOption.create("SSL_PROVIDER", String.class);
 
     /**
-     * Specify the protocol name for an SSL context.
+     * Specify the getProtocol name for an SSL context.
      *
      * @since 2.1
      */

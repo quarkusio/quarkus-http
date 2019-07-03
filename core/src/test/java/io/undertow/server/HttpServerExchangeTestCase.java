@@ -30,8 +30,8 @@ import org.junit.runner.RunWith;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
-import io.undertow.util.HttpProtocolNames;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.HttpProtocolNames;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * @author Stuart Douglas
@@ -45,7 +45,7 @@ public class HttpServerExchangeTestCase {
             @Override
             public void handleRequest(HttpServerExchange exchange) throws Exception {
                 exchange.writeAsync(exchange.getHostName()
-                        + ":" + exchange.protocol()
+                        + ":" + exchange.getProtocol()
                         + ":" + exchange.getRequestMethod()
                         + ":" + exchange.getHostPort()
                         + ":" + exchange.getRequestURI()

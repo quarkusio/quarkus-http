@@ -31,7 +31,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -53,8 +52,8 @@ import io.undertow.servlet.test.util.TestResourceLoader;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
-import io.undertow.util.HttpProtocolNames;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.HttpProtocolNames;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * @author Stuart Douglas

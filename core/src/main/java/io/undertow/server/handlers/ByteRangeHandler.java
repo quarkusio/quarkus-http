@@ -33,9 +33,9 @@ import io.undertow.server.WriteFunction;
 import io.undertow.server.handlers.builder.HandlerBuilder;
 import io.undertow.util.ByteRange;
 import io.undertow.util.DateUtils;
-import io.undertow.util.HttpHeaderNames;
-import io.undertow.util.HttpMethodNames;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.HttpMethodNames;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * Handler for Range requests. This is a generic handler that can handle range requests to any resource

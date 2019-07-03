@@ -50,13 +50,12 @@ import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.undertow.websockets.jsr.util.ClassUtils;
-import io.vertx.core.Handler;
 
 /**
  * @author Stuart Douglas
  * @author <a href="mailto:nmaurer@redhat.com">Norman Maurer</a>
  */
-class FrameHandler implements Handler<io.vertx.core.http.WebSocketFrame> {
+class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
     private final Endpoint endpoint;
     private final UndertowSession session;
     protected static final byte[] EMPTY = new byte[0];
@@ -65,11 +64,6 @@ class FrameHandler implements Handler<io.vertx.core.http.WebSocketFrame> {
     private StringBuilder stringBuffer;
     private ByteArrayOutputStream binaryBuffer;
     private FrameType expectedContinuation;
-
-    @Override
-    public void handle(io.vertx.core.http.WebSocketFrame event) {
-
-    }
 
 
     /**

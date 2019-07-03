@@ -23,6 +23,7 @@ import java.util.Date;
 import java.util.List;
 
 import io.undertow.UndertowLogger;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * Represents a byte range for a range request

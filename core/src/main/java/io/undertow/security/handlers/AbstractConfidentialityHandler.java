@@ -23,8 +23,8 @@ import java.net.URISyntaxException;
 import io.undertow.UndertowLogger;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpHeaderNames;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * Handler responsible for checking of confidentiality is required for the requested resource and if so rejecting the request

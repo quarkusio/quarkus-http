@@ -26,7 +26,7 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.netty.handler.codec.http.HttpHeaders;
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.server.HttpServerExchange;
 
 /**

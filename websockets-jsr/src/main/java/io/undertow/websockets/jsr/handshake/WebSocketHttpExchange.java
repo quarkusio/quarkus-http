@@ -95,7 +95,7 @@ public interface WebSocketHttpExchange extends Closeable {
      *
      * @param upgradeCallback
      */
-    void upgradeChannel(Consumer<ServerWebSocket> listener);
+    void upgradeChannel(Consumer<Object> listener);
 
     /**
      * End the exchange normally. If this is a blocking exchange this may be a noop, and the exchange

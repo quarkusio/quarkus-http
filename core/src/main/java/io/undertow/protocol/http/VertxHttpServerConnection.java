@@ -9,9 +9,10 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowLogger;
-import io.undertow.iocore.IoCallback;
+import io.undertow.httpcore.IoCallback;
 import io.undertow.server.BufferAllocator;
 import io.undertow.server.ConnectionSSLSessionInfo;
 import io.undertow.server.Connectors;
@@ -19,13 +20,13 @@ import io.undertow.server.HttpContinue;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.SSLSessionInfo;
 import io.undertow.server.ServerConnection;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.util.UndertowOptionMap;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.http.impl.Http1xServerConnection;
 import io.vertx.core.net.impl.ConnectionBase;
 
 public class VertxHttpServerConnection extends ServerConnection implements Handler<Buffer> {
@@ -52,6 +53,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
     private boolean waitingForDrain;
     private boolean drainHandlerRegistered;
+    private volatile boolean writeQueued = false;
 
     public VertxHttpServerConnection(HttpServerRequest request, BufferAllocator allocator, Executor worker) {
         this.request = request;
@@ -85,6 +87,9 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
             public void handle(Throwable event) {
                 UndertowLogger.REQUEST_IO_LOGGER.ioException(event);
                 //TODO: do we need this?
+                eof = true;
+                Connectors.terminateRequest(exchange);
+                Connectors.terminateResponse(exchange);
                 exchange.endExchange();
             }
         });
@@ -93,12 +98,10 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
             @Override
             public void handle(Void event) {
                 synchronized (request.connection()) {
-                    eof = true;
                     if (waiting) {
                         request.connection().notify();
                     }
                 }
-                Connectors.terminateRequest(exchange);
                 Connectors.terminateResponse(exchange);
             }
         });
@@ -238,6 +241,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
     @Override
     public <T> void writeAsync(ByteBuf data, boolean last, HttpServerExchange exchange, IoCallback<T> callback, T context) {
+        writeQueued = true;
         if(data != null) {
             Connectors.updateResponseBytesSent(exchange, data.writableBytes());
         }
@@ -278,6 +282,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
                     Connectors.terminateResponse(exchange);
                 }
                 callback.onComplete(exchange, context);
+                writeQueued = false;
             }
         });
     }
@@ -288,7 +293,7 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
 
     @Override
     protected boolean isIoOperationQueued() {
-        return readCallback != null;
+        return readCallback != null || writeQueued;
     }
 
     @Override
@@ -359,19 +364,20 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
         return null;
     }
 
-    protected void setUpgradeListener(Consumer<ServerWebSocket> listener) {
-        ServerWebSocket sebsocket = request.upgrade();
+    protected void setUpgradeListener(Consumer<Object> listener) {
+        Http1xServerConnection connection = (Http1xServerConnection) request.connection();
+        ChannelHandlerContext context = connection.channelHandlerContext();
         getIoThread().execute(new Runnable() {
             @Override
             public void run() {
-                listener.accept(sebsocket);
+                listener.accept(context);
             }
         });
     }
 
     @Override
     protected boolean isUpgradeSupported() {
-        return true;
+        return request.connection() instanceof Http1xServerConnection;
     }
 
     @Override

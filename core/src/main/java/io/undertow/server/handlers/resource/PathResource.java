@@ -15,7 +15,7 @@ import java.util.List;
 
 import io.netty.buffer.ByteBuf;
 import io.undertow.UndertowLogger;
-import io.undertow.iocore.OutputChannel;
+import io.undertow.httpcore.OutputChannel;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.DateUtils;
 import io.undertow.util.ETag;

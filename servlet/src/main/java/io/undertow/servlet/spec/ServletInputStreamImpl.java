@@ -29,8 +29,8 @@ import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 
 import io.netty.buffer.ByteBuf;
-import io.undertow.iocore.HttpExchange;
-import io.undertow.iocore.IoCallback;
+import io.undertow.httpcore.HttpExchange;
+import io.undertow.httpcore.IoCallback;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.UndertowServletMessages;
 

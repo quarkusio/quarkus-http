@@ -20,11 +20,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.util.AttachmentKey;
-import io.undertow.util.HttpHeaderNames;
-import io.undertow.util.HttpProtocolNames;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.HttpProtocolNames;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * Class that provides support for dealing with HTTP 100 (Continue) responses.
@@ -56,7 +55,7 @@ public class HttpContinue {
      * @return <code>true</code> if the server needs to send a continue response
      */
     public static boolean requiresContinueResponse(final HttpServerExchange exchange) {
-        if (!COMPATIBLE_PROTOCOLS.contains(exchange.protocol()) || exchange.isResponseStarted() || !exchange.getConnection().isContinueResponseSupported() || exchange.getAttachment(ALREADY_SENT) != null) {
+        if (!COMPATIBLE_PROTOCOLS.contains(exchange.getProtocol()) || exchange.isResponseStarted() || !exchange.getConnection().isContinueResponseSupported() || exchange.getAttachment(ALREADY_SENT) != null) {
             return false;
         }
 

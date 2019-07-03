@@ -41,10 +41,9 @@ import io.netty.handler.codec.http.websocketx.extensions.WebSocketExtensionEncod
 import io.netty.handler.codec.http.websocketx.extensions.WebSocketExtensionUtil;
 import io.netty.handler.codec.http.websocketx.extensions.WebSocketServerExtension;
 import io.netty.handler.codec.http.websocketx.extensions.WebSocketServerExtensionHandshaker;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.websockets.jsr.ConfiguredServerEndpoint;
 import io.undertow.websockets.jsr.ExtensionImpl;
-import io.vertx.core.http.ServerWebSocket;
 
 /**
  * Abstract base class for doing a WebSocket Handshake.
@@ -96,7 +95,7 @@ public class Handshake {
      *
      * @param exchange The {@link WebSocketHttpExchange} for which the handshake and upgrade should occur.
      */
-    public final void handshake(final WebSocketHttpExchange exchange, Consumer<ServerWebSocket> completeListener) {
+    public final void handshake(final WebSocketHttpExchange exchange, Consumer<ChannelHandlerContext> completeListener) {
         String origin = exchange.getRequestHeader(HttpHeaderNames.ORIGIN);
         if (origin != null) {
             exchange.setResponseHeader(HttpHeaderNames.ORIGIN, origin);
@@ -115,10 +114,10 @@ public class Handshake {
             return;
         }
         handshakeInternal(exchange);
-        exchange.upgradeChannel(new Consumer<ServerWebSocket>() {
+        exchange.upgradeChannel(new Consumer<Object>() {
             @Override
-            public void accept(ServerWebSocket context) {
-
+            public void accept(Object c) {
+                ChannelHandlerContext context = (ChannelHandlerContext) c;
                 WebSocket13FrameDecoder decoder = new WebSocket13FrameDecoder(true, allowExtensions, 65536, false);
                 WebSocket13FrameEncoder encoder = new WebSocket13FrameEncoder(false);
                 ChannelPipeline p = context.pipeline();

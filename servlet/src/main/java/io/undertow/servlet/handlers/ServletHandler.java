@@ -31,7 +31,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.UndertowServletLogger;
 import io.undertow.servlet.api.InstanceHandle;
 import io.undertow.servlet.core.ManagedServlet;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * The handler that is responsible for invoking the servlet

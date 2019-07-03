@@ -34,7 +34,7 @@ import io.undertow.servlet.api.SecurityInfo;
 import io.undertow.servlet.api.SingleConstraintMatch;
 import io.undertow.servlet.api.TransportGuaranteeType;
 import io.undertow.servlet.api.WebResourceCollection;
-import io.undertow.util.HttpMethodNames;
+import io.undertow.httpcore.HttpMethodNames;
 
 /**
  * @author Stuart Douglas

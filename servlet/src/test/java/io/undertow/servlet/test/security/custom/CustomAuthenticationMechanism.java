@@ -26,7 +26,7 @@ import io.undertow.security.idm.IdentityManager;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.servlet.handlers.security.ServletFormAuthenticationMechanism;
-import io.undertow.util.HttpMethodNames;
+import io.undertow.httpcore.HttpMethodNames;
 
 /**
  * <p>

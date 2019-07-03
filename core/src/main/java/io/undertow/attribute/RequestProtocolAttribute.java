@@ -21,7 +21,7 @@ package io.undertow.attribute;
 import io.undertow.server.HttpServerExchange;
 
 /**
- * The request protocol
+ * The request getProtocol
  *
  * @author Stuart Douglas
  */
@@ -38,19 +38,19 @@ public class RequestProtocolAttribute implements ExchangeAttribute {
 
     @Override
     public String readAttribute(final HttpServerExchange exchange) {
-        return exchange.protocol();
+        return exchange.getProtocol();
     }
 
     @Override
     public void writeAttribute(final HttpServerExchange exchange, final String newValue) throws ReadOnlyAttributeException {
-        throw new ReadOnlyAttributeException("Request protocol", newValue);
+        throw new ReadOnlyAttributeException("Request getProtocol", newValue);
     }
 
     public static final class Builder implements ExchangeAttributeBuilder {
 
         @Override
         public String name() {
-            return "Request protocol";
+            return "Request getProtocol";
         }
 
         @Override

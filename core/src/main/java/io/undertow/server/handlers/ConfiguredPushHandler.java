@@ -22,7 +22,7 @@ import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpMethodNames;
+import io.undertow.httpcore.HttpMethodNames;
 import io.undertow.util.PathMatcher;
 
 /**

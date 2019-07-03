@@ -28,7 +28,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowMessages;
-import io.undertow.iocore.IoCallback;
+import io.undertow.httpcore.IoCallback;
 import io.undertow.util.AbstractAttachable;
 import io.undertow.util.UndertowOptionMap;
 import io.vertx.core.http.ServerWebSocket;
@@ -156,10 +156,10 @@ public abstract class ServerConnection extends AbstractAttachable {
     protected abstract void maxEntitySizeUpdated(HttpServerExchange exchange);
 
     /**
-     * Returns a string representation describing the protocol used to transmit messages
+     * Returns a string representation describing the getProtocol used to transmit messages
      * on this connection.
      *
-     * @return the transport protocol
+     * @return the transport getProtocol
      */
     public abstract String getTransportProtocol();
 
@@ -210,7 +210,7 @@ public abstract class ServerConnection extends AbstractAttachable {
     public abstract void writeFileBlocking(RandomAccessFile file, long position, long count, HttpServerExchange exchange) throws IOException;
 
 
-    protected  void setUpgradeListener(Consumer<ServerWebSocket> listener) {
+    protected  void setUpgradeListener(Consumer<Object> listener) {
         throw UndertowMessages.MESSAGES.upgradeNotSupported();
     }
 

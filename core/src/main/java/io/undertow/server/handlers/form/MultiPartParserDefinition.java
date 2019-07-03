@@ -35,16 +35,16 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
-import io.undertow.iocore.HttpExchange;
-import io.undertow.iocore.IoCallback;
+import io.undertow.httpcore.HttpExchange;
+import io.undertow.httpcore.IoCallback;
 import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.util.IoUtils;
 import io.undertow.util.MalformedMessageException;
 import io.undertow.util.SameThreadExecutor;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 import io.undertow.util.UndertowOptions;
 
 /**

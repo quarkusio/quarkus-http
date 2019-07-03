@@ -46,23 +46,23 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
-import io.undertow.iocore.HttpExchange;
-import io.undertow.iocore.InputChannel;
-import io.undertow.iocore.IoCallback;
-import io.undertow.iocore.OutputChannel;
+import io.undertow.httpcore.HttpExchange;
+import io.undertow.httpcore.InputChannel;
+import io.undertow.httpcore.IoCallback;
+import io.undertow.httpcore.OutputChannel;
 import io.undertow.security.api.SecurityContext;
 import io.undertow.server.handlers.Cookie;
 import io.undertow.util.AbstractAttachable;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.Cookies;
-import io.undertow.util.HttpHeaderNames;
-import io.undertow.util.HttpMethodNames;
-import io.undertow.util.HttpProtocolNames;
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.HttpMethodNames;
+import io.undertow.httpcore.HttpProtocolNames;
 import io.undertow.util.HttpString;
 import io.undertow.util.IoUtils;
 import io.undertow.util.NetworkUtils;
 import io.undertow.util.Rfc6265CookieSupport;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 import io.undertow.util.UndertowOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.ServerWebSocket;
@@ -300,31 +300,17 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         this.responseHeaders = (HttpHeaders) request.response().headers();
     }
 
-    public HttpServerRequest request() {
-        return request;
-    }
-
     /**
-     * Get the request protocol string.  Normally this is one of the strings listed in {@link HttpProtocolNames}.
+     * Get the request getProtocol string.  Normally this is one of the strings listed in {@link HttpProtocolNames}.
      *
-     * @return the request protocol string
+     * @return the request getProtocol string
      */
-    @Deprecated
-    public HttpString getProtocol() {
-        return new HttpString(protocol);
-    }
-
-    /**
-     * Get the request protocol string.  Normally this is one of the strings listed in {@link HttpProtocolNames}.
-     *
-     * @return the request protocol string
-     */
-    public String protocol() {
+    public String getProtocol() {
         return protocol;
     }
 
     /**
-     * Sets the http protocol
+     * Sets the http getProtocol
      *
      * @param protocol
      */
@@ -385,7 +371,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     /**
-     * The original request URI. This will include the host name, protocol etc
+     * The original request URI. This will include the host name, getProtocol etc
      * if it was specified by the client.
      * <p>
      * This is not decoded in any way, and does not include the query string.
@@ -560,84 +546,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         return StandardCharsets.ISO_8859_1.name();
     }
 
-    /**
-     * Return the host that this request was sent to, in general this will be the
-     * value of the Host header, minus the port specifier.
-     * <p>
-     * If this resolves to an IPv6 address it will not be enclosed by square brackets.
-     * Care must be taken when constructing URLs based on this method to ensure IPv6 URLs
-     * are handled correctly.
-     *
-     * @return The host part of the destination address
-     */
-    public String getHostName() {
-        String host = requestHeaders.get(HttpHeaderNames.HOST);
-        if (host == null) {
-            host = getDestinationAddress().getHostString();
-        } else {
-            if (host.startsWith("[")) {
-                host = host.substring(1, host.indexOf(']'));
-            } else if (host.indexOf(':') != -1) {
-                host = host.substring(0, host.indexOf(':'));
-            }
-        }
-        return host;
-    }
-
-    /**
-     * Return the host, and also the port if this request was sent to a non-standard port. In general
-     * this will just be the value of the Host header.
-     * <p>
-     * If this resolves to an IPv6 address it *will*  be enclosed by square brackets. The return
-     * value of this method is suitable for inclusion in a URL.
-     *
-     * @return The host and port part of the destination address
-     */
-    public String getHostAndPort() {
-        String host = requestHeaders.get(HttpHeaderNames.HOST);
-        if (host == null) {
-            InetSocketAddress address = getDestinationAddress();
-            host = NetworkUtils.formatPossibleIpv6Address(address.getHostString());
-            int port = address.getPort();
-            if (!((getRequestScheme().equals("http") && port == 80)
-                    || (getRequestScheme().equals("https") && port == 443))) {
-                host = host + ":" + port;
-            }
-        }
-        return host;
-    }
-
-    /**
-     * Return the port that this request was sent to. In general this will be the value of the Host
-     * header, minus the host name.
-     *
-     * @return The port part of the destination address
-     */
-    public int getHostPort() {
-        String host = requestHeaders.get(HttpHeaderNames.HOST);
-        if (host != null) {
-            //for ipv6 addresses we make sure we take out the first part, which can have multiple occurrences of :
-            final int colonIndex;
-            if (host.startsWith("[")) {
-                colonIndex = host.indexOf(':', host.indexOf(']'));
-            } else {
-                colonIndex = host.indexOf(':');
-            }
-            if (colonIndex != -1) {
-                try {
-                    return Integer.parseInt(host.substring(colonIndex + 1));
-                } catch (NumberFormatException ignore) {
-                }
-            }
-            if (getRequestScheme().equals("https")) {
-                return 443;
-            } else if (getRequestScheme().equals("http")) {
-                return 80;
-            }
-
-        }
-        return getDestinationAddress().getPort();
-    }
 
     /**
      * Get the underlying HTTP connection.
@@ -667,13 +575,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     @Override
     public InputChannel getInputChannel() {
         return this;
-    }
-
-    /**
-     * @return True if this exchange represents an upgrade response
-     */
-    public boolean isUpgrade() {
-        return getStatusCode() == StatusCodes.SWITCHING_PROTOCOLS;
     }
 
     /**
@@ -904,27 +805,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         return this;
     }
 
-    /**
-     * @return The content length of the request, or <code>-1</code> if it has not been set
-     */
-    public long getRequestContentLength() {
-        String contentLengthString = requestHeaders.get(HttpHeaderNames.CONTENT_LENGTH);
-        if (contentLengthString == null) {
-            return -1;
-        }
-        return Long.parseLong(contentLengthString);
-    }
-
-    /**
-     * @return The content length of the response, or <code>-1</code> if it has not been set
-     */
-    public long getResponseContentLength() {
-        String contentLengthString = responseHeaders.get(HttpHeaderNames.CONTENT_LENGTH);
-        if (contentLengthString == null) {
-            return -1;
-        }
-        return Long.parseLong(contentLengthString);
-    }
 
     /**
      * Sets the response content length
@@ -1622,10 +1502,10 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     /**
-     * Used to terminate the request in an async manner, the actual mechanism will depend on the underlying protocol,
+     * Used to terminate the request in an async manner, the actual mechanism will depend on the underlying getProtocol,
      * for example HTTP/2 may send a RST_STREAM stream if there is more data coming.
      * <p>
-     * This may result in an unclean close if it is called on a non multiplexed protocol
+     * This may result in an unclean close if it is called on a non multiplexed getProtocol
      */
     public void discardRequest() {
         if (isRequestComplete()) {
@@ -1642,7 +1522,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @throws IllegalStateException if a response or upgrade was already sent, or if the request body is already being
      *                               read
      */
-    public HttpServerExchange upgradeChannel(final Consumer<ServerWebSocket> listener) {
+    public HttpServerExchange upgradeChannel(final Consumer<Object> listener) {
         if (!connection.isUpgradeSupported()) {
             throw UndertowMessages.MESSAGES.upgradeNotSupported();
         }
@@ -1667,7 +1547,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @throws IllegalStateException if a response or upgrade was already sent, or if the request body is already being
      *                               read
      */
-    public HttpServerExchange upgradeChannel(String productName, final Consumer<ServerWebSocket> listener) {
+    public HttpServerExchange upgradeChannel(String productName, final Consumer<Object> listener) {
         if (!connection.isUpgradeSupported()) {
             throw UndertowMessages.MESSAGES.upgradeNotSupported();
         }

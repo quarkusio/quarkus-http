@@ -36,8 +36,8 @@ import io.undertow.server.session.Session;
 import io.undertow.server.session.SessionConfig;
 import io.undertow.server.session.SessionManager;
 import io.undertow.util.DateUtils;
-import io.undertow.util.HttpHeaderNames;
-import io.undertow.util.HttpMethodNames;
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.HttpMethodNames;
 
 /**
  * Handler that builds up a cache of resources that a browsers requests, and uses

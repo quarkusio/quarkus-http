@@ -34,8 +34,8 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.server.ServerConnection;
 import io.undertow.server.handlers.Cookie;
 import io.undertow.servlet.UndertowServletMessages;
-import io.undertow.util.HttpHeaderNames;
-import io.undertow.util.HttpMethodNames;
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.HttpMethodNames;
 
 /**
  * @author Stuart Douglas

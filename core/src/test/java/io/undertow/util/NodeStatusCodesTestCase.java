@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
+import io.undertow.httpcore.StatusCodes;
 import io.undertow.testutils.category.UnitTest;
 
 /**

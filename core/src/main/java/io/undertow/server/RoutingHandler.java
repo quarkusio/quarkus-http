@@ -26,7 +26,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import io.undertow.predicate.Predicate;
 import io.undertow.server.handlers.ResponseCodeHandler;
 import io.undertow.util.CopyOnWriteMap;
-import io.undertow.util.HttpMethodNames;
+import io.undertow.httpcore.HttpMethodNames;
 import io.undertow.util.PathTemplate;
 import io.undertow.util.PathTemplateMatch;
 import io.undertow.util.PathTemplateMatcher;

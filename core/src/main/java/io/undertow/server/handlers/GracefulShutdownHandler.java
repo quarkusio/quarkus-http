@@ -26,7 +26,7 @@ import io.undertow.UndertowMessages;
 import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * Handler that allows for graceful server shutdown. Basically it provides a way to prevent the server from

@@ -36,8 +36,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import io.undertow.iocore.HttpExchange;
-import io.undertow.iocore.IoCallback;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.resource.DefaultResourceSupplier;
 import io.undertow.server.handlers.resource.DirectoryUtils;
@@ -53,9 +51,9 @@ import io.undertow.util.CanonicalPathUtils;
 import io.undertow.util.DateUtils;
 import io.undertow.util.ETag;
 import io.undertow.util.ETagUtils;
-import io.undertow.util.HttpHeaderNames;
-import io.undertow.util.HttpMethodNames;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.HttpMethodNames;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * Default servlet responsible for serving up resources. This is both a handler and a servlet. If no filters

@@ -17,9 +17,9 @@
  */
 package io.undertow.servlet.test.security.constraint;
 
-import static io.undertow.util.HttpHeaderNames.AUTHORIZATION;
-import static io.undertow.util.HttpHeaderNames.BASIC;
-import static io.undertow.util.HttpHeaderNames.WWW_AUTHENTICATE;
+import static io.undertow.httpcore.HttpHeaderNames.AUTHORIZATION;
+import static io.undertow.httpcore.HttpHeaderNames.BASIC;
+import static io.undertow.httpcore.HttpHeaderNames.WWW_AUTHENTICATE;
 import static org.junit.Assert.assertEquals;
 
 import javax.servlet.ServletException;
@@ -48,7 +48,7 @@ import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
 import io.undertow.util.FlexBase64;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * A test case for the three supported {@link EmptyRoleSemantic} values.

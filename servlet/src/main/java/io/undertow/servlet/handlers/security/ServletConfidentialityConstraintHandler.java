@@ -31,7 +31,7 @@ import io.undertow.servlet.api.AuthorizationManager;
 import io.undertow.servlet.api.ConfidentialPortManager;
 import io.undertow.servlet.api.TransportGuaranteeType;
 import io.undertow.servlet.handlers.ServletRequestContext;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * Servlet specific extension to {@link SinglePortConfidentialityHandler}

@@ -29,7 +29,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.api.AuthorizationManager;
 import io.undertow.servlet.api.SingleConstraintMatch;
 import io.undertow.servlet.handlers.ServletRequestContext;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * Servlet role handler

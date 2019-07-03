@@ -29,7 +29,7 @@ import io.undertow.servlet.UndertowServletLogger;
 import io.undertow.servlet.handlers.ServletRequestContext;
 import io.undertow.servlet.spec.HttpServletRequestImpl;
 import io.undertow.servlet.spec.HttpServletResponseImpl;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.util.QueryParameterUtils;
 import io.undertow.util.UndertowOptions;
 

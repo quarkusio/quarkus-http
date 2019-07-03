@@ -20,12 +20,12 @@ package io.undertow.security.impl;
 import static io.undertow.UndertowLogger.REQUEST_LOGGER;
 import static io.undertow.UndertowMessages.MESSAGES;
 import static io.undertow.security.impl.DigestAuthorizationToken.parseHeader;
-import static io.undertow.util.HttpHeaderNames.AUTHENTICATION_INFO;
-import static io.undertow.util.HttpHeaderNames.AUTHORIZATION;
-import static io.undertow.util.HttpHeaderNames.DIGEST;
-import static io.undertow.util.HttpHeaderNames.NEXT_NONCE;
-import static io.undertow.util.HttpHeaderNames.WWW_AUTHENTICATE;
-import static io.undertow.util.StatusCodes.UNAUTHORIZED;
+import static io.undertow.httpcore.HttpHeaderNames.AUTHENTICATION_INFO;
+import static io.undertow.httpcore.HttpHeaderNames.AUTHORIZATION;
+import static io.undertow.httpcore.HttpHeaderNames.DIGEST;
+import static io.undertow.httpcore.HttpHeaderNames.NEXT_NONCE;
+import static io.undertow.httpcore.HttpHeaderNames.WWW_AUTHENTICATE;
+import static io.undertow.httpcore.StatusCodes.UNAUTHORIZED;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.UndertowLogger;
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.security.api.AuthenticationMechanismFactory;
@@ -51,8 +50,8 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.form.FormParserFactory;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.HexConverter;
-import io.undertow.util.HttpHeaderNames;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * {@link io.undertow.server.HttpHandler} to handle HTTP Digest authentication, both according to RFC-2617 and draft update to allow additional

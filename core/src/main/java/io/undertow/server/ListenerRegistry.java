@@ -80,7 +80,7 @@ public class ListenerRegistry {
         }
 
         /**
-         * The protocol that this listener is using
+         * The getProtocol that this listener is using
          */
         public String getProtocol() {
             return protocol;

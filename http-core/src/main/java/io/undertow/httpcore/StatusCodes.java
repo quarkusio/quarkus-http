@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package io.undertow.util;
+package io.undertow.httpcore;
 
 /**
  * @author Stuart Douglas

@@ -41,7 +41,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * @author Stuart Douglas
@@ -92,7 +92,7 @@ public class HttpContinueAcceptingHandlerTestCase {
         accept = false;
         String message = "My HTTP Request!";
         HttpParams httpParams = new BasicHttpParams();
-        httpParams.setParameter("http.protocol.wait-for-continue", Integer.MAX_VALUE);
+        httpParams.setParameter("http.getProtocol.wait-for-continue", Integer.MAX_VALUE);
 
         TestHttpClient client = new TestHttpClient();
         client.setParams(httpParams);
@@ -113,7 +113,7 @@ public class HttpContinueAcceptingHandlerTestCase {
         accept = true;
         String message = "My HTTP Request!";
         HttpParams httpParams = new BasicHttpParams();
-        httpParams.setParameter("http.protocol.wait-for-continue", Integer.MAX_VALUE);
+        httpParams.setParameter("http.getProtocol.wait-for-continue", Integer.MAX_VALUE);
 
         TestHttpClient client = new TestHttpClient();
         client.setParams(httpParams);

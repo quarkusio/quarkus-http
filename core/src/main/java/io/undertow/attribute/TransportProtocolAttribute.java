@@ -42,7 +42,7 @@ public class TransportProtocolAttribute implements ExchangeAttribute {
 
     @Override
     public void writeAttribute(final HttpServerExchange exchange, final String newValue) throws ReadOnlyAttributeException {
-        throw new ReadOnlyAttributeException("transport protocol", newValue);
+        throw new ReadOnlyAttributeException("transport getProtocol", newValue);
     }
 
     public static final class Builder implements ExchangeAttributeBuilder {

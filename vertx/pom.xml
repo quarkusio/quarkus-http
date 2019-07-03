@@ -29,7 +29,7 @@
     </parent>
 
     <groupId>io.undertow</groupId>
-    <artifactId>undertow-io-core</artifactId>
+    <artifactId>undertow-vertx-backend</artifactId>
     <version>3.0.0.Alpha1-SNAPSHOT</version>
 
     <name>Undertow IO Core</name>
@@ -50,6 +50,11 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>io.vertx</groupId>
+            <artifactId>vertx-web</artifactId>
+            <version>3.7.0</version>
+        </dependency>
         <dependency>
             <groupId>org.jboss.logging</groupId>
             <artifactId>jboss-logging</artifactId>

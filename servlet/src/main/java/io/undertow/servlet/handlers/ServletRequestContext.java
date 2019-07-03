@@ -37,7 +37,7 @@ import io.undertow.servlet.spec.HttpServletResponseImpl;
 import io.undertow.servlet.spec.HttpSessionImpl;
 import io.undertow.servlet.spec.ServletContextImpl;
 import io.undertow.util.AttachmentKey;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 
 /**
  * All the information that servlet needs to attach to the exchange.

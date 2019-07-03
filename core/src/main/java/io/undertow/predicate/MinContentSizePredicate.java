@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 
 /**
  * Predicate that returns true if the Content-Size of a request is below a

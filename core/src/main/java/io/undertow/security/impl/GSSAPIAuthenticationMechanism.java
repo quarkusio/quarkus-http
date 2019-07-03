@@ -17,11 +17,11 @@
  */
 package io.undertow.security.impl;
 
-import static io.undertow.util.HttpHeaderNames.AUTHORIZATION;
-import static io.undertow.util.HttpHeaderNames.HOST;
-import static io.undertow.util.HttpHeaderNames.NEGOTIATE;
-import static io.undertow.util.HttpHeaderNames.WWW_AUTHENTICATE;
-import static io.undertow.util.StatusCodes.UNAUTHORIZED;
+import static io.undertow.httpcore.HttpHeaderNames.AUTHORIZATION;
+import static io.undertow.httpcore.HttpHeaderNames.HOST;
+import static io.undertow.httpcore.HttpHeaderNames.NEGOTIATE;
+import static io.undertow.httpcore.HttpHeaderNames.WWW_AUTHENTICATE;
+import static io.undertow.httpcore.StatusCodes.UNAUTHORIZED;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;

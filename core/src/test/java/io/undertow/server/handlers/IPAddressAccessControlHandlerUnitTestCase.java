@@ -27,7 +27,7 @@ import org.junit.experimental.categories.Category;
 
 import io.undertow.server.handlers.builder.HandlerParser;
 import io.undertow.testutils.category.UnitTest;
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 /**
  * Unit tests for peer security handler

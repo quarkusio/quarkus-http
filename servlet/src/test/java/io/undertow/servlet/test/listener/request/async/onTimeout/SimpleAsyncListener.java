@@ -23,7 +23,7 @@ import javax.servlet.AsyncEvent;
 import javax.servlet.AsyncListener;
 import javax.servlet.http.HttpServletResponse;
 
-import io.undertow.util.StatusCodes;
+import io.undertow.httpcore.StatusCodes;
 
 public class SimpleAsyncListener implements AsyncListener {
 

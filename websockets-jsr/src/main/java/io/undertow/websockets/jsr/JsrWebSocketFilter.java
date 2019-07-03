@@ -43,12 +43,12 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.undertow.UndertowLogger;
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.StatusCodes;
 import io.undertow.server.session.Session;
 import io.undertow.servlet.handlers.ServletRequestContext;
 import io.undertow.servlet.spec.HttpSessionImpl;
-import io.undertow.util.HttpHeaderNames;
 import io.undertow.util.PathTemplateMatcher;
-import io.undertow.util.StatusCodes;
 import io.undertow.websockets.jsr.handshake.Handshake;
 import io.undertow.websockets.jsr.handshake.HandshakeUtil;
 

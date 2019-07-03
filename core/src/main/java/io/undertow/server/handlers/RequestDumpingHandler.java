@@ -31,7 +31,7 @@ import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.builder.HandlerBuilder;
-import io.undertow.util.HttpHeaderNames;
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.util.LocaleUtils;
 
 /**
@@ -98,7 +98,7 @@ public class RequestDumpingHandler implements HttpHandler {
             sb.append("\n");
         }
         //sb.append("          pathInfo=" + exchange.getPathInfo());
-        sb.append("          protocol=" + exchange.protocol() + "\n");
+        sb.append("          getProtocol=" + exchange.getProtocol() + "\n");
         sb.append("       queryString=" + exchange.getQueryString() + "\n");
         sb.append("        remoteAddr=" + exchange.getSourceAddress() + "\n");
         sb.append("        remoteHost=" + exchange.getSourceAddress().getHostName() + "\n");

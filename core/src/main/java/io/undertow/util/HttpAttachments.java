@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 import io.netty.handler.codec.http.HttpHeaders;
 
 /**
- * Exchange attachments that have specific meaning when using the HTTP protocol
+ * Exchange attachments that have specific meaning when using the HTTP getProtocol
  *
  * @author Stuart Douglas
  */
