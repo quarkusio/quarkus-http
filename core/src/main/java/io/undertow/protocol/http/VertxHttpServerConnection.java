@@ -379,7 +379,6 @@ public class VertxHttpServerConnection extends ServerConnection implements Handl
                         context.pipeline().remove("httpEncoder");
                         context.pipeline().remove("websocketExtensionHandler");
                         context.pipeline().remove("handler");
-                        System.out.println(context.pipeline());
                         listener.accept(context);
                     }
                 };

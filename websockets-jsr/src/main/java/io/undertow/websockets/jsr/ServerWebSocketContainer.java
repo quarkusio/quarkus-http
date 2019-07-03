@@ -37,6 +37,8 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -66,6 +68,8 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.websocketx.extensions.WebSocketExtensionData;
 import io.netty.handler.codec.http.websocketx.extensions.WebSocketServerExtensionHandshaker;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.undertow.httpcore.StatusCodes;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.api.ClassIntrospecter;
@@ -324,8 +328,46 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
 
         WebSocketClientNegotiation clientNegotiation = connectionBuilder.getClientNegotiation();
 
+        CompletableFuture<UndertowSession> sessionCompletableFuture = new CompletableFuture<>();
+
+        EndpointSessionHandler sessionHandler = new EndpointSessionHandler(this);
         ChannelFuture session = connectionBuilder
-                .connect();
+                .connect().addListener(new GenericFutureListener<ChannelFuture>() {
+                    @Override
+                    public void operationComplete(ChannelFuture future) throws Exception {
+                        if(!future.isSuccess()) {
+                            sessionCompletableFuture.completeExceptionally(future.cause());
+                            return;
+                        }
+
+                        final List<Extension> extensions = new ArrayList<>();
+                        final Map<String, Extension> extMap = new HashMap<>();
+                        for (Extension ext : cec.getExtensions()) {
+                            extMap.put(ext.getName(), ext);
+                        }
+                        for (WebSocketExtensionData e : clientNegotiation.getSelectedExtensions()) {
+                            Extension ext = extMap.get(e.name());
+                            if (ext == null) {
+                                throw JsrWebSocketMessages.MESSAGES.extensionWasNotPresentInClientHandshake(e.name(), clientNegotiation.getSupportedExtensions());
+                            }
+                            extensions.add(new ExtensionImpl(e));
+                        }
+                        ConfiguredClientEndpoint configured = clientEndpoints.get(endpointInstance.getClass());
+                        if (configured == null) {
+                            synchronized (clientEndpoints) {
+                                configured = clientEndpoints.get(endpointInstance.getClass());
+                                if (configured == null) {
+                                    clientEndpoints.put(endpointInstance.getClass(), configured = new ConfiguredClientEndpoint());
+                                }
+                            }
+                        }
+
+                        EncodingFactory encodingFactory = EncodingFactory.createFactory(classIntrospecter, cec.getDecoders(), cec.getEncoders());
+                        UndertowSession undertowSession = new UndertowSession(future.channel(), connectionBuilder.getUri(), Collections.<String, String>emptyMap(), Collections.<String, List<String>>emptyMap(), sessionHandler, null, new ImmediateInstanceHandle<>(endpointInstance), cec, connectionBuilder.getUri().getQuery(), encodingFactory.createEncoding(cec), configured, clientNegotiation.getSelectedSubProtocol(), extensions, connectionBuilder, executorSupplier.get());
+                        endpointInstance.onOpen(undertowSession, cec);
+                        sessionCompletableFuture.complete(undertowSession);
+                    }
+                });
         Number timeout = (Number) cec.getUserProperties().get(TIMEOUT);
         try {
             if (!session.await(timeout == null ? DEFAULT_WEB_SOCKET_TIMEOUT_SECONDS : timeout.intValue(), TimeUnit.SECONDS)) {
@@ -339,35 +381,13 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
             interruptedIOException.addSuppressed(e);
             throw interruptedIOException;
         }
-        EndpointSessionHandler sessionHandler = new EndpointSessionHandler(this);
 
-        final List<Extension> extensions = new ArrayList<>();
-        final Map<String, Extension> extMap = new HashMap<>();
-        for (Extension ext : cec.getExtensions()) {
-            extMap.put(ext.getName(), ext);
-        }
-        for (WebSocketExtensionData e : clientNegotiation.getSelectedExtensions()) {
-            Extension ext = extMap.get(e.name());
-            if (ext == null) {
-                throw JsrWebSocketMessages.MESSAGES.extensionWasNotPresentInClientHandshake(e.name(), clientNegotiation.getSupportedExtensions());
-            }
-            extensions.add(new ExtensionImpl(e));
-        }
-        ConfiguredClientEndpoint configured = clientEndpoints.get(endpointInstance.getClass());
-        if (configured == null) {
-            synchronized (clientEndpoints) {
-                configured = clientEndpoints.get(endpointInstance.getClass());
-                if (configured == null) {
-                    clientEndpoints.put(endpointInstance.getClass(), configured = new ConfiguredClientEndpoint());
-                }
-            }
-        }
 
-        EncodingFactory encodingFactory = EncodingFactory.createFactory(classIntrospecter, cec.getDecoders(), cec.getEncoders());
-        UndertowSession undertowSession = new UndertowSession(session.channel(), connectionBuilder.getUri(), Collections.<String, String>emptyMap(), Collections.<String, List<String>>emptyMap(), sessionHandler, null, new ImmediateInstanceHandle<>(endpointInstance), cec, connectionBuilder.getUri().getQuery(), encodingFactory.createEncoding(cec), configured, clientNegotiation.getSelectedSubProtocol(), extensions, connectionBuilder, executorSupplier.get());
-        endpointInstance.onOpen(undertowSession, cec);
-
-        return undertowSession;
+        try {
+            return sessionCompletableFuture.get();
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
     }
 
 
