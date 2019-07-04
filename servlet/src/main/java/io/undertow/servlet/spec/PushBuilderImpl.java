@@ -33,7 +33,6 @@ import javax.servlet.http.PushBuilder;
 
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
-import io.undertow.server.ServerConnection;
 import io.undertow.server.handlers.Cookie;
 import io.undertow.servlet.UndertowServletMessages;
 import io.undertow.httpcore.HttpHeaderNames;

@@ -1,14 +1,19 @@
 package io.undertow.httpcore;
 
+import java.io.Closeable;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
-public interface HttpExchange {
+import io.netty.util.concurrent.EventExecutor;
 
-    HttpExchange endExchange();
+public interface HttpExchange extends Closeable {
+
+    BufferAllocator getBufferAllocator();
 
     HttpExchange setStatusCode(int code);
 
@@ -53,6 +58,8 @@ public interface HttpExchange {
      * @return The header value, or null if it is not present
      */
     String getResponseHeader(String name);
+
+    void setCompletedListener(CompletedListener listener);
 
     /**
      * @return The content length of the request, or <code>-1</code> if it has not been set
@@ -121,87 +128,65 @@ public interface HttpExchange {
 
     OutputStream getOutputStream();
 
+    /**
+     * Returns true if the output stream was created for this request and has not yet been closed
+     */
+    boolean isOutputStreamInUse();
+
+    /**
+     * Returns true if the input stream was created for this request and has not yet been closed
+     */
+    boolean isInputStreamInUse();
+
     InetSocketAddress getDestinationAddress();
 
     InetSocketAddress getSourceAddress();
 
 
-    /**
-     * Return the host that this request was sent to, in general this will be the
-     * value of the Host header, minus the port specifier.
-     * <p>
-     * If this resolves to an IPv6 address it will not be enclosed by square brackets.
-     * Care must be taken when constructing URLs based on this method to ensure IPv6 URLs
-     * are handled correctly.
-     *
-     * @return The host part of the destination address
-     */
-    default String getHostName() {
-        String host = getRequestHeader(HttpHeaderNames.HOST);
-        if (host == null) {
-            host = getDestinationAddress().getHostString();
-        } else {
-            if (host.startsWith("[")) {
-                host = host.substring(1, host.indexOf(']'));
-            } else if (host.indexOf(':') != -1) {
-                host = host.substring(0, host.indexOf(':'));
-            }
-        }
-        return host;
-    }
+    boolean isComplete();
 
     /**
-     * Return the host, and also the port if this request was sent to a non-standard port. In general
-     * this will just be the value of the Host header.
-     * <p>
-     * If this resolves to an IPv6 address it *will*  be enclosed by square brackets. The return
-     * value of this method is suitable for inclusion in a URL.
+     * Returns true if all data has been read from the request, or if there
+     * was not data.
      *
-     * @return The host and port part of the destination address
+     * @return true if the request is complete
      */
-    default String getHostAndPort() {
-        String host = getRequestHeader(HttpHeaderNames.HOST);
-        if (host == null) {
-            InetSocketAddress address = getDestinationAddress();
-            host = CoreUtils.formatPossibleIpv6Address(address.getHostString());
-            int port = address.getPort();
-            if (!((getRequestScheme().equals("http") && port == 80)
-                    || (getRequestScheme().equals("https") && port == 443))) {
-                host = host + ":" + port;
-            }
-        }
-        return host;
-    }
+    boolean isRequestComplete();
 
     /**
-     * Return the port that this request was sent to. In general this will be the value of the Host
-     * header, minus the host name.
-     *
-     * @return The port part of the destination address
+     * @return true if the responses is complete
      */
-    default int getHostPort() {
-        String host = getRequestHeader(HttpHeaderNames.HOST);
-        if (host != null) {
-            //for ipv6 addresses we make sure we take out the first part, which can have multiple occurrences of :
-            final int colonIndex;
-            if (host.startsWith("[")) {
-                colonIndex = host.indexOf(':', host.indexOf(']'));
-            } else {
-                colonIndex = host.indexOf(':');
-            }
-            if (colonIndex != -1) {
-                try {
-                    return Integer.parseInt(host.substring(colonIndex + 1));
-                } catch (NumberFormatException ignore) {
-                }
-            }
-            if (getRequestScheme().equals("https")) {
-                return 443;
-            } else if (getRequestScheme().equals("http")) {
-                return 80;
-            }
+    boolean isResponseComplete();
 
-        }
-        return getDestinationAddress().getPort();
+    void close();
+
+    EventExecutor getIoThread();
+
+    void setUpgradeListener(Consumer<Object> listener);
+
+    Executor getWorker();
+
+    UndertowOptionMap getUndertowOptions();
+
+    void sendContinue();
+
+    void discardRequest();
+
+    boolean isUpgradeSupported();
+
+    SSLSessionInfo getSslSessionInfo();
+
+    default boolean isPushSupported() {
+        return false;
     }
+
+    default boolean isRequestTrailerFieldsSupported() {
+        return false;
+    }
+
+    boolean isIoOperationQueued();
+
+    void setMaxEntitySize(long maxEntitySize);
+
+    long getMaxEntitySize();
 }

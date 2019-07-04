@@ -25,10 +25,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import io.undertow.server.ServerConnection;
 import io.undertow.servlet.handlers.ServletRequestContext;
 import io.undertow.servlet.spec.HttpServletRequestImpl;
-import io.undertow.testutils.DefaultServer;
 
 /**
  * @author Stuart Douglas

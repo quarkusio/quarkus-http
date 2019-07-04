@@ -30,7 +30,6 @@ import org.junit.runner.RunWith;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.ServerConnection;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
@@ -50,8 +49,6 @@ public class HeadTestCase {
 
     private static volatile String message;
 
-    private static volatile ServerConnection connection;
-
     @BeforeClass
     public static void setup() {
         DefaultServer.setRootHandler(new HttpHandler() {
@@ -66,7 +63,6 @@ public class HeadTestCase {
 
     @Test
     public void sendHttpHead() throws IOException {
-        connection = null;
         HttpGet get = new HttpGet(DefaultServer.getDefaultServerURL() + "/path");
         HttpHead head = new HttpHead(DefaultServer.getDefaultServerURL() + "/path");
         TestHttpClient client = new TestHttpClient();

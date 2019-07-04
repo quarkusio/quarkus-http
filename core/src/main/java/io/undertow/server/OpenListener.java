@@ -20,7 +20,7 @@ package io.undertow.server;
 
 
 import io.netty.buffer.ByteBufAllocator;
-import io.undertow.util.UndertowOptionMap;
+import io.undertow.httpcore.UndertowOptionMap;
 
 /**
  * Interface that represents an open listener, aka a connector.

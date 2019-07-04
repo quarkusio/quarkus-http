@@ -26,14 +26,14 @@ import java.util.concurrent.RejectedExecutionException;
 
 import io.netty.buffer.ByteBuf;
 import io.undertow.UndertowLogger;
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.StatusCodes;
+import io.undertow.httpcore.UndertowOptions;
 import io.undertow.server.handlers.Cookie;
 import io.undertow.util.DateUtils;
-import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.util.LegacyCookieSupport;
 import io.undertow.util.ParameterLimitException;
-import io.undertow.httpcore.StatusCodes;
 import io.undertow.util.URLUtils;
-import io.undertow.util.UndertowOptions;
 
 /**
  * This class provides the connector part of the {@link HttpServerExchange} API.
@@ -53,7 +53,7 @@ public class Connectors {
      */
     public static void flattenCookies(final HttpServerExchange exchange) {
         Map<String, Cookie> cookies = exchange.getResponseCookiesInternal();
-        boolean enableRfc6265Validation = exchange.connection.getUndertowOptions().get(UndertowOptions.ENABLE_RFC6265_COOKIE_VALIDATION, UndertowOptions.DEFAULT_ENABLE_RFC6265_COOKIE_VALIDATION);
+        boolean enableRfc6265Validation = exchange.getUndertowOptions().get(UndertowOptions.ENABLE_RFC6265_COOKIE_VALIDATION, UndertowOptions.DEFAULT_ENABLE_RFC6265_COOKIE_VALIDATION);
         if (cookies != null) {
             for (Map.Entry<String, Cookie> entry : cookies.entrySet()) {
                 exchange.addResponseHeader(HttpHeaderNames.SET_COOKIE, getCookieString(entry.getValue(), enableRfc6265Validation));
@@ -62,26 +62,19 @@ public class Connectors {
     }
 
     public static boolean isRunningHandlerChain(HttpServerExchange exchange) {
-        return exchange.connection.isExecutingHandlerChain();
+        return exchange.isExecutingHandlerChain();
     }
 
     /**
      * Attached buffered data to the exchange. The will generally be used to allow data to be re-read.
      *
      * @param exchange The HTTP server exchange
-     * @param buffers  The buffers to attach
+     * @param buffer  The buffers to attach
      */
     public static void ungetRequestBytes(final HttpServerExchange exchange, ByteBuf buffer) {
-        exchange.connection.ungetRequestBytes(buffer, exchange);
-        exchange.resetRequestChannel();
-    }
-
-    public static void terminateRequest(final HttpServerExchange exchange) {
-        exchange.terminateRequest();
-    }
-
-    public static void terminateResponse(final HttpServerExchange exchange) {
-        exchange.terminateResponse();
+        throw new RuntimeException("NYI");
+//        exchange.ungetRequestBytes(buffer, exchange);
+//        exchange.resetRequestChannel();
     }
 
     private static String getCookieString(final Cookie cookie, boolean enableRfc6265Validation) {
@@ -293,10 +286,10 @@ public class Connectors {
 
     public static void executeRootHandler(final HttpHandler handler, final HttpServerExchange exchange) {
         try {
-            exchange.connection.beginExecutingHandlerChain(exchange);
+            exchange.beginExecutingHandlerChain();
             handler.handleRequest(exchange);
-            exchange.connection.endExecutingHandlerChain(exchange);
-            boolean resumed = exchange.connection.isIoOperationQueued();
+            exchange.endExecutingHandlerChain();
+            boolean resumed = exchange.delegate.isIoOperationQueued();
             if (exchange.isDispatched()) {
                 if (resumed) {
                     UndertowLogger.REQUEST_LOGGER.resumedAndDispatched();
@@ -309,7 +302,7 @@ public class Connectors {
                 exchange.setDispatchExecutor(null);
                 exchange.unDispatch();
                 if (dispatchTask != null) {
-                    executor = executor == null ? exchange.connection.getWorker() : executor;
+                    executor = executor == null ? exchange.getWorker() : executor;
                     try {
                         executor.execute(dispatchTask);
                     } catch (RejectedExecutionException e) {
@@ -321,11 +314,11 @@ public class Connectors {
             } else if (!resumed) {
                 exchange.endExchange();
             } else {
-                exchange.connection.runResumeReadWrite();
+                exchange.runResumeReadWrite();
             }
         } catch (Throwable t) {
             exchange.putAttachment(DefaultResponseListener.EXCEPTION, t);
-            exchange.connection.endExecutingHandlerChain(exchange);
+            exchange.endExecutingHandlerChain();
             if (!exchange.isResponseStarted()) {
                 exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
             }
@@ -348,7 +341,7 @@ public class Connectors {
     @Deprecated
     public static void setExchangeRequestPath(final HttpServerExchange exchange, final String encodedPath, final String charset, boolean decode, final boolean allowEncodedSlash, StringBuilder decodeBuffer) {
         try {
-            setExchangeRequestPath(exchange, encodedPath, charset, decode, allowEncodedSlash, decodeBuffer, exchange.connection.getUndertowOptions().get(UndertowOptions.MAX_PARAMETERS, UndertowOptions.DEFAULT_MAX_PARAMETERS));
+            setExchangeRequestPath(exchange, encodedPath, charset, decode, allowEncodedSlash, decodeBuffer, exchange.getUndertowOptions().get(UndertowOptions.MAX_PARAMETERS, UndertowOptions.DEFAULT_MAX_PARAMETERS));
         } catch (ParameterLimitException e) {
             throw new RuntimeException(e);
         }

@@ -54,7 +54,7 @@ import io.undertow.server.handlers.URLDecodingHandler;
 import io.undertow.server.handlers.builder.PredicatedHandler;
 import io.undertow.server.handlers.resource.ResourceHandler;
 import io.undertow.server.handlers.resource.ResourceManager;
-import io.undertow.util.UndertowOptions;
+import io.undertow.httpcore.UndertowOptions;
 
 /**
  * Utility class with convenience methods for dealing with handlers

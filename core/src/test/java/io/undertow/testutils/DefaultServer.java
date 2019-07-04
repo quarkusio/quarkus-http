@@ -54,8 +54,8 @@ import io.undertow.server.handlers.RequestDumpingHandler;
 import io.undertow.server.handlers.SSLHeaderHandler;
 import io.undertow.util.IoUtils;
 import io.undertow.util.NetworkUtils;
-import io.undertow.util.UndertowOptionMap;
-import io.undertow.util.UndertowOptions;
+import io.undertow.httpcore.UndertowOptionMap;
+import io.undertow.httpcore.UndertowOptions;
 import io.vertx.core.net.JksOptions;
 
 /**

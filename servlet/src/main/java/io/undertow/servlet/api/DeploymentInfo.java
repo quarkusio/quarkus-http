@@ -54,7 +54,7 @@ import io.undertow.servlet.core.DefaultAuthorizationManager;
 import io.undertow.servlet.core.InMemorySessionManagerFactory;
 import io.undertow.servlet.util.DefaultClassIntrospector;
 import io.undertow.util.ImmediateAuthenticationMechanismFactory;
-import io.undertow.util.UndertowOptions;
+import io.undertow.httpcore.UndertowOptions;
 
 /**
  * Represents a servlet deployment.

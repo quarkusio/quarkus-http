@@ -33,7 +33,7 @@ public interface IoCallback<T> {
 
     default void onException(final HttpExchange exchange, final T context, final IOException exception) {
         log.debugf(exception, "IO Exception");
-        exchange.endExchange();
+        exchange.close();
     }
 
     /**
@@ -42,7 +42,7 @@ public interface IoCallback<T> {
     IoCallback END_EXCHANGE = new IoCallback<Object>() {
         @Override
         public void onComplete(HttpExchange exchange, Object context) {
-            exchange.endExchange();
+            exchange.close();
         }
     };
 

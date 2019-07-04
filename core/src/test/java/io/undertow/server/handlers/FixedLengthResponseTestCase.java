@@ -23,14 +23,12 @@ import java.io.IOException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.ServerConnection;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
@@ -48,13 +46,6 @@ public class FixedLengthResponseTestCase {
     private static final String MESSAGE = "My HTTP Request!";
 
     private static volatile String message;
-
-    private static volatile ServerConnection connection;
-
-    @Before
-    public void reset() {
-        connection = null;
-    }
 
     @BeforeClass
     public static void setup() {

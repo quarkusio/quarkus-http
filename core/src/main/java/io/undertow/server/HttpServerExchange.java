@@ -22,12 +22,10 @@ import static io.undertow.util.Bits.allAreClear;
 import static io.undertow.util.Bits.allAreSet;
 import static io.undertow.util.Bits.anyAreClear;
 import static io.undertow.util.Bits.anyAreSet;
-import static io.undertow.util.Bits.intBitMask;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -42,32 +40,30 @@ import java.util.function.Consumer;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
+import io.undertow.httpcore.BufferAllocator;
+import io.undertow.httpcore.CompletedListener;
 import io.undertow.httpcore.HttpExchange;
-import io.undertow.httpcore.InputChannel;
-import io.undertow.httpcore.IoCallback;
-import io.undertow.httpcore.OutputChannel;
-import io.undertow.security.api.SecurityContext;
-import io.undertow.server.handlers.Cookie;
-import io.undertow.server.handlers.form.FormData;
-import io.undertow.util.AbstractAttachable;
-import io.undertow.util.AttachmentKey;
-import io.undertow.util.Cookies;
 import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.httpcore.HttpMethodNames;
 import io.undertow.httpcore.HttpProtocolNames;
-import io.undertow.util.HttpString;
+import io.undertow.httpcore.InputChannel;
+import io.undertow.httpcore.IoCallback;
+import io.undertow.httpcore.OutputChannel;
+import io.undertow.httpcore.SSLSessionInfo;
+import io.undertow.httpcore.StatusCodes;
+import io.undertow.security.api.SecurityContext;
+import io.undertow.server.handlers.Cookie;
+import io.undertow.util.AbstractAttachable;
+import io.undertow.util.AttachmentKey;
+import io.undertow.util.Cookies;
 import io.undertow.util.IoUtils;
 import io.undertow.util.NetworkUtils;
 import io.undertow.util.Rfc6265CookieSupport;
-import io.undertow.httpcore.StatusCodes;
-import io.undertow.util.UndertowOptionMap;
-import io.undertow.util.UndertowOptions;
-import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.ServerWebSocket;
+import io.undertow.httpcore.UndertowOptionMap;
+import io.undertow.httpcore.UndertowOptions;
 
 /**
  * An HTTP server request/response exchange.  An instance of this class is constructed as soon as the request headers are
@@ -75,7 +71,7 @@ import io.vertx.core.http.ServerWebSocket;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class HttpServerExchange extends AbstractAttachable implements BufferAllocator, OutputChannel, HttpExchange, InputChannel {
+public final class HttpServerExchange extends AbstractAttachable implements BufferAllocator, OutputChannel, InputChannel, CompletedListener {
 
     // immutable state
     private static final String HTTPS = "https";
@@ -95,20 +91,16 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         public void onComplete(HttpExchange exchange, ByteBuf context) {
             if (context != null) {
                 context.release();
-                ((HttpServerExchange)exchange).readAsync(this);
+                exchange.getInputChannel().readAsync(this);
             }
 
         }
 
         @Override
         public void onException(HttpExchange exchange, ByteBuf context, IOException exception) {
-            ((HttpServerExchange)exchange).connection.close(((HttpServerExchange)exchange));
+            exchange.close();
         }
     };
-
-    final ServerConnection connection;
-    private final io.netty.handler.codec.http.HttpHeaders requestHeaders;
-    private final io.netty.handler.codec.http.HttpHeaders responseHeaders;
 
     private int exchangeCompletionListenersCount = 0;
     private ExchangeCompletionListener[] exchangeCompleteListeners;
@@ -220,24 +212,10 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      */
     private long responseBytesSent = 0;
 
-
-    private static final int MASK_RESPONSE_CODE = intBitMask(0, 9);
-
     /**
      * Flag that is set when the response sending begins
      */
     private static final int FLAG_RESPONSE_SENT = 1 << 10;
-
-    /**
-     * Flag that is sent when the response has been fully written and flushed.
-     */
-    private static final int FLAG_RESPONSE_TERMINATED = 1 << 11;
-
-    /**
-     * Flag that is set once the request has been fully read. For zero
-     * length requests this is set immediately.
-     */
-    private static final int FLAG_REQUEST_TERMINATED = 1 << 12;
 
     /**
      * Flag that is set if this is a persistent connection, and the
@@ -284,22 +262,14 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      */
     private InetSocketAddress destinationAddress;
 
-    private final HttpServerRequest request;
     private SSLSessionInfo sslSessionInfo;
+    final HttpExchange delegate;
+    private boolean executingHandlerChain;
 
-    public HttpServerExchange(final ServerConnection connection, final HttpServerRequest request, HttpHeaders requestHeaders, HttpHeaders responseHeaders, long maxEntitySize) {
-        this.connection = connection;
+    public HttpServerExchange(final HttpExchange delegate, long maxEntitySize) {
         this.maxEntitySize = maxEntitySize;
-        this.request = request;
-        this.requestHeaders = requestHeaders;
-        this.responseHeaders = responseHeaders;
-    }
-    public HttpServerExchange(final ServerConnection connection, final HttpServerRequest request, long maxEntitySize) {
-        this.connection = connection;
-        this.maxEntitySize = maxEntitySize;
-        this.request = request;
-        this.requestHeaders = (HttpHeaders) request.headers();
-        this.responseHeaders = (HttpHeaders) request.response().headers();
+        this.delegate = delegate;
+        delegate.setCompletedListener(this);
     }
 
     /**
@@ -338,8 +308,10 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      *
      * @return the HTTP request method
      */
-    @Override
     public String getRequestMethod() {
+        if(requestMethod == null) {
+            return delegate.getRequestMethod();
+        }
         return requestMethod;
     }
 
@@ -359,6 +331,9 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @return the request URI scheme
      */
     public String getRequestScheme() {
+        if(requestScheme == null) {
+            return delegate.getRequestScheme();
+        }
         return requestScheme;
     }
 
@@ -383,6 +358,9 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * POST /my+File.jsf?foo=bar HTTP/1.1 -&gt; '/my+File.jsf'
      */
     public String getRequestURI() {
+        if(requestURI == null) {
+            return delegate.getRequestURI();
+        }
         return requestURI;
     }
 
@@ -516,36 +494,94 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         }
     }
 
-    /**
-     * Returns the request charset. If none was explicitly specified it will return
-     * "ISO-8859-1", which is the default charset for HTTP requests.
-     *
-     * @return The character encoding
-     */
-    public String getRequestCharset() {
-        return extractCharset(requestHeaders);
+    public long getRequestContentLength() {
+        return delegate.getRequestContentLength();
     }
 
     /**
-     * Returns the response charset. If none was explicitly specified it will return
-     * "ISO-8859-1", which is the default charset for HTTP requests.
-     *
-     * @return The character encoding
+     * @return The content length of the response, or <code>-1</code> if it has not been set
      */
-    public String getResponseCharset() {
-        io.netty.handler.codec.http.HttpHeaders headers = responseHeaders;
-        return extractCharset(headers);
+    public long getResponseContentLength() {
+        return delegate.getResponseContentLength();
     }
-
-    private String extractCharset(io.netty.handler.codec.http.HttpHeaders headers) {
-        String contentType = headers.get(HttpHeaderNames.CONTENT_TYPE);
-        if (contentType != null) {
-            String value = HttpHeaderNames.extractQuotedValueFromHeader(contentType, "charset");
-            if (value != null) {
-                return value;
+    /**
+     * Return the host that this request was sent to, in general this will be the
+     * value of the Host header, minus the port specifier.
+     * <p>
+     * If this resolves to an IPv6 address it will not be enclosed by square brackets.
+     * Care must be taken when constructing URLs based on this method to ensure IPv6 URLs
+     * are handled correctly.
+     *
+     * @return The host part of the destination address
+     */
+    public String getHostName() {
+        String host = getRequestHeader(HttpHeaderNames.HOST);
+        if (host == null) {
+            host = getDestinationAddress().getHostString();
+        } else {
+            if (host.startsWith("[")) {
+                host = host.substring(1, host.indexOf(']'));
+            } else if (host.indexOf(':') != -1) {
+                host = host.substring(0, host.indexOf(':'));
             }
         }
-        return StandardCharsets.ISO_8859_1.name();
+        return host;
+    }
+
+
+    /**
+     * Return the host, and also the port if this request was sent to a non-standard port. In general
+     * this will just be the value of the Host header.
+     * <p>
+     * If this resolves to an IPv6 address it *will*  be enclosed by square brackets. The return
+     * value of this method is suitable for inclusion in a URL.
+     *
+     * @return The host and port part of the destination address
+     */
+    public String getHostAndPort() {
+        String host = getRequestHeader(HttpHeaderNames.HOST);
+        if (host == null) {
+            InetSocketAddress address = getDestinationAddress();
+            host = NetworkUtils.formatPossibleIpv6Address(address.getHostString());
+            int port = address.getPort();
+            if (!((getRequestScheme().equals("http") && port == 80)
+                    || (getRequestScheme().equals("https") && port == 443))) {
+                host = host + ":" + port;
+            }
+        }
+        return host;
+    }
+
+    /**
+     * Return the port that this request was sent to. In general this will be the value of the Host
+     * header, minus the host name.
+     *
+     * @return The port part of the destination address
+     */
+    public int getHostPort() {
+        String host = getRequestHeader(HttpHeaderNames.HOST);
+        if (host != null) {
+            //for ipv6 addresses we make sure we take out the first part, which can have multiple occurrences of :
+            final int colonIndex;
+            if (host.startsWith("[")) {
+                colonIndex = host.indexOf(':', host.indexOf(']'));
+            } else {
+                colonIndex = host.indexOf(':');
+            }
+            if (colonIndex != -1) {
+                try {
+                    return Integer.parseInt(host.substring(colonIndex + 1));
+                } catch (NumberFormatException ignore) {
+                }
+            }
+            if (getRequestScheme().equals("https")) {
+                return 443;
+            } else if (getRequestScheme().equals("http")) {
+                return 80;
+            }
+
+        }
+        return getDestinationAddress().getPort();
     }
 
     public boolean isPersistent() {
@@ -557,16 +593,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      */
     public boolean isInIoThread() {
         return getIoThread().inEventLoop();
-    }
-
-    @Override
-    public OutputChannel getOutputChannel() {
-        return this;
-    }
-
-    @Override
-    public InputChannel getInputChannel() {
-        return this;
     }
 
     /**
@@ -611,19 +637,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     /**
-     * {@link #dispatch(Executor, Runnable)} should be used instead of this method, as it is hard to use safely.
-     * <p>
-     * Use {@link io.undertow.util.SameThreadExecutor#INSTANCE} if you do not want to dispatch to another thread.
-     *
-     * @return this exchange
-     */
-    @Deprecated
-    public HttpServerExchange dispatch() {
-        state |= FLAG_DISPATCHED;
-        return this;
-    }
-
-    /**
      * Dispatches this request to the XNIO worker thread pool. Once the call stack returns
      * the given runnable will be submitted to the executor.
      * <p>
@@ -651,23 +664,27 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @throws IllegalStateException If this exchange has already been dispatched
      */
     public HttpServerExchange dispatch(final Executor executor, final Runnable runnable) {
-        if (connection.isExecutingHandlerChain()) {
+        if (isExecutingHandlerChain()) {
             if (executor != null) {
                 this.dispatchExecutor = executor;
             }
             state |= FLAG_DISPATCHED;
-            if (connection.isIoOperationQueued()) {
+            if (delegate.isIoOperationQueued()) {
                 throw UndertowMessages.MESSAGES.resumedAndDispatched();
             }
             this.dispatchTask = runnable;
         } else {
             if (executor == null) {
-                connection.getWorker().execute(runnable);
+                delegate.getWorker().execute(runnable);
             } else {
                 executor.execute(runnable);
             }
         }
         return this;
+    }
+
+    boolean isExecutingHandlerChain() {
+        return executingHandlerChain;
     }
 
     public HttpServerExchange dispatch(final HttpHandler handler) {
@@ -760,7 +777,19 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if (sourceAddress != null) {
             return sourceAddress;
         }
-        return connection.getPeerAddress();
+        return delegate.getSourceAddress();
+    }
+
+    public boolean isComplete() {
+        return delegate.isComplete();
+    }
+
+    public boolean isRequestComplete() {
+        return delegate.isRequestComplete();
+    }
+
+    public boolean isResponseComplete() {
+        return delegate.isResponseComplete();
     }
 
     /**
@@ -783,7 +812,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if (destinationAddress != null) {
             return destinationAddress;
         }
-        return connection.getLocalAddress();
+        return delegate.getDestinationAddress();
     }
 
     /**
@@ -805,9 +834,9 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      */
     public HttpServerExchange setResponseContentLength(long length) {
         if (length == -1) {
-            responseHeaders.remove(HttpHeaderNames.CONTENT_LENGTH);
+            delegate.removeResponseHeader(HttpHeaderNames.CONTENT_LENGTH);
         } else {
-            responseHeaders.set(HttpHeaderNames.CONTENT_LENGTH, Long.toString(length));
+            delegate.setResponseHeader(HttpHeaderNames.CONTENT_LENGTH, Long.toString(length));
         }
         return this;
     }
@@ -867,9 +896,9 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     public Map<String, Cookie> getRequestCookies() {
         if (requestCookies == null) {
             requestCookies = Cookies.parseRequestCookies(
-                    connection.getUndertowOptions().get(UndertowOptions.MAX_COOKIES, 200),
-                    connection.getUndertowOptions().get(UndertowOptions.ALLOW_EQUALS_IN_COOKIE_VALUE, false),
-                    requestHeaders.getAll(HttpHeaderNames.COOKIE));
+                    delegate.getUndertowOptions().get(UndertowOptions.MAX_COOKIES, 200),
+                    delegate.getUndertowOptions().get(UndertowOptions.ALLOW_EQUALS_IN_COOKIE_VALUE, false),
+                    delegate.getRequestHeaders(HttpHeaderNames.COOKIE));
         }
         return requestCookies;
     }
@@ -880,7 +909,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @param cookie The cookie
      */
     public HttpServerExchange setResponseCookie(final Cookie cookie) {
-        if (connection.getUndertowOptions().get(UndertowOptions.ENABLE_RFC6265_COOKIE_VALIDATION, UndertowOptions.DEFAULT_ENABLE_RFC6265_COOKIE_VALIDATION)) {
+        if (delegate.getUndertowOptions().get(UndertowOptions.ENABLE_RFC6265_COOKIE_VALIDATION, UndertowOptions.DEFAULT_ENABLE_RFC6265_COOKIE_VALIDATION)) {
             if (cookie.getValue() != null && !cookie.getValue().isEmpty()) {
                 Rfc6265CookieSupport.validateCookieValue(cookie.getValue());
             }
@@ -932,14 +961,16 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @throws IOException on failure
      */
     public ByteBuf readBlocking() throws IOException {
-        if (anyAreSet(state, FLAG_REQUEST_TERMINATED)) {
+        if (isRequestComplete()) {
             return null;
         }
-        return connection.readBlocking(this);
+        return delegate.getInputChannel().readBlocking();
     }
 
     public void send1ContinueIfRequired() {
-        connection.sendContinueIfRequired();
+        if(HttpContinue.requiresContinueResponse(this)) {
+            delegate.sendContinue();
+        }
     }
 
 
@@ -974,32 +1005,35 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if (data == null && !last) {
             throw new IllegalArgumentException("cannot call write with a null buffer and last being false");
         }
-        if (anyAreSet(state, FLAG_RESPONSE_TERMINATED | FLAG_LAST_DATA_QUEUED)) {
+        if (isResponseComplete() || anyAreSet(state, FLAG_LAST_DATA_QUEUED)) {
             if (last && data == null) {
-                callback.onComplete(this, context);
+                callback.onComplete(delegate, context);
                 return;
             }
-            callback.onException(this, context, new IOException(UndertowMessages.MESSAGES.responseComplete()));
+            callback.onException(delegate, context, new IOException(UndertowMessages.MESSAGES.responseComplete()));
             return;
         }
         if (last) {
             state |= FLAG_LAST_DATA_QUEUED;
         }
 
+        if(data != null) {
+            updateBytesSent(data.readableBytes());
+        }
         handleFirstData();
-        if(writeFunctions != null) {
-            for(int i = 0; i < writeFunctionCount; ++i) {
+        if (writeFunctions != null) {
+            for (int i = 0; i < writeFunctionCount; ++i) {
                 data = writeFunctions[i].preWrite(data, last);
             }
         }
-        connection.writeAsync(data, last, this, callback, context);
+        delegate.getOutputChannel().writeAsync(data, last,  callback, context);
     }
 
     public void writeBlocking(ByteBuf data, boolean last) throws IOException {
         if (data == null && !last) {
             throw new IllegalArgumentException("cannot call write with a null buffer and last being false");
         }
-        if (anyAreSet(state, FLAG_RESPONSE_TERMINATED | FLAG_LAST_DATA_QUEUED)) {
+        if (isResponseComplete() || anyAreSet(state,  FLAG_LAST_DATA_QUEUED)) {
             if (last && data == null) {
                 return;
             }
@@ -1008,13 +1042,16 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if (last) {
             state |= FLAG_LAST_DATA_QUEUED;
         }
+        if(data != null) {
+            updateBytesSent(data.readableBytes());
+        }
         handleFirstData();
-        if(writeFunctions != null) {
-            for(int i = 0; i < writeFunctionCount; ++i) {
+        if (writeFunctions != null) {
+            for (int i = 0; i < writeFunctionCount; ++i) {
                 data = writeFunctions[i].preWrite(data, last);
             }
         }
-        connection.writeBlocking(data, last, this);
+        delegate.getOutputChannel().writeBlocking(data, last);
     }
 
     private void handleFirstData() {
@@ -1024,69 +1061,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             }
             state |= FLAG_RESPONSE_SENT;
             Connectors.flattenCookies(this);
-        }
-    }
-
-    public <T> void writeFileAsync(RandomAccessFile file, long position, long count, IoCallback<T> callback, T context) {
-        if (anyAreSet(state, FLAG_RESPONSE_TERMINATED)) {
-            callback.onException(this, context, new IOException(UndertowMessages.MESSAGES.responseComplete()));
-        }
-        handleFirstData();
-        state |= FLAG_LAST_DATA_QUEUED;
-        connection.writeFileAsync(file, position, count, this, callback, context);
-    }
-
-    public void writeFileBlocking(RandomAccessFile file, long position, long count) throws IOException {
-        if (anyAreSet(state, FLAG_RESPONSE_TERMINATED)) {
-            throw UndertowMessages.MESSAGES.responseComplete();
-        }
-        handleFirstData();
-        state |= FLAG_LAST_DATA_QUEUED;
-        connection.writeFileBlocking(file, position, count, this);
-    }
-
-    public <T> void scheduleIoCallback(IoCallback<T> callback, T context) {
-        connection.scheduleIoCallback(callback, context, this);
-    }
-
-    /**
-     * Returns true if the completion handler for this exchange has been invoked, and the request is considered
-     * finished.
-     */
-    public boolean isComplete() {
-        return allAreSet(state, FLAG_REQUEST_TERMINATED | FLAG_RESPONSE_TERMINATED);
-    }
-
-    /**
-     * Returns true if all data has been read from the request, or if there
-     * was not data.
-     *
-     * @return true if the request is complete
-     */
-    public boolean isRequestComplete() {
-        return allAreSet(state, FLAG_REQUEST_TERMINATED);
-    }
-
-    /**
-     * @return true if the responses is complete
-     */
-    public boolean isResponseComplete() {
-        return allAreSet(state, FLAG_RESPONSE_TERMINATED);
-    }
-
-    /**
-     * Force the codec to treat the request as fully read.  Should only be invoked by handlers which downgrade
-     * the socket or implement a transfer coding.
-     */
-    void terminateRequest() {
-        int oldVal = state;
-        if (allAreSet(oldVal, FLAG_REQUEST_TERMINATED)) {
-            // idempotent
-            return;
-        }
-        this.state = oldVal | FLAG_REQUEST_TERMINATED;
-        if (anyAreSet(oldVal, FLAG_RESPONSE_TERMINATED)) {
-            invokeExchangeCompleteListeners();
         }
     }
 
@@ -1103,100 +1077,73 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * Get the status code.
      *
      * @return the status code
-     * @see #getStatusCode()
-     */
-    @Deprecated
-    public int getResponseCode() {
-        return state & MASK_RESPONSE_CODE;
-    }
-
-    /**
-     * Get the status code.
-     *
-     * @return the status code
      */
     public int getStatusCode() {
-        return state & MASK_RESPONSE_CODE;
+        return delegate.getStatusCode();
     }
 
-    @Override
     public String getRequestHeader(String name) {
-        return requestHeaders.get(name);
+        return delegate.getRequestHeader(name);
     }
 
-    @Override
     public List<String> getRequestHeaders(String name) {
-        return requestHeaders.getAll(name);
+        return delegate.getRequestHeaders(name);
     }
 
-    @Override
     public boolean containsRequestHeader(String name) {
-        return requestHeaders.contains(name);
+        return delegate.containsRequestHeader(name);
     }
 
-    @Override
     public void removeRequestHeader(String name) {
-        requestHeaders.remove(name);
+        delegate.removeRequestHeader(name);
     }
 
-    @Override
     public void setRequestHeader(String name, String value) {
-        requestHeaders.set(name, value);
+        delegate.setRequestHeader(name, value);
     }
 
-    @Override
     public Collection<String> getRequestHeaderNames() {
-        return requestHeaders.names();
+        return delegate.getRequestHeaderNames();
     }
 
-    @Override
     public void addRequestHeader(String name, String value) {
-        requestHeaders.add(name, value);
+        delegate.addRequestHeader(name, value);
     }
 
-    @Override
     public void clearRequestHeaders() {
-        request.headers().clear();
+        delegate.clearRequestHeaders();
     }
 
-    @Override
     public void clearResponseHeaders() {
-        request.response().headers().clear();
+        delegate.clearResponseHeaders();
     }
 
-    @Override
     public String getResponseHeader(String name) {
-        return responseHeaders.get(name);
+        return delegate.getResponseHeader(name);
     }
 
-    @Override
     public List<String> getResponseHeaders(String name) {
-        return responseHeaders.getAll(name);
+        return delegate.getResponseHeaders(name);
     }
 
-    @Override
     public boolean containsResponseHeader(String name) {
-        return responseHeaders.contains(name);
+        return delegate.containsResponseHeader(name);
     }
 
-    @Override
     public void removeResponseHeader(String name) {
-        responseHeaders.remove(name);
+        delegate.removeResponseHeader(name);
     }
 
-    @Override
     public void setResponseHeader(String name, String value) {
-        responseHeaders.set(name, value);
+        delegate.setResponseHeader(name, value);
     }
 
-    @Override
     public Collection<String> getResponseHeaderNames() {
-        return responseHeaders.names();
+        return delegate.getResponseHeaderNames();
     }
 
-    @Override
     public void addResponseHeader(String name, String value) {
-        responseHeaders.add(name, value);
+        delegate.addResponseHeader(name, value);
     }
 
     /**
@@ -1206,7 +1153,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @param statusCode the new code
      * @throws IllegalStateException if a response or upgrade was already sent
      */
-    public HttpExchange setStatusCode(final int statusCode) {
+    public HttpServerExchange setStatusCode(final int statusCode) {
         if (statusCode < 0 || statusCode > 999) {
             throw new IllegalArgumentException("Invalid response code");
         }
@@ -1219,7 +1166,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
                 UndertowLogger.ERROR_RESPONSE.debugf(new RuntimeException(), "Setting error code %s for exchange %s", statusCode, this);
             }
         }
-        this.state = oldVal & ~MASK_RESPONSE_CODE | statusCode & MASK_RESPONSE_CODE;
+        delegate.setStatusCode(statusCode);
         return this;
     }
 
@@ -1290,22 +1237,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         return blockingHttpExchange.getOutputStream();
     }
 
-    /**
-     * Force the codec to treat the response as fully written.  Should only be invoked by handlers which downgrade
-     * the socket or implement a transfer coding.
-     */
-    HttpServerExchange terminateResponse() {
-        int oldVal = state;
-        if (allAreSet(oldVal, FLAG_RESPONSE_TERMINATED)) {
-            // idempotent
-            return this;
-        }
-        this.state = oldVal | FLAG_RESPONSE_TERMINATED;
-        if (anyAreSet(oldVal, FLAG_REQUEST_TERMINATED)) {
-            invokeExchangeCompleteListeners();
-        }
-        return this;
-    }
 
     /**
      * @return The request start time, or -1 if this was not recorded
@@ -1328,9 +1259,9 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * <p>
      * If the exchange is already complete this method is a noop
      */
-    public HttpExchange endExchange() {
+    public HttpServerExchange endExchange() {
         final int state = this.state;
-        if (allAreSet(state, FLAG_REQUEST_TERMINATED | FLAG_RESPONSE_TERMINATED)) {
+        if (isRequestComplete() && isResponseComplete()) {
             if (blockingHttpExchange != null) {
                 //we still have to close the blocking exchange in this case,
                 if (isInIoThread()) {
@@ -1373,7 +1304,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
                         endExchange();
                     }
                 });
-                return this ;
+                return this;
             }
             IoUtils.safeClose(blockingHttpExchange);
 
@@ -1383,14 +1314,14 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
                 blockingHttpExchange.close();
             } catch (IOException e) {
                 UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
-                connection.close(this);
+                delegate.close();
             } catch (Throwable t) {
                 UndertowLogger.REQUEST_IO_LOGGER.handleUnexpectedFailure(t);
-                connection.close(this);
+                delegate.close();
             }
         }
         if (!isRequestComplete()) {
-            connection.readAsync(DRAIN_CALLBACK, this);
+            delegate.getInputChannel().readAsync(DRAIN_CALLBACK);
         }
 
         if (!isResponseComplete() && allAreClear(state, FLAG_LAST_DATA_QUEUED)) {
@@ -1400,7 +1331,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     public EventExecutor getIoThread() {
-        return connection.getIoThread();
+        return delegate.getIoThread();
     }
 
     /**
@@ -1420,7 +1351,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             throw UndertowMessages.MESSAGES.requestChannelAlreadyProvided();
         }
         this.maxEntitySize = maxEntitySize;
-        connection.maxEntitySizeUpdated(this);
+        delegate.setMaxEntitySize(maxEntitySize);
         return this;
     }
 
@@ -1452,6 +1383,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         }
         responseCommitListeners[responseCommitListenerCount] = listener;
     }
+
     public void addWriteFunction(final WriteFunction listener) {
         final int writeFunctionCount = this.writeFunctionCount++;
         WriteFunction[] writeFunctions = this.writeFunctions;
@@ -1466,36 +1398,36 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     public void readAsync(IoCallback<ByteBuf> cb) {
-        connection.readAsync(cb, this);
+        delegate.getInputChannel().readAsync(cb);
     }
 
     public int readBytesAvailable() {
-        return connection.readBytesAvailable(this);
+        return delegate.getInputChannel().readBytesAvailable();
     }
 
     @Override
     public ByteBuf allocateBuffer() {
-        return connection.allocateBuffer();
+        return delegate.getBufferAllocator().allocateBuffer();
     }
 
     @Override
     public ByteBuf allocateBuffer(boolean direct) {
-        return connection.allocateBuffer(direct);
+        return delegate.getBufferAllocator().allocateBuffer(direct);
     }
 
     @Override
     public ByteBuf allocateBuffer(int bufferSize) {
-        return connection.allocateBuffer(bufferSize);
+        return delegate.getBufferAllocator().allocateBuffer(bufferSize);
     }
 
     @Override
     public ByteBuf allocateBuffer(boolean direct, int bufferSize) {
-        return connection.allocateBuffer(direct, bufferSize);
+        return delegate.getBufferAllocator().allocateBuffer(direct, bufferSize);
     }
 
     @Override
     public int getBufferSize() {
-        return connection.getBufferSize();
+        return delegate.getBufferAllocator().getBufferSize();
     }
 
     /**
@@ -1508,7 +1440,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if (isRequestComplete()) {
             return;
         }
-        connection.discardRequest(this);
+        delegate.discardRequest();
     }
 
     /**
@@ -1520,17 +1452,17 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      *                               read
      */
     public HttpServerExchange upgradeChannel(final Consumer<Object> listener) {
-        if (!connection.isUpgradeSupported()) {
+        if (!delegate.isUpgradeSupported()) {
             throw UndertowMessages.MESSAGES.upgradeNotSupported();
         }
-        if (!requestHeaders.contains(HttpHeaderNames.UPGRADE)) {
+        if (!delegate.containsRequestHeader(HttpHeaderNames.UPGRADE)) {
             throw UndertowMessages.MESSAGES.notAnUpgradeRequest();
         }
         UndertowLogger.REQUEST_LOGGER.debugf("Upgrading request %s", this);
 
         setStatusCode(StatusCodes.SWITCHING_PROTOCOLS);
-        responseHeaders.get(HttpHeaderNames.CONNECTION, HttpHeaderNames.UPGRADE);
-        connection.setUpgradeListener(listener);
+        delegate.setResponseHeader(HttpHeaderNames.CONNECTION, HttpHeaderNames.UPGRADE);
+        delegate.setUpgradeListener(listener);
         return this;
     }
 
@@ -1544,15 +1476,14 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      *                               read
      */
     public HttpServerExchange upgradeChannel(String productName, final Consumer<Object> listener) {
-        if (!connection.isUpgradeSupported()) {
+        if (!delegate.isUpgradeSupported()) {
             throw UndertowMessages.MESSAGES.upgradeNotSupported();
         }
         UndertowLogger.REQUEST_LOGGER.debugf("Upgrading request %s", this);
-        connection.setUpgradeListener(listener);
+        delegate.setUpgradeListener(listener);
         setStatusCode(StatusCodes.SWITCHING_PROTOCOLS);
-        final io.netty.handler.codec.http.HttpHeaders headers = responseHeaders;
-        headers.set(HttpHeaderNames.UPGRADE, productName);
-        headers.set(HttpHeaderNames.CONNECTION, HttpHeaderNames.UPGRADE);
+        delegate.setResponseHeader(HttpHeaderNames.UPGRADE, productName);
+        delegate.setResponseHeader(HttpHeaderNames.CONNECTION, HttpHeaderNames.UPGRADE);
         return this;
     }
 
@@ -1565,27 +1496,27 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     public SSLSessionInfo getSslSessionInfo() {
-        if(sslSessionInfo == null) {
-            return connection.getSslSessionInfo();
+        if (sslSessionInfo == null) {
+            return delegate.getSslSessionInfo();
         }
         return sslSessionInfo;
     }
 
     @Override
-    public void close()  {
+    public void close() {
         endExchange();
     }
 
     public Executor getWorker() {
-        return connection.getWorker();
+        return delegate.getWorker();
     }
 
     public UndertowOptionMap getUndertowOptions() {
-        return connection.getUndertowOptions();
+        return delegate.getUndertowOptions();
     }
 
     public boolean isPushSupported() {
-        return connection.isPushSupported();
+        return delegate.isPushSupported();
     }
 
     public void pushResource(String path, String method, Map<String, List<String>> requestHeaders) {
@@ -1593,7 +1524,32 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     public boolean isRequestTrailerFieldsSupported() {
-        return connection.isRequestTrailerFieldsSupported();
+        return delegate.isRequestTrailerFieldsSupported();
+    }
+
+    @Override
+    public void completed(HttpExchange exchange) {
+        invokeExchangeCompleteListeners();
+    }
+
+    public void beginExecutingHandlerChain() {
+        executingHandlerChain = true;
+    }
+
+    public void endExecutingHandlerChain() {
+        executingHandlerChain = false;
+    }
+
+    public void runResumeReadWrite() {
+        //TODO: hold off on queuing IO
+    }
+
+    public OutputChannel getOutputChannel() {
+        return this;
+    }
+
+    public InputChannel getInputChannel() {
+        return this;
     }
 
     private static class DefaultBlockingHttpExchange implements BlockingHttpExchange {
@@ -1632,6 +1588,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
 
     @Override
     public String toString() {
-        return "HttpServerExchange{ " + getRequestMethod() + " " + getRequestURI() + " request " + requestHeaders + " response " + responseHeaders + '}';
+        return "HttpServerExchange{ " + getRequestMethod() + " " + getRequestURI() + " delegate " + delegate + '}';
     }
 }

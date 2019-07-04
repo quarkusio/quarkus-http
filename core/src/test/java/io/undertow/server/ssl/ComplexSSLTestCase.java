@@ -21,6 +21,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -53,6 +54,8 @@ import io.undertow.httpcore.StatusCodes;
 @AjpIgnore
 @RunWith(DefaultServer.class)
 public class ComplexSSLTestCase {
+
+    public static AtomicInteger vcount = new AtomicInteger();
 
     private static final String MESSAGE = "My HTTP Request!";
 
@@ -123,6 +126,7 @@ public class ComplexSSLTestCase {
                 while ((res = exchange.getInputStream().read(buf)) > 0) {
                     out.write(buf, 0, res);
                 }
+                System.out.println("vcount " + vcount);
                 System.out.println("WRITE " + out.size());
                 exchange.getOutputStream().write(out.toByteArray());
                 System.out.println("DONE " + out.size());

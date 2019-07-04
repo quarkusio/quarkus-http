@@ -45,7 +45,7 @@ import io.undertow.util.IoUtils;
 import io.undertow.util.MalformedMessageException;
 import io.undertow.util.SameThreadExecutor;
 import io.undertow.httpcore.StatusCodes;
-import io.undertow.util.UndertowOptions;
+import io.undertow.httpcore.UndertowOptions;
 
 /**
  * @author Stuart Douglas
@@ -378,7 +378,7 @@ public class MultiPartParserDefinition implements FormParserFactory.ParserDefini
             public void onException(HttpExchange exchange, ByteBuf context, IOException exception) {
                 UndertowLogger.REQUEST_IO_LOGGER.debug("Exception parsing data", exception);
                 exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                exchange.endExchange();
+                exchange.close();
             }
 
             @Override

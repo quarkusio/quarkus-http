@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.AttachmentKey;
-import io.undertow.util.UndertowOptions;
+import io.undertow.httpcore.UndertowOptions;
 
 /**
  * The response time

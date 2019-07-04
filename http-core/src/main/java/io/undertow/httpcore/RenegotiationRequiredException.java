@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package io.undertow.server;
+package io.undertow.httpcore;
 
 /**
  * Exception that is thrown that indicates that SSL renegotiation is required

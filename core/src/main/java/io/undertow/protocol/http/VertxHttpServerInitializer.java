@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.undertow.server.BufferAllocator;
+import io.undertow.httpcore.BufferAllocator;
 import io.undertow.server.Connectors;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -145,18 +145,13 @@ public class VertxHttpServerInitializer implements Closeable  {
 
             server.requestHandler(request -> {
 
-                VertxHttpServerConnection con = new VertxHttpServerConnection(request, allocator, blockingExecutor);
-
-                HttpServerExchange exchange = new HttpServerExchange(con, request,  -1);
+                VertxHttpExchange delegate = new VertxHttpExchange(request, allocator, blockingExecutor);
+                HttpServerExchange exchange = new HttpServerExchange(delegate,  -1);
                 Connectors.setExchangeRequestPath(exchange, request.uri(), "UTF-8", true, false, new StringBuilder());
                 exchange.requestMethod(request.rawMethod());
                 exchange.setRequestScheme(request.scheme());
                 exchange.protocol("HTTP/1.1");
 
-                con.exchange = exchange;
-                if (request.isEnded()) {
-                    Connectors.terminateRequest(exchange);
-                }
                 Connectors.executeRootHandler(rootHandler, exchange);
             });
 

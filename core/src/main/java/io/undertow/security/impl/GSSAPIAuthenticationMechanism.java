@@ -48,7 +48,6 @@ import io.undertow.security.idm.Account;
 import io.undertow.security.idm.GSSContextCredential;
 import io.undertow.security.idm.IdentityManager;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.ServerConnection;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.FlexBase64;
 

@@ -13,19 +13,27 @@
  * limitations under the License.
  */
 
-package io.undertow.server;
+package io.undertow.httpcore;
 
-import io.netty.buffer.ByteBuf;
+public class UndertowOption<T> {
 
-public interface BufferAllocator {
+    private final String name;
+    private final Class<T> type;
 
-    ByteBuf allocateBuffer();
+    UndertowOption(String name, Class<T> type) {
+        this.name = name;
+        this.type = type;
+    }
 
-    ByteBuf allocateBuffer(boolean direct);
+    public String getName() {
+        return name;
+    }
 
-    ByteBuf allocateBuffer(int bufferSize);
+    public Class<T> getType() {
+        return type;
+    }
 
-    ByteBuf allocateBuffer(boolean direct, int bufferSize);
-
-    int getBufferSize();
+    public static <T> UndertowOption<T> create(String name, Class<T> type) {
+        return new UndertowOption<>(name, type);
+    }
 }

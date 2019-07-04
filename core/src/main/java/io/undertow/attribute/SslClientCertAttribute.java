@@ -23,8 +23,8 @@ import javax.security.cert.CertificateEncodingException;
 import javax.security.cert.X509Certificate;
 
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.RenegotiationRequiredException;
-import io.undertow.server.SSLSessionInfo;
+import io.undertow.httpcore.RenegotiationRequiredException;
+import io.undertow.httpcore.SSLSessionInfo;
 import io.undertow.util.Certificates;
 
 /**

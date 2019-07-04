@@ -79,13 +79,14 @@ public class ServletInputStreamImpl extends ServletInputStream {
         boolean finished = anyAreSet(state, FLAG_FINISHED);
         if (finished) {
             if (anyAreClear(state, FLAG_ON_DATA_READ_CALLED)) {
-                exchange.scheduleIoCallback(new IoCallback<Object>() {
+                exchange.getIoThread().execute(new Runnable() {
                     @Override
-                    public void onComplete(HttpExchange exchange, Object context) {
+                    public void run() {
+
                         setFlags(FLAG_ON_DATA_READ_CALLED);
                         request.getServletContext().invokeOnAllDataRead(request.getExchange(), listener);
                     }
-                }, null);
+                });
             }
         }
         boolean ready = anyAreSet(state, FLAG_READY) && !finished;
@@ -122,7 +123,12 @@ public class ServletInputStreamImpl extends ServletInputStream {
             @Override
             public void run() {
                 if(existing != null) {
-                    exchange.scheduleIoCallback(internalListener, existing);
+                    exchange.getIoThread().execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            internalListener.onComplete(null, existing);
+                        }
+                    });
                 } else {
                     exchange.readAsync(internalListener);
                 }

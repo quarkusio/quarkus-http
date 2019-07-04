@@ -26,7 +26,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.util.SameThreadExecutor;
 import io.undertow.util.URLUtils;
-import io.undertow.util.UndertowOptions;
+import io.undertow.httpcore.UndertowOptions;
 
 /**
  * Parser definition for form encoded data. This handler takes effect for any request that has a mime type
@@ -223,7 +223,7 @@ public class FormEncodedDataDefinition implements FormParserFactory.ParserDefini
         }
 
         @Override
-        public void onComplete(HttpExchange exchange, ByteBuf buffer) {
+        public void onComplete(HttpExchange ec, ByteBuf buffer) {
             doParse(buffer);
             if (state != 4) {
                 exchange.getInputChannel().readAsync(this);
@@ -235,7 +235,7 @@ public class FormEncodedDataDefinition implements FormParserFactory.ParserDefini
         @Override
         public void onException(HttpExchange exchange, ByteBuf context, IOException exception) {
             UndertowLogger.REQUEST_IO_LOGGER.ioExceptionReadingFromChannel(exception);
-            exchange.endExchange();
+            exchange.close();
         }
     }
 

@@ -38,8 +38,8 @@ import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
 import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.httpcore.StatusCodes;
-import io.undertow.util.UndertowOptionMap;
-import io.undertow.util.UndertowOptions;
+import io.undertow.httpcore.UndertowOptionMap;
+import io.undertow.httpcore.UndertowOptions;
 
 /**
  * @author Stuart Douglas

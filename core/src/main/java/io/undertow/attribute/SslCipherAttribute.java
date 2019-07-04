@@ -19,7 +19,7 @@
 package io.undertow.attribute;
 
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.SSLSessionInfo;
+import io.undertow.httpcore.SSLSessionInfo;
 
 /**
  * @author Stuart Douglas

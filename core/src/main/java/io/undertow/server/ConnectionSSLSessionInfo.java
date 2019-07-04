@@ -22,7 +22,9 @@ import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
 import javax.security.cert.X509Certificate;
 
-import io.netty.handler.ssl.ClientAuth;
+import io.undertow.httpcore.ClientAuth;
+import io.undertow.httpcore.RenegotiationRequiredException;
+import io.undertow.httpcore.SSLSessionInfo;
 
 /**
  * SSL session information that is read directly from the SSL session of the
@@ -108,7 +110,7 @@ public class ConnectionSSLSessionInfo implements SSLSessionInfo {
 
 
     @Override
-    public void renegotiate(HttpServerExchange exchange, ClientAuth sslClientAuthMode) throws IOException {
+    public void renegotiate(ClientAuth sslClientAuthMode) throws IOException {
         //TODO
     }
 

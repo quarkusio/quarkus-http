@@ -29,8 +29,9 @@ import javax.security.cert.CertificateException;
 import javax.security.cert.X509Certificate;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.handler.ssl.ClientAuth;
 import io.undertow.UndertowMessages;
+import io.undertow.httpcore.ClientAuth;
+import io.undertow.httpcore.SSLSessionInfo;
 import io.undertow.util.FlexBase64;
 
 /**
@@ -117,7 +118,7 @@ public class BasicSSLSessionInfo implements SSLSessionInfo {
     }
 
     @Override
-    public void renegotiate(HttpServerExchange exchange, ClientAuth sslClientAuthMode) throws IOException {
+    public void renegotiate(ClientAuth sslClientAuthMode) throws IOException {
         throw UndertowMessages.MESSAGES.renegotiationNotSupported();
     }
 

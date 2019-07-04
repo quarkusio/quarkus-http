@@ -23,7 +23,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
-import io.undertow.server.BufferAllocator;
+import io.undertow.httpcore.BufferAllocator;
 import io.undertow.util.FlexBase64;
 import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.util.MalformedMessageException;

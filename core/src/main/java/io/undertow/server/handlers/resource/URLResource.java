@@ -267,10 +267,10 @@ public class URLResource implements Resource, RangeAwareResource {
             }
 
             @Override
-            public void onComplete(HttpExchange exchange, Void context) {
+            public void onComplete(HttpExchange ex, Void context) {
 
                 if (exchange.isInIoThread()) {
-                    ((HttpServerExchange) exchange).dispatch(this);
+                    exchange.dispatch(this);
                 } else {
                     run();
                 }
@@ -279,7 +279,7 @@ public class URLResource implements Resource, RangeAwareResource {
             @Override
             public void onException(HttpExchange exchange, Void context, IOException exception) {
                 UndertowLogger.REQUEST_IO_LOGGER.ioException(exception);
-                exchange.endExchange();
+                exchange.close();
             }
         }
 

@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -32,7 +33,7 @@ import io.undertow.server.handlers.builder.HandlerBuilder;
  * {@link StoredResponseStreamSinkConduit}
  * <p>
  * This will be made available once the response is fully complete, so should generally
- * be read in an {@link io.undertow.server.ExchangeCompletionListener}
+ * be read in an {@link ExchangeCompletionListener}
  *
  * @author Stuart Douglas
  */

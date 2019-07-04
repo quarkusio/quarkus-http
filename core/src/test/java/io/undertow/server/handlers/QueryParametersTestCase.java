@@ -32,12 +32,13 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
+import io.undertow.testutils.MockHttpExchange;
 import io.undertow.testutils.ProxyIgnore;
 import io.undertow.testutils.TestHttpClient;
 import io.undertow.util.ParameterLimitException;
 import io.undertow.util.URLUtils;
-import io.undertow.util.UndertowOptionMap;
-import io.undertow.util.UndertowOptions;
+import io.undertow.httpcore.UndertowOptionMap;
+import io.undertow.httpcore.UndertowOptions;
 
 /**
  * Tests that query parameters are handled correctly.
@@ -134,7 +135,7 @@ public class QueryParametersTestCase {
         out.append((char)0xb1);
         out.append((char)0xdb);
         String s = "p=" + out.toString();
-        HttpServerExchange exchange = new HttpServerExchange(null, null, new DefaultHttpHeaders(), new DefaultHttpHeaders(), -1);
+        HttpServerExchange exchange = new HttpServerExchange(new MockHttpExchange(),-1 );
         URLUtils.parseQueryString(s, exchange, "MS949", true, 1000);
         Assert.assertEquals("한 글", exchange.getQueryParameters().get("p").getFirst());
 

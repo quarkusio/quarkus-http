@@ -31,7 +31,7 @@ import io.undertow.servlet.spec.HttpServletRequestImpl;
 import io.undertow.servlet.spec.HttpServletResponseImpl;
 import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.util.QueryParameterUtils;
-import io.undertow.util.UndertowOptions;
+import io.undertow.httpcore.UndertowOptions;
 
 /**
  * @author Remy Maucherat

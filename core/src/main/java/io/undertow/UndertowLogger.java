@@ -40,7 +40,6 @@ import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.ServerConnection;
 import io.undertow.util.HttpString;
 
 /**
@@ -126,9 +125,9 @@ UndertowLogger extends BasicLogger {
     @Message(id = 5017, value = "Unknown variable %s. For the literal percent character use two percent characters: '%%'")
     void unknownVariable(String token);
 
-    @LogMessage(level = ERROR)
-    @Message(id = 5018, value = "Exception invoking close listener %s")
-    void exceptionInvokingCloseListener(ServerConnection.CloseListener l, @Cause Throwable e);
+//    @LogMessage(level = ERROR)
+//    @Message(id = 5018, value = "Exception invoking close listener %s")
+//    void exceptionInvokingCloseListener(ServerConnection.CloseListener l, @Cause Throwable e);
 
 //    @LogMessage(level = Logger.Level.ERROR)
 //    @Message(id = 5019, value = "Cannot upgrade connection")
@@ -375,9 +374,9 @@ UndertowLogger extends BasicLogger {
     @Message(id = 5084, value = "Attempted to write %s bytes however content-length has been set to %s")
     IOException dataLargerThanContentLength(long totalToWrite, long responseContentLength);
 
-    @LogMessage(level = ERROR)
-    @Message(id = 5085, value = "Connection %s for exchange %s was not closed cleanly, forcibly closing connection")
-    void responseWasNotTerminated(ServerConnection connection, HttpServerExchange exchange);
+//    @LogMessage(level = ERROR)
+//    @Message(id = 5085, value = "Connection %s for exchange %s was not closed cleanly, forcibly closing connection")
+//    void responseWasNotTerminated(ServerConnection connection, HttpServerExchange exchange);
 
     @LogMessage(level = ERROR)
     @Message(id = 5086, value = "Failed to accept SSL request")

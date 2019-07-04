@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package io.undertow.util;
+package io.undertow.httpcore;
 
 import java.util.Collections;
 import java.util.HashMap;

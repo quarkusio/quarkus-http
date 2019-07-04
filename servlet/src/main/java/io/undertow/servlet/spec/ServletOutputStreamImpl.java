@@ -328,7 +328,12 @@ public class ServletOutputStreamImpl extends ServletOutputStream {
             @Override
             public void run() {
                 //TODO: hack to make sure the invocation happens in the callback loop, to prevent recursive callbacks
-                exchange.scheduleIoCallback(listenerCallback, null);
+                exchange.getIoThread().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        listenerCallback.onComplete(null, null);
+                    }
+                });
             }
         });
 

@@ -16,13 +16,11 @@
  *  limitations under the License.
  */
 
-package io.undertow.server;
+package io.undertow.httpcore;
 
 import java.io.IOException;
 
 import javax.net.ssl.SSLSession;
-
-import io.netty.handler.ssl.ClientAuth;
 
 /**
  * SSL session information.
@@ -52,13 +50,11 @@ public interface SSLSessionInfo {
     /**
      * Renegotiate in a blocking manner. This will set the client aut
      * <p>
-     * TODO: we also need a non-blocking version
      *
-     * @param exchange          The exchange
      * @param sslClientAuthMode The client cert mode to use when renegotiating
      * @throws IOException
      */
-    void renegotiate(HttpServerExchange exchange, ClientAuth sslClientAuthMode) throws IOException;
+    void renegotiate(ClientAuth sslClientAuthMode) throws IOException;
 
     /**
      * @return The SSL session, or null if it is not applicable

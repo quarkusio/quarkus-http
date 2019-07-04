@@ -32,14 +32,12 @@ import org.junit.runner.RunWith;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.ServerConnection;
 import io.undertow.testutils.AjpIgnore;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.util.HttpAttachments;
-import io.undertow.httpcore.StatusCodes;
-import io.undertow.util.UndertowOptionMap;
-import io.undertow.util.UndertowOptions;
+import io.undertow.httpcore.UndertowOptionMap;
+import io.undertow.httpcore.UndertowOptions;
 
 /**
  * @author Stuart Douglas

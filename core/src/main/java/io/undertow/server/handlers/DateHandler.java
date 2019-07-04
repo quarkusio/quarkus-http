@@ -24,7 +24,7 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.DateUtils;
 import io.undertow.httpcore.HttpHeaderNames;
-import io.undertow.util.UndertowOptions;
+import io.undertow.httpcore.UndertowOptions;
 
 /**
  * Class that adds the Date: header to a HTTP response.

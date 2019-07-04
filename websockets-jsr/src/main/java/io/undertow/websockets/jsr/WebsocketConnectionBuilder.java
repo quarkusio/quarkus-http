@@ -47,7 +47,7 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
-import io.undertow.util.UndertowOptionMap;
+import io.undertow.httpcore.UndertowOptionMap;
 
 class WebsocketConnectionBuilder {
     private final URI uri;
