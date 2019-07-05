@@ -56,7 +56,6 @@ public class ConnectionTerminationTestCase {
                     exchange.dispatch(this);
                     return;
                 }
-                exchange.startBlocking();
                 exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
                     @Override
                     public void exchangeEvent(HttpServerExchange exchange) {

@@ -119,7 +119,6 @@ public class ComplexSSLTestCase {
                     exchange.dispatch(this);
                     return;
                 }
-                exchange.startBlocking();
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 byte[] buf = new byte[100];
                 int res = 0;

@@ -13,17 +13,12 @@
  * limitations under the License.
  */
 
-package io.undertow.server;
-
-import static io.undertow.util.Bits.anyAreClear;
-import static io.undertow.util.Bits.anyAreSet;
+package io.undertow.httpcore;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
 import io.netty.buffer.ByteBuf;
-import io.undertow.UndertowMessages;
-import io.undertow.httpcore.HttpHeaderNames;
 
 /**
  * Buffering output stream that wraps a channel.
@@ -35,21 +30,20 @@ import io.undertow.httpcore.HttpHeaderNames;
  */
 public class UndertowOutputStream extends OutputStream {
 
-    private final HttpServerExchange exchange;
+    private final HttpExchange exchange;
     private ByteBuf pooledBuffer;
-    private int state;
     private long written;
     private final long contentLength;
 
-    private static final int FLAG_CLOSED = 1;
-    private static final int FLAG_WRITE_STARTED = 1 << 1;
+    private boolean closed;
+    private boolean writeStarted;
 
     /**
      * Construct a new instance.  No write timeout is configured.
      *
      * @param exchange The exchange
      */
-    public UndertowOutputStream(HttpServerExchange exchange) {
+    public UndertowOutputStream(HttpExchange exchange) {
         this.exchange = exchange;
         this.contentLength = exchange.getResponseContentLength();
     }
@@ -62,8 +56,8 @@ public class UndertowOutputStream extends OutputStream {
      * @throws java.lang.IllegalStateException If the response has been committed
      */
     public void resetBuffer() {
-        if(anyAreSet(state, FLAG_WRITE_STARTED)) {
-            throw UndertowMessages.MESSAGES.cannotResetBuffer();
+        if (writeStarted) {
+            throw new IllegalStateException("Cannot reset buffer");
         }
         if (pooledBuffer != null) {
             pooledBuffer.release();
@@ -98,10 +92,10 @@ public class UndertowOutputStream extends OutputStream {
             return;
         }
         if (exchange.getIoThread().inEventLoop()) {
-            throw UndertowMessages.MESSAGES.blockingIoFromIOThread();
+            throw new IllegalStateException("Cannot do blocking IO from IO thread");
         }
-        if (anyAreSet(state, FLAG_CLOSED)) {
-            throw UndertowMessages.MESSAGES.streamIsClosed();
+        if (closed) {
+            throw new IOException("Stream is closed");
         }
 
         int rem = len;
@@ -109,7 +103,7 @@ public class UndertowOutputStream extends OutputStream {
         ByteBuf buffer = pooledBuffer;
         try {
             if (buffer == null) {
-                pooledBuffer = buffer = exchange.allocateBuffer();
+                pooledBuffer = buffer = exchange.getBufferAllocator().allocateBuffer();
             }
             while (rem > 0) {
                 int toWrite = Math.min(rem, buffer.writableBytes());
@@ -117,8 +111,9 @@ public class UndertowOutputStream extends OutputStream {
                 rem -= toWrite;
                 idx += toWrite;
                 if (!buffer.isWritable()) {
-                    exchange.writeBlocking(buffer, false);
-                    this.pooledBuffer = buffer = exchange.allocateBuffer();
+                    writeStarted = true;
+                    exchange.getOutputChannel().writeBlocking(buffer, false);
+                    this.pooledBuffer = buffer = exchange.getBufferAllocator().allocateBuffer();
                 }
             }
         } catch (Exception e) {
@@ -142,12 +137,12 @@ public class UndertowOutputStream extends OutputStream {
      * {@inheritDoc}
      */
     public void flush() throws IOException {
-        if (anyAreSet(state, FLAG_CLOSED)) {
-            throw UndertowMessages.MESSAGES.streamIsClosed();
+        if (closed) {
+            throw new IOException("Stream is closed");
         }
         try {
             if (pooledBuffer != null) {
-                exchange.writeBlocking(pooledBuffer, false);
+                exchange.getOutputChannel().writeBlocking(pooledBuffer, false);
                 pooledBuffer = null;
             }
         } catch (Exception e) {
@@ -163,9 +158,9 @@ public class UndertowOutputStream extends OutputStream {
      * {@inheritDoc}
      */
     public void close() throws IOException {
-        if (anyAreSet(state, FLAG_CLOSED)) return;
-        state |= FLAG_CLOSED;
-        if (anyAreClear(state, FLAG_WRITE_STARTED)) {
+        if (closed) return;
+        closed = true;
+        if (!writeStarted) {
             if (pooledBuffer == null) {
                 exchange.setResponseHeader(HttpHeaderNames.CONTENT_LENGTH, "0");
             } else {
@@ -173,7 +168,7 @@ public class UndertowOutputStream extends OutputStream {
             }
         }
         try {
-            exchange.writeBlocking(pooledBuffer, true);
+            exchange.getOutputChannel().writeBlocking(pooledBuffer, true);
         } catch (Exception e) {
             throw new IOException(e);
         } finally {

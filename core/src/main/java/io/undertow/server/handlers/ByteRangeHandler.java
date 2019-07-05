@@ -29,7 +29,7 @@ import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.ResponseCommitListener;
-import io.undertow.server.WriteFunction;
+import io.undertow.httpcore.WriteFunction;
 import io.undertow.server.handlers.builder.HandlerBuilder;
 import io.undertow.util.ByteRange;
 import io.undertow.util.DateUtils;

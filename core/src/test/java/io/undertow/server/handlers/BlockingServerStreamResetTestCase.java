@@ -20,7 +20,7 @@ package io.undertow.server.handlers;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.UndertowOutputStream;
+import io.undertow.httpcore.UndertowOutputStream;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;

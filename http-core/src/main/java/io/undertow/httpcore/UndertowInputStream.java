@@ -13,16 +13,12 @@
  * limitations under the License.
  */
 
-package io.undertow.server;
-
-import static io.undertow.util.Bits.allAreClear;
-import static io.undertow.util.Bits.anyAreSet;
+package io.undertow.httpcore;
 
 import java.io.IOException;
 import java.io.InputStream;
 
 import io.netty.buffer.ByteBuf;
-import io.undertow.UndertowMessages;
 
 /**
  * Input stream that reads from the underlying channel. This stream delays creation
@@ -32,18 +28,13 @@ import io.undertow.UndertowMessages;
  */
 public class UndertowInputStream extends InputStream {
 
-    private final HttpServerExchange exchange;
+    private final HttpExchange exchange;
 
-    /**
-     * If this stream is ready for a read
-     */
-    private static final int FLAG_CLOSED = 1;
-    private static final int FLAG_FINISHED = 1 << 1;
-
-    private int state;
+    private boolean closed;
+    private boolean finished;
     private ByteBuf pooled;
 
-    public UndertowInputStream(final HttpServerExchange exchange) {
+    public UndertowInputStream(final HttpExchange exchange) {
         this.exchange = exchange;
     }
 
@@ -64,11 +55,11 @@ public class UndertowInputStream extends InputStream {
 
     @Override
     public int read(final byte[] b, final int off, final int len) throws IOException {
-        if (anyAreSet(state, FLAG_CLOSED)) {
-            throw UndertowMessages.MESSAGES.streamIsClosed();
+        if (closed) {
+            throw new IOException("Stream is closed");
         }
         readIntoBuffer();
-        if (anyAreSet(state, FLAG_FINISHED)) {
+        if (finished) {
             return -1;
         }
         if (len == 0) {
@@ -85,10 +76,10 @@ public class UndertowInputStream extends InputStream {
     }
 
     private void readIntoBuffer() throws IOException {
-        if (pooled == null && !anyAreSet(state, FLAG_FINISHED)) {
-            pooled = exchange.readBlocking();
+        if (pooled == null && !finished) {
+            pooled = exchange.getInputChannel().readBlocking();
             if (pooled == null) {
-                state |= FLAG_FINISHED;
+                finished = true;
                 pooled = null;
             }
         }
@@ -96,23 +87,23 @@ public class UndertowInputStream extends InputStream {
 
     @Override
     public int available() throws IOException {
-        if (anyAreSet(state, FLAG_CLOSED)) {
-            throw UndertowMessages.MESSAGES.streamIsClosed();
+        if (closed) {
+            throw new IOException("Stream is closed");
         }
-        if (anyAreSet(state, FLAG_FINISHED)) {
+        if (finished) {
             return -1;
         }
-        return exchange.readBytesAvailable();
+        return exchange.getInputChannel().readBytesAvailable();
     }
 
     @Override
     public void close() throws IOException {
-        if (anyAreSet(state, FLAG_CLOSED)) {
-            return;
+        if (closed) {
+            throw new IOException("Stream is closed");
         }
-        state |= FLAG_CLOSED;
+        closed = true;
         try {
-            while (allAreClear(state, FLAG_FINISHED)) {
+            while (!finished) {
                 readIntoBuffer();
                 if (pooled != null) {
                     pooled.release();
@@ -121,14 +112,14 @@ public class UndertowInputStream extends InputStream {
             }
         } catch (IOException | RuntimeException e) {
             //our exchange is all broken, just end it
-            exchange.endExchange();
+            exchange.close();
             throw e;
         } finally {
             if (pooled != null) {
                 pooled.release();
                 pooled = null;
             }
-            state |= FLAG_FINISHED;
+            finished = true;
         }
     }
 }

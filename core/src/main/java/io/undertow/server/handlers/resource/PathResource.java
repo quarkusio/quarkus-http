@@ -122,7 +122,6 @@ public class PathResource implements RangeAwareResource {
             @Override
             public void run() {
                 try {
-                    exchange.startBlocking();
                     serveBlocking(exchange.getOutputStream(), exchange);
                 } catch (IOException e) {
                     UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
@@ -219,7 +218,6 @@ public class PathResource implements RangeAwareResource {
             @Override
             public void run() {
                 try {
-                    exchange.startBlocking();
                     serveRangeBlocking(exchange.getOutputStream(), exchange, start, end);
                 } catch (IOException e) {
                     UndertowLogger.REQUEST_IO_LOGGER.ioException(e);

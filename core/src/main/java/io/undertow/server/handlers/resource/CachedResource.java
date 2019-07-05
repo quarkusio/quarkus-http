@@ -33,7 +33,7 @@ import io.undertow.httpcore.HttpExchange;
 import io.undertow.httpcore.IoCallback;
 import io.undertow.httpcore.OutputChannel;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.WriteFunction;
+import io.undertow.httpcore.WriteFunction;
 import io.undertow.server.handlers.cache.DirectBufferCache;
 import io.undertow.server.handlers.cache.LimitedBufferSlicePool;
 import io.undertow.util.DateUtils;

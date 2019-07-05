@@ -1,4 +1,4 @@
-package io.undertow.server;
+package io.undertow.httpcore;
 
 import io.netty.buffer.ByteBuf;
 

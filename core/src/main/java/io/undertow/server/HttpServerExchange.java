@@ -44,6 +44,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
+import io.undertow.httpcore.BlockingHttpExchange;
 import io.undertow.httpcore.BufferAllocator;
 import io.undertow.httpcore.CompletedListener;
 import io.undertow.httpcore.HttpExchange;
@@ -53,14 +54,16 @@ import io.undertow.httpcore.HttpProtocolNames;
 import io.undertow.httpcore.InputChannel;
 import io.undertow.httpcore.IoCallback;
 import io.undertow.httpcore.OutputChannel;
+import io.undertow.httpcore.PreCommitListener;
 import io.undertow.httpcore.SSLSessionInfo;
 import io.undertow.httpcore.StatusCodes;
+import io.undertow.httpcore.WriteFunction;
 import io.undertow.security.api.SecurityContext;
 import io.undertow.server.handlers.Cookie;
+import io.undertow.server.handlers.resource.CachedResource;
 import io.undertow.util.AbstractAttachable;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.Cookies;
-import io.undertow.util.IoUtils;
 import io.undertow.util.NetworkUtils;
 import io.undertow.util.Rfc6265CookieSupport;
 import io.undertow.httpcore.UndertowOptionMap;
@@ -72,7 +75,7 @@ import io.undertow.httpcore.UndertowOptions;
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */
-public final class HttpServerExchange extends AbstractAttachable implements BufferAllocator, OutputChannel, InputChannel, CompletedListener {
+public final class HttpServerExchange extends AbstractAttachable implements BufferAllocator, OutputChannel, InputChannel, CompletedListener, PreCommitListener {
 
     // immutable state
     private static final String HTTPS = "https";
@@ -87,22 +90,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      */
     public static final AttachmentKey<Boolean> SECURE_REQUEST = AttachmentKey.create(Boolean.class);
 
-    private static final BiConsumer<InputChannel, HttpServerExchange> DRAIN_CALLBACK = new BiConsumer<InputChannel, HttpServerExchange>() {
-        @Override
-        public void accept(InputChannel channel, HttpServerExchange exchange) {
-            while (channel.isReadable()) {
-                try {
-                    if(channel.readAsync() == null) {
-                        return;
-                    }
-                } catch (IOException e) {
-                    UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
-                    exchange.delegate.close();
-                }
-            }
-            channel.setReadHandler(this, exchange);
-        }
-    };
 
     private int exchangeCompletionListenersCount = 0;
     private ExchangeCompletionListener[] exchangeCompleteListeners;
@@ -112,16 +99,12 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     private int responseCommitListenerCount;
     private ResponseCommitListener[] responseCommitListeners;
 
-    private int writeFunctionCount;
-    private WriteFunction[] writeFunctions;
 
     private Map<String, Deque<String>> queryParameters;
     private Map<String, Deque<String>> pathParameters;
 
     private Map<String, Cookie> requestCookies;
     private Map<String, Cookie> responseCookies;
-
-    private BlockingHttpExchange blockingHttpExchange;
 
     private String protocol;
 
@@ -272,6 +255,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         this.maxEntitySize = maxEntitySize;
         this.delegate = delegate;
         delegate.setCompletedListener(this);
+        delegate.setPreCommitListener(this);
     }
 
     /**
@@ -1026,12 +1010,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if(data != null) {
             updateBytesSent(data.readableBytes());
         }
-        handleFirstData();
-        if (writeFunctions != null) {
-            for (int i = 0; i < writeFunctionCount; ++i) {
-                data = writeFunctions[i].preWrite(data, last);
-            }
-        }
         delegate.getOutputChannel().writeAsync(data, last,  callback, context);
     }
 
@@ -1051,23 +1029,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if(data != null) {
             updateBytesSent(data.readableBytes());
         }
-        handleFirstData();
-        if (writeFunctions != null) {
-            for (int i = 0; i < writeFunctionCount; ++i) {
-                data = writeFunctions[i].preWrite(data, last);
-            }
-        }
         delegate.getOutputChannel().writeBlocking(data, last);
-    }
-
-    private void handleFirstData() {
-        if (anyAreClear(state, FLAG_RESPONSE_SENT)) {
-            for (int i = responseCommitListenerCount - 1; i >= 0; --i) {
-                responseCommitListeners[i].beforeCommit(this);
-            }
-            state |= FLAG_RESPONSE_SENT;
-            Connectors.flattenCookies(this);
-        }
     }
 
     private void invokeExchangeCompleteListeners() {
@@ -1176,21 +1138,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         return this;
     }
 
-    /**
-     * Calling this method puts the exchange in blocking mode, and creates a
-     * {@link BlockingHttpExchange} object to store the streams.
-     * <p>
-     * When an exchange is in blocking mode the input stream methods become
-     * available, other than that there is presently no major difference
-     * between blocking an non-blocking modes.
-     *
-     * @return The existing blocking exchange, if any
-     */
-    public BlockingHttpExchange startBlocking() {
-        final BlockingHttpExchange old = this.blockingHttpExchange;
-        blockingHttpExchange = new DefaultBlockingHttpExchange(this);
-        return old;
-    }
+
 
     /**
      * Calling this method puts the exchange in blocking mode, using the given
@@ -1206,41 +1154,19 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      *
      * @return The existing blocking exchange, if any
      */
-    public BlockingHttpExchange startBlocking(final BlockingHttpExchange httpExchange) {
-        final BlockingHttpExchange old = this.blockingHttpExchange;
-        blockingHttpExchange = httpExchange;
-        return old;
-    }
-
-    /**
-     * Returns true if {@link #startBlocking()} or {@link #startBlocking(BlockingHttpExchange)} has been called.
-     *
-     * @return <code>true</code> If this is a blocking HTTP server exchange
-     */
-    public boolean isBlocking() {
-        return blockingHttpExchange != null;
+    public void startBlocking(final BlockingHttpExchange httpExchange) {
+        delegate.setBlockingHttpExchange(httpExchange);
     }
 
     /**
      * @return The input stream
-     * @throws IllegalStateException if {@link #startBlocking()} has not been called
      */
     public InputStream getInputStream() {
-        if (blockingHttpExchange == null) {
-            throw UndertowMessages.MESSAGES.startBlockingHasNotBeenCalled();
-        }
-        return blockingHttpExchange.getInputStream();
+        return delegate.getInputStream();
     }
 
-    /**
-     * @return The output stream
-     * @throws IllegalStateException if {@link #startBlocking()} has not been called
-     */
     public OutputStream getOutputStream() {
-        if (blockingHttpExchange == null) {
-            throw UndertowMessages.MESSAGES.startBlockingHasNotBeenCalled();
-        }
-        return blockingHttpExchange.getOutputStream();
+        return delegate.getOutputStream();
     }
 
 
@@ -1266,24 +1192,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * If the exchange is already complete this method is a noop
      */
     public HttpServerExchange endExchange() {
-        final int state = this.state;
-        if (isRequestComplete() && isResponseComplete()) {
-            if (blockingHttpExchange != null) {
-                //we still have to close the blocking exchange in this case,
-                if (isInIoThread()) {
-                    dispatch(new Runnable() {
-                        @Override
-                        public void run() {
-                            endExchange();
-                        }
-                    });
-                    return this;
-                }
-                IoUtils.safeClose(blockingHttpExchange);
-            }
-            return this;
-        }
-        if (defaultResponseListeners != null) {
+        if (defaultResponseListeners != null && !isResponseStarted()) {
             int i = defaultResponseListeners.length - 1;
             while (i >= 0) {
                 DefaultResponseListener listener = defaultResponseListeners[i];
@@ -1300,39 +1209,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
                 i--;
             }
         }
-
-        if (blockingHttpExchange != null) {
-            //we still have to close the blocking exchange in this case,
-            if (isInIoThread()) {
-                dispatch(new Runnable() {
-                    @Override
-                    public void run() {
-                        endExchange();
-                    }
-                });
-                return this;
-            }
-            IoUtils.safeClose(blockingHttpExchange);
-
-            try {
-                //TODO: can we end up in this situation in a IO thread?
-                //this will end the exchange in a blocking manner
-                blockingHttpExchange.close();
-            } catch (IOException e) {
-                UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
-                delegate.close();
-            } catch (Throwable t) {
-                UndertowLogger.REQUEST_IO_LOGGER.handleUnexpectedFailure(t);
-                delegate.close();
-            }
-        }
-        if (!isRequestComplete()) {
-            DRAIN_CALLBACK.accept(this, this);
-        }
-
-        if (!isResponseComplete() && allAreClear(state, FLAG_LAST_DATA_QUEUED)) {
-            writeAsync(null, true, IoCallback.END_EXCHANGE, null);
-        }
+        delegate.endExchange();
         return this;
     }
 
@@ -1388,19 +1265,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             }
         }
         responseCommitListeners[responseCommitListenerCount] = listener;
-    }
-
-    public void addWriteFunction(final WriteFunction listener) {
-        final int writeFunctionCount = this.writeFunctionCount++;
-        WriteFunction[] writeFunctions = this.writeFunctions;
-        if (writeFunctions == null || writeFunctions.length == writeFunctionCount) {
-            WriteFunction[] old = writeFunctions;
-            this.writeFunctions = writeFunctions = new WriteFunction[writeFunctionCount + 2];
-            if (old != null) {
-                System.arraycopy(old, 0, writeFunctions, 0, writeFunctionCount);
-            }
-        }
-        writeFunctions[writeFunctionCount] = listener;
     }
 
     @Override
@@ -1569,42 +1433,21 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         return this;
     }
 
-    private static class DefaultBlockingHttpExchange implements BlockingHttpExchange {
-
-        private InputStream inputStream;
-        private UndertowOutputStream outputStream;
-        private final HttpServerExchange exchange;
-
-        DefaultBlockingHttpExchange(final HttpServerExchange exchange) {
-            this.exchange = exchange;
-        }
-
-        public InputStream getInputStream() {
-            if (inputStream == null) {
-                inputStream = new UndertowInputStream(exchange);
-            }
-            return inputStream;
-        }
-
-        public UndertowOutputStream getOutputStream() {
-            if (outputStream == null) {
-                outputStream = new UndertowOutputStream(exchange);
-            }
-            return outputStream;
-        }
-
-        @Override
-        public void close() throws IOException {
-            try {
-                getInputStream().close();
-            } finally {
-                getOutputStream().close();
-            }
-        }
-    }
-
     @Override
     public String toString() {
         return "HttpServerExchange{ " + getRequestMethod() + " " + getRequestURI() + " delegate " + delegate + '}';
+    }
+
+    @Override
+    public void preCommit(HttpExchange exchange) {
+        for (int i = responseCommitListenerCount - 1; i >= 0; --i) {
+            responseCommitListeners[i].beforeCommit(this);
+        }
+        state |= FLAG_RESPONSE_SENT;
+        Connectors.flattenCookies(this);
+    }
+
+    public void addWriteFunction(WriteFunction function) {
+        delegate.addWriteFunction(function);
     }
 }

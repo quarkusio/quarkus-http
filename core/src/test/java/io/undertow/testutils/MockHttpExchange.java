@@ -1,5 +1,6 @@
 package io.undertow.testutils;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -11,11 +12,14 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.util.concurrent.EventExecutor;
+import io.undertow.httpcore.BlockingHttpExchange;
 import io.undertow.httpcore.BufferAllocator;
 import io.undertow.httpcore.HttpExchange;
 import io.undertow.httpcore.HttpExchangeBase;
 import io.undertow.httpcore.InputChannel;
+import io.undertow.httpcore.IoCallback;
 import io.undertow.httpcore.OutputChannel;
 import io.undertow.httpcore.SSLSessionInfo;
 import io.undertow.httpcore.UndertowOptionMap;
@@ -151,28 +155,18 @@ public class MockHttpExchange extends HttpExchangeBase {
     }
 
     @Override
+    protected <T> void writeAsync0(ByteBuf data, boolean last, IoCallback<T> callback, T context) {
+
+    }
+
+    @Override
+    protected void writeBlocking0(ByteBuf data, boolean last) throws IOException {
+
+    }
+
+    @Override
     public InputChannel getInputChannel() {
         return null;
-    }
-
-    @Override
-    public InputStream getInputStream() {
-        return null;
-    }
-
-    @Override
-    public OutputStream getOutputStream() {
-        return null;
-    }
-
-    @Override
-    public boolean isOutputStreamInUse() {
-        return false;
-    }
-
-    @Override
-    public boolean isInputStreamInUse() {
-        return false;
     }
 
     @Override

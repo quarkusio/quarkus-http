@@ -60,6 +60,7 @@ public interface HttpExchange extends Closeable {
     String getResponseHeader(String name);
 
     void setCompletedListener(CompletedListener listener);
+    void setPreCommitListener(PreCommitListener listener);
 
     /**
      * @return The content length of the request, or <code>-1</code> if it has not been set
@@ -120,6 +121,8 @@ public interface HttpExchange extends Closeable {
 
     boolean isInIoThread();
 
+    void addWriteFunction(WriteFunction listener);
+
     OutputChannel getOutputChannel();
 
     InputChannel getInputChannel();
@@ -128,15 +131,8 @@ public interface HttpExchange extends Closeable {
 
     OutputStream getOutputStream();
 
-    /**
-     * Returns true if the output stream was created for this request and has not yet been closed
-     */
-    boolean isOutputStreamInUse();
+    void setBlockingHttpExchange(BlockingHttpExchange exchange);
 
-    /**
-     * Returns true if the input stream was created for this request and has not yet been closed
-     */
-    boolean isInputStreamInUse();
 
     InetSocketAddress getDestinationAddress();
 
@@ -189,4 +185,7 @@ public interface HttpExchange extends Closeable {
     void setMaxEntitySize(long maxEntitySize);
 
     long getMaxEntitySize();
+
+    void endExchange();
+
 }

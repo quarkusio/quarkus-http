@@ -1,9 +1,7 @@
 package io.undertow.vertx;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InterruptedIOException;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -49,7 +47,6 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     //io
     private final BufferAllocator allocator;
     private final Executor worker;
-    private boolean responseStarted;
     private boolean inHandlerChain;
 
     private Buffer input1;
@@ -214,7 +211,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void removeResponseHeader(String name) {
-        if (responseStarted) {
+        if (isResponseStarted()) {
             return;
         }
         response.headers().remove(name);
@@ -222,7 +219,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void setResponseHeader(String name, String value) {
-        if (responseStarted) {
+        if (isResponseStarted()) {
             return;
         }
         response.headers().set(name, value);
@@ -235,7 +232,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void addResponseHeader(String name, String value) {
-        if (responseStarted) {
+        if (isResponseStarted()) {
             return;
         }
         response.headers().add(name, value);
@@ -243,7 +240,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void clearResponseHeaders() {
-        if (responseStarted) {
+        if (isResponseStarted()) {
             return;
         }
         response.headers().clear();
@@ -287,34 +284,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         return connectionBase.channel().eventLoop().inEventLoop();
     }
 
-    @Override
-    public OutputChannel getOutputChannel() {
-        return this;
-    }
 
     @Override
     public InputChannel getInputChannel() {
         return this;
-    }
-
-    @Override
-    public InputStream getInputStream() {
-        return null;
-    }
-
-    @Override
-    public OutputStream getOutputStream() {
-        return null;
-    }
-
-    @Override
-    public boolean isOutputStreamInUse() {
-        return false;
-    }
-
-    @Override
-    public boolean isInputStreamInUse() {
-        return false;
     }
 
     @Override
@@ -420,8 +393,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     }
 
     @Override
-    public void writeBlocking(ByteBuf data, boolean last) throws IOException {
-        handleContentLength(data, last);
+    public void writeBlocking0(ByteBuf data, boolean last) throws IOException {
         if (last && data == null) {
             request.response().end();
             return;
@@ -443,26 +415,6 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         }
     }
 
-    private void handleContentLength(ByteBuf data, boolean last) {
-        if (!responseStarted) {
-            responseStarted = true;
-            if (last) {
-                if (data == null) {
-                    if (!containsResponseHeader(HttpHeaderNames.CONTENT_LENGTH)) {
-                        request.response().headers().add(HttpHeaderNames.CONTENT_LENGTH, "0");
-                    }
-                } else {
-                    if (!containsResponseHeader(HttpHeaderNames.CONTENT_LENGTH)) {
-                        request.response().headers().add(HttpHeaderNames.CONTENT_LENGTH, Integer.toString(data.readableBytes()));
-                    }
-                }
-            } else {
-                if (!containsResponseHeader(HttpHeaderNames.CONTENT_LENGTH)) {
-                    request.response().setChunked(true);
-                }
-            }
-        }
-    }
 
     private void awaitWriteable() throws InterruptedIOException {
         assert Thread.holdsLock(request.connection());
@@ -490,9 +442,8 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     }
 
     @Override
-    public <T> void writeAsync(ByteBuf data, boolean last, IoCallback<T> callback, T context) {
+    public <T> void writeAsync0(ByteBuf data, boolean last, IoCallback<T> callback, T context) {
         writeQueued = true;
-        handleContentLength(data, last);
         if (last && data == null) {
             request.response().end();
             queueWriteListener(callback, context, last);

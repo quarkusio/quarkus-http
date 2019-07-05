@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package io.undertow.server;
+package io.undertow.httpcore;
 
 import java.io.Closeable;
 import java.io.IOException;

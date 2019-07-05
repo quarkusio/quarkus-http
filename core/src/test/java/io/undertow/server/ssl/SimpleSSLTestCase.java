@@ -142,7 +142,6 @@ public class SimpleSSLTestCase {
                     exchange.dispatch(this);
                     return;
                 }
-                exchange.startBlocking();
                 exchange.setResponseHeader("scheme", exchange.getRequestScheme());
                 exchange.endExchange();
             }
