@@ -31,13 +31,10 @@ import java.util.function.Consumer;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import io.netty.channel.ChannelHandlerContext;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.handlers.ServletRequestContext;
 import io.undertow.util.AttachmentKey;
-import io.undertow.util.IoUtils;
 import io.undertow.websockets.jsr.handshake.WebSocketHttpExchange;
-import io.vertx.core.http.ServerWebSocket;
 
 /**
  * @author Stuart Douglas

@@ -49,31 +49,6 @@ public class UndertowOptions {
      */
     public static final long DEFAULT_MAX_ENTITY_SIZE = -1;
 
-    /**
-     * If we should buffer pipelined requests. Defaults to false.
-     */
-    public static final UndertowOption<Boolean> BUFFER_PIPELINED_DATA = UndertowOption.create("BUFFER_PIPELINED_DATA", Boolean.class);
-
-    /**
-     * The idle timeout in milliseconds after which the channel will be closed.
-     * <p>
-     * If the underlying channel already has a read or write timeout set the smaller of the two values will be used
-     * for read/write timeouts.
-     */
-    public static final UndertowOption<Integer> IDLE_TIMEOUT = UndertowOption.create("IDLE_TIMEOUT", Integer.class);
-
-    /**
-     * The maximum allowed time of reading HTTP request in milliseconds.
-     * <p>
-     * <code>-1</code> or missing value disables this functionality.
-     */
-    public static final UndertowOption<Integer> REQUEST_PARSE_TIMEOUT = UndertowOption.create("REQUEST_PARSE_TIMEOUT", Integer.class);
-
-    /**
-     * The amount of time the connection can be idle with no current requests before it is closed;
-     */
-    public static final UndertowOption<Integer> NO_REQUEST_TIMEOUT = UndertowOption.create("NO_REQUEST_TIMEOUT", Integer.class);
-
     public static final int DEFAULT_MAX_PARAMETERS = 1000;
 
     /**
@@ -133,14 +108,6 @@ public class UndertowOptions {
     public static final UndertowOption<String> URL_CHARSET = UndertowOption.create("URL_CHARSET", String.class);
 
     /**
-     * If this is true then a Connection: keep-alive header will be added to responses, even when it is not strictly required by
-     * the specification.
-     * <p>
-     * Defaults to true
-     */
-    public static final UndertowOption<Boolean> ALWAYS_SET_KEEP_ALIVE = UndertowOption.create("ALWAYS_SET_KEEP_ALIVE", Boolean.class);
-
-    /**
      * If this is true then a Date header will be added to all responses. The HTTP spec says this header should be added to all
      * responses, unless the server does not have an accurate clock.
      * <p>
@@ -193,115 +160,6 @@ public class UndertowOptions {
     public static final UndertowOption<Boolean> ENABLE_HTTP2 = UndertowOption.create("ENABLE_HTTP2", Boolean.class);
 
     /**
-     * If connector level statistics should be enabled. This has a slight performance impact, but allows statistics such
-     * as bytes sent/recevied to be monitored.
-     * <p>
-     * If this is passed to the client then client statistics will be enabled.
-     */
-    public static final UndertowOption<Boolean> ENABLE_STATISTICS = UndertowOption.create("ENABLE_STATISTICS", Boolean.class);
-
-
-    /**
-     * If unknown protocols should be allowed. The known protocols are:
-     * <p>
-     * HTTP/0.9
-     * HTTP/1.0
-     * HTTP/1.1
-     * HTTP/2.0
-     * <p>
-     * If this is false then requests that specify any other getProtocol will be rejected with a 400
-     * <p>
-     * Defaults to false
-     */
-    public static final UndertowOption<Boolean> ALLOW_UNKNOWN_PROTOCOLS = UndertowOption.create("ALLOW_UNKNOWN_PROTOCOLS", Boolean.class);
-
-    /**
-     * The size of the header table that is used in the encoder
-     */
-    public static final UndertowOption<Integer> HTTP2_SETTINGS_HEADER_TABLE_SIZE = UndertowOption.create("HTTP2_SETTINGS_HEADER_TABLE_SIZE", Integer.class);
-    public static final int HTTP2_SETTINGS_HEADER_TABLE_SIZE_DEFAULT = 4096;
-
-    /**
-     * If push should be enabled for this connection.
-     */
-    public static final UndertowOption<Boolean> HTTP2_SETTINGS_ENABLE_PUSH = UndertowOption.create("HTTP2_SETTINGS_ENABLE_PUSH", Boolean.class);
-
-    /**
-     * The maximum number of concurrent
-     */
-    public static final UndertowOption<Integer> HTTP2_SETTINGS_MAX_CONCURRENT_STREAMS = UndertowOption.create("HTTP2_SETTINGS_MAX_CONCURRENT_STREAMS", Integer.class);
-
-    public static final UndertowOption<Integer> HTTP2_SETTINGS_INITIAL_WINDOW_SIZE = UndertowOption.create("HTTP2_SETTINGS_INITIAL_WINDOW_SIZE", Integer.class);
-    public static final UndertowOption<Integer> HTTP2_SETTINGS_MAX_FRAME_SIZE = UndertowOption.create("HTTP2_SETTINGS_MAX_FRAME_SIZE", Integer.class);
-
-    /**
-     * Deprecated, as it is effectively a duplicate of MAX_HEADER_SIZE
-     *
-     * @see #MAX_HEADER_SIZE
-     */
-    @Deprecated
-    public static final UndertowOption<Integer> HTTP2_SETTINGS_MAX_HEADER_LIST_SIZE = UndertowOption.create("HTTP2_SETTINGS_MAX_HEADER_LIST_SIZE", Integer.class);
-
-    /**
-     * The maximum amount of padding to send in a HTTP/2 frame. Actual amount will be randomly determined, defaults to Zero.
-     */
-    public static final UndertowOption<Integer> HTTP2_PADDING_SIZE = UndertowOption.create("HTTP2_PADDING_SIZE", Integer.class);
-
-    /**
-     * Undertow keeps a LRU cache of common huffman encodings. This sets the maximum size, setting this to 0 will disable the caching.
-     */
-    public static final UndertowOption<Integer> HTTP2_HUFFMAN_CACHE_SIZE = UndertowOption.create("HTTP2_HUFFMAN_CACHE_SIZE", Integer.class);
-
-    /**
-     * The maximum number of concurrent requests that will be processed at a time. This differs from max concurrent streams in that it is not sent to the remote client.
-     * <p>
-     * If the number of pending requests exceeds this number then requests will be queued, the difference between this and max concurrent streams determines
-     * the maximum number of requests that will be queued.
-     * <p>
-     * Queued requests are processed by a priority queue, rather than a FIFO based queue, using HTTP2 stream priority.
-     * <p>
-     * If this number is smaller than or equal to zero then max concurrent streams determines the maximum number of streams that can be run.
-     */
-    public static final UndertowOption<Integer> MAX_CONCURRENT_REQUESTS_PER_CONNECTION = UndertowOption.create("MAX_CONCURRENT_REQUESTS_PER_CONNECTION", Integer.class);
-
-    /**
-     * The maximum number of buffers that will be used before reads are paused in framed protocols. Defaults to 10
-     */
-    public static final UndertowOption<Integer> MAX_QUEUED_READ_BUFFERS = UndertowOption.create("MAX_QUEUED_READ_BUFFERS", Integer.class);
-
-    /**
-     * The maximum AJP packet size, default is 8192
-     */
-    public static final UndertowOption<Integer> MAX_AJP_PACKET_SIZE = UndertowOption.create("MAX_AJP_PACKET_SIZE", Integer.class);
-
-    /**
-     * If this is true then HTTP/1.1 requests will be failed if no host header is present.
-     */
-    public static final UndertowOption<Boolean> REQUIRE_HOST_HTTP11 = UndertowOption.create("REQUIRE_HOST_HTTP11", Boolean.class);
-
-    public static final int DEFAULT_MAX_CACHED_HEADER_SIZE = 150;
-
-    /**
-     * The maximum size of a header name+value combo that is cached in the per connection cache. Defaults to 150
-     */
-    public static final UndertowOption<Integer> MAX_CACHED_HEADER_SIZE = UndertowOption.create("MAX_CACHED_HEADER_SIZE", Integer.class);
-
-    public static final int DEFAULT_HTTP_HEADERS_CACHE_SIZE = 15;
-
-    /**
-     * The maximum number of headers that are cached per connection. Defaults to 15. If this is set to zero the cache is disabled.
-     */
-    public static final UndertowOption<Integer> HTTP_HEADERS_CACHE_SIZE = UndertowOption.create("HTTP_HEADERS_CACHE_SIZE", Integer.class);
-
-    /**
-     * If the SSLEngine should prefer the servers cipher version. Only applicable on JDK8+.
-     */
-    public static final UndertowOption<Boolean> SSL_USER_CIPHER_SUITES_ORDER = UndertowOption.create("SSL_USER_CIPHER_SUITES_ORDER", Boolean.class);
-
-
-    public static final UndertowOption<Boolean> ALLOW_UNESCAPED_CHARACTERS_IN_URL = UndertowOption.create("ALLOW_UNESCAPED_CHARACTERS_IN_URL", Boolean.class);
-
-    /**
      * The server shutdown timeout in milliseconds after which the executor will be forcefully shut down interrupting
      * tasks which are still executing.
      * <p>
@@ -309,38 +167,6 @@ public class UndertowOptions {
      */
     public static final UndertowOption<Integer> SHUTDOWN_TIMEOUT = UndertowOption.create("SHUTDOWN_TIMEOUT", Integer.class);
 
-
-    /**
-     * Enable or disable blocking I/O for a newly created channel thread.
-     */
-    public static final UndertowOption<Boolean> ALLOW_BLOCKING = UndertowOption.create("ALLOW_BLOCKING", Boolean.class);
-
-    /**
-     * Enable multicast support for a socket.  The value type for this option is {@code boolean}.  Note that some
-     * implementations may add overhead when multicast sockets are in use.
-     */
-    public static final UndertowOption<Boolean> MULTICAST = UndertowOption.create("MULTICAST", Boolean.class);
-
-    /**
-     * Enable broadcast support for IP datagram sockets.  The value type for this option is {@code boolean}.  If you
-     * intend to send datagrams to a broadcast address, this option must be enabled.
-     */
-    public static final UndertowOption<Boolean> BROADCAST = UndertowOption.create("BROADCAST", Boolean.class);
-
-    /**
-     * Configure a TCP socket to send an {@code RST} packet on close.  The value type for this option is {@code boolean}.
-     */
-    public static final UndertowOption<Boolean> CLOSE_ABORT = UndertowOption.create("CLOSE_ABORT", Boolean.class);
-
-    /**
-     * The receive buffer size.  The value type for this option is {@code int}.  This may be used by an XNIO provider
-     * directly, or it may be passed to the underlying operating system, depending on the channel type.  Buffer
-     * sizes must always be greater than 0.  Note that this value is just a hint; if the application needs to know
-     * what value was actually stored for this option, it must call {@code getOption(Options.RECEIVE_BUFFER)} on the
-     * channel to verify.  On most operating systems, the receive buffer size may not be changed on a socket after
-     * it is connected; in these cases, calling {@code setOption(Options.RECEIVE_BUFFER, val)} will return {@code null}.
-     */
-    public static final UndertowOption<Integer> RECEIVE_BUFFER = UndertowOption.create("RECEIVE_BUFFER", Integer.class);
 
     /**
      * Configure an IP socket to reuse addresses.  The value type for this option is {@code boolean}. Default value is true.
@@ -424,43 +250,6 @@ public class UndertowOptions {
      */
     public static final UndertowOption<Boolean> SSL_ENABLED = UndertowOption.create("SSL_ENABLED", Boolean.class);
 //
-//    /**
-//     * Specify the SSL client authentication mode.
-//     *
-//     * @since 2.0
-//     */
-//    public static final UndertowOption<SslClientAuthMode> SSL_CLIENT_AUTH_MODE = UndertowOption.create( "SSL_CLIENT_AUTH_MODE", SslClientAuthMode.class);
-//
-//    /**
-//     * Specify the cipher suites for an SSL/TLS session.  If a listed cipher suites is not supported, it is ignored; however, if you
-//     * specify a list of cipher suites, none of which are supported, an exception will be thrown.
-//     *
-//     * @since 2.0
-//     */
-//    public static final UndertowOption<Sequence<String>> SSL_ENABLED_CIPHER_SUITES = Option.sequence(Options.class, "SSL_ENABLED_CIPHER_SUITES", String.class);
-//
-//    /**
-//     * Get the supported cipher suites for an SSL/TLS session.  This option is generally read-only.
-//     *
-//     * @since 2.0
-//     */
-//    public static final UndertowOption<Sequence<String>> SSL_SUPPORTED_CIPHER_SUITES = Option.sequence(Options.class, "SSL_SUPPORTED_CIPHER_SUITES", String.class);
-//
-//    /**
-//     * Specify the enabled protocols for an SSL/TLS session.  If a listed getProtocol is not supported, it is ignored; however, if you
-//     * specify a list of protocols, none of which are supported, an exception will be thrown.
-//     *
-//     * @since 2.0
-//     */
-//    public static final UndertowOption<Sequence<String>> SSL_ENABLED_PROTOCOLS = Option.sequence(Options.class, "SSL_ENABLED_PROTOCOLS", String.class);
-//
-//    /**
-//     * Get the supported protocols for an SSL/TLS session.  This option is generally read-only.
-//     *
-//     * @since 2.0
-//     */
-//    public static final UndertowOption<Sequence<String>> SSL_SUPPORTED_PROTOCOLS = Option.sequence(Options.class, "SSL_SUPPORTED_PROTOCOLS", String.class);
-
     /**
      * Specify the requested provider for an SSL/TLS session.
      *

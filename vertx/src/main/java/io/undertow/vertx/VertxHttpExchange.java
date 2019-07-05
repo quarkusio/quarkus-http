@@ -1,4 +1,4 @@
-package io.undertow.protocol.http;
+package io.undertow.vertx;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,16 +10,17 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import javax.net.ssl.SSLSession;
 
+import org.jboss.logging.Logger;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.EventExecutor;
-import io.undertow.UndertowLogger;
 import io.undertow.httpcore.BufferAllocator;
+import io.undertow.httpcore.ConnectionSSLSessionInfo;
 import io.undertow.httpcore.HttpExchange;
 import io.undertow.httpcore.HttpExchangeBase;
 import io.undertow.httpcore.HttpHeaderNames;
@@ -28,7 +29,6 @@ import io.undertow.httpcore.IoCallback;
 import io.undertow.httpcore.OutputChannel;
 import io.undertow.httpcore.SSLSessionInfo;
 import io.undertow.httpcore.UndertowOptionMap;
-import io.undertow.server.ConnectionSSLSessionInfo;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
@@ -37,6 +37,8 @@ import io.vertx.core.http.impl.Http1xServerConnection;
 import io.vertx.core.net.impl.ConnectionBase;
 
 public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange, InputChannel, OutputChannel, Handler<Buffer> {
+
+    private static final Logger log = Logger.getLogger(VertxHttpExchange.class);
 
     private final HttpServerRequest request;
     private final HttpServerResponse response;
@@ -103,7 +105,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         request.response().exceptionHandler(new Handler<Throwable>() {
             @Override
             public void handle(Throwable event) {
-                UndertowLogger.REQUEST_IO_LOGGER.ioException(event);
+                log.debugf(event, "IO Exception ");
                 //TODO: do we need this?
                 event.printStackTrace();
                 eof = true;
@@ -251,6 +253,14 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public String getProtocol() {
+        switch (request.version()) {
+            case HTTP_1_0:
+                return "HTTP/1.0";
+            case HTTP_1_1:
+                return "HTTP/1.1";
+            case HTTP_2:
+                return "HTTP/2.0";
+        }
         return request.version().toString();
     }
 
@@ -307,7 +317,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         synchronized (request.connection()) {
             if (input1 != null) {
                 ret = input1.getByteBuf();
-                if(inputOverflow!= null) {
+                if (inputOverflow != null) {
                     input1 = inputOverflow.poll();
                     needMore = input1 == null;
                 } else {
@@ -320,7 +330,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             } else {
                 this.readCallback = callback;
             }
-            if(needMore) {
+            if (needMore) {
                 request.fetch(1);
             }
         }
@@ -358,9 +368,9 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             }
             Buffer ret = input1;
             input1 = null;
-            if(inputOverflow != null) {
+            if (inputOverflow != null) {
                 input1 = inputOverflow.poll();
-                if(input1 == null) {
+                if (input1 == null) {
                     request.fetch(1);
                 }
             } else {
@@ -417,7 +427,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                         request.response().headers().add(HttpHeaderNames.CONTENT_LENGTH, "0");
                     }
                 } else {
-                    if (containsResponseHeader(HttpHeaderNames.CONTENT_LENGTH)) {
+                    if (!containsResponseHeader(HttpHeaderNames.CONTENT_LENGTH)) {
                         request.response().headers().add(HttpHeaderNames.CONTENT_LENGTH, Integer.toString(data.readableBytes()));
                     }
                 }
@@ -515,7 +525,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 if (input1 == null) {
                     input1 = event;
                 } else {
-                    if(inputOverflow == null) {
+                    if (inputOverflow == null) {
                         inputOverflow = new ArrayDeque<>();
                     }
                     inputOverflow.add(event);

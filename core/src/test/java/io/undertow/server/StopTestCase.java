@@ -15,7 +15,7 @@ public class StopTestCase {
     @Test
     public void testStopUndertowAfterExceptionDuringStart() {
         // Making the NioXnioWorker constructor throw an exception, resulting in the Undertow.worker field not getting set.
-        Undertow undertow = Undertow.builder().setWorkerOption(UndertowOptions.WORKER_IO_THREADS, -1).build();
+        Undertow undertow = Undertow.builder().build();
         try {
             undertow.start();
         }

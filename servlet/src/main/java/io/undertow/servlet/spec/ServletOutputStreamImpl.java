@@ -336,7 +336,6 @@ public class ServletOutputStreamImpl extends ServletOutputStream {
                 });
             }
         });
-
     }
 
     private class ListenerCallback implements IoCallback<Void> {

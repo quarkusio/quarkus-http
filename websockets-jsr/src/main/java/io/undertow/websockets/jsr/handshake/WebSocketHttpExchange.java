@@ -22,9 +22,7 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
-import io.netty.channel.ChannelHandlerContext;
 import io.undertow.util.AttachmentKey;
-import io.vertx.core.http.ServerWebSocket;
 
 
 /**
@@ -93,7 +91,7 @@ public interface WebSocketHttpExchange extends Closeable {
     /**
      * Upgrade the underlying channel
      *
-     * @param upgradeCallback
+     * @param listener
      */
     void upgradeChannel(Consumer<Object> listener);
 

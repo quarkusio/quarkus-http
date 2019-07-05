@@ -278,7 +278,11 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @return the request getProtocol string
      */
     public String getProtocol() {
-        return protocol;
+        if(protocol != null) {
+            return protocol;
+        } else {
+            return delegate.getProtocol();
+        }
     }
 
     /**

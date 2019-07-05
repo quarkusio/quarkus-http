@@ -46,8 +46,6 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.undertow.server.session.SecureRandomSessionIdGenerator;
 import io.undertow.servlet.api.InstanceHandle;
-import io.vertx.core.http.ServerWebSocket;
-import io.vertx.core.http.WebSocketBase;
 
 /**
  * {@link Session} implementation which makes use of the high-level WebSocket API of undertow under the hood.

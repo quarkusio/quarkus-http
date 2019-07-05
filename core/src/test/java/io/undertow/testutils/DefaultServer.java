@@ -45,6 +45,7 @@ import org.junit.runners.model.Statement;
 import org.wildfly.openssl.OpenSSLProvider;
 
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -95,7 +96,7 @@ public class DefaultServer extends BlockJUnit4ClassRunner {
     private static final String SERVER_TRUST_STORE = "server.truststore";
     private static final String CLIENT_KEY_STORE = "client.keystore";
     private static final String CLIENT_TRUST_STORE = "client.truststore";
-    private static final char[] STORE_PASSWORD = "password".toCharArray();
+    private static final String STORE_PASSWORD = "password";
 
     private static final boolean ajp = Boolean.getBoolean("test.ajp");
     private static final boolean h2 = Boolean.getBoolean("test.h2");
@@ -111,6 +112,8 @@ public class DefaultServer extends BlockJUnit4ClassRunner {
     private static final DelegatingHandler rootHandler = new DelegatingHandler();
 
 
+    static NioEventLoopGroup clientGroup = new NioEventLoopGroup();
+
     private static KeyStore loadKeyStore(final String name) throws IOException {
         final InputStream stream = DefaultServer.class.getClassLoader().getResourceAsStream(name);
         if (stream == null) {
@@ -118,7 +121,7 @@ public class DefaultServer extends BlockJUnit4ClassRunner {
         }
         try {
             KeyStore loadedKeystore = KeyStore.getInstance("JKS");
-            loadedKeystore.load(stream, STORE_PASSWORD);
+            loadedKeystore.load(stream, STORE_PASSWORD.toCharArray());
 
             return loadedKeystore;
         } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException e) {
@@ -132,7 +135,7 @@ public class DefaultServer extends BlockJUnit4ClassRunner {
         KeyManager[] keyManagers;
         try {
             KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            keyManagerFactory.init(keyStore, STORE_PASSWORD);
+            keyManagerFactory.init(keyStore, STORE_PASSWORD.toCharArray());
             keyManagers = keyManagerFactory.getKeyManagers();
         } catch (NoSuchAlgorithmException | UnrecoverableKeyException | KeyStoreException e) {
             throw new IOException("Unable to initialise KeyManager[]", e);
@@ -191,7 +194,7 @@ public class DefaultServer extends BlockJUnit4ClassRunner {
         return new Supplier<EventLoopGroup>() {
             @Override
             public EventLoopGroup get() {
-                return undertow.getWorkerGroup();
+                return clientGroup;
             }
         };
     }
@@ -252,6 +255,7 @@ public class DefaultServer extends BlockJUnit4ClassRunner {
                 public void testRunFinished(Result result) throws Exception {
                     super.testRunFinished(result);
                     undertow.stop();
+                    clientGroup.shutdownGracefully();
                 }
             });
         }
@@ -413,9 +417,13 @@ public class DefaultServer extends BlockJUnit4ClassRunner {
         sslUndertow = Undertow.builder()
                 .setWorker(undertow.getWorker())
                 .setHandler(rootHandler)
-                .addHttpsListener(getHostSSLPort(DEFAULT), getHostAddress(),
-                        new JksOptions().setPath(SERVER_KEY_STORE).setPassword(new String(STORE_PASSWORD)),
-                        new JksOptions().setPath(SERVER_TRUST_STORE).setPassword(new String(STORE_PASSWORD))).build();
+                .addListener(new Undertow.ListenerBuilder().setType(Undertow.ListenerType.HTTPS)
+                        .setPort(getHostSSLPort(DEFAULT))
+                        .setHost(getHostAddress())
+                        .setKeyStore(SERVER_KEY_STORE)
+                        .setKeyStorePassword(STORE_PASSWORD)
+                        .setTrustStore(SERVER_TRUST_STORE)
+                        .setTrustStorePassword(STORE_PASSWORD)).build();
         sslUndertow.start();
 
 //        startSSLServer(serverContext, OptionMap.create(Options.SSL_CLIENT_AUTH_MODE, SslClientAuthMode.REQUESTED, Options.SSL_ENABLED_PROTOCOLS, Sequence.of("TLSv1.2")));

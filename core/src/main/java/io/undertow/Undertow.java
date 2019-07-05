@@ -22,29 +22,22 @@ import java.net.SocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.ServiceLoader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
 
-import io.netty.bootstrap.ServerBootstrap;
-import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.undertow.protocol.http.VertxHttpServerInitializer;
-import io.undertow.server.ConnectorStatistics;
-import io.undertow.server.HttpHandler;
-import io.undertow.server.OpenListener;
+import io.undertow.httpcore.BufferAllocator;
+import io.undertow.httpcore.UndertowEngine;
 import io.undertow.httpcore.UndertowOption;
 import io.undertow.httpcore.UndertowOptionMap;
 import io.undertow.httpcore.UndertowOptions;
-import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.net.JksOptions;
+import io.undertow.server.DefaultExchangeHandler;
+import io.undertow.server.HttpHandler;
 
 /**
  * Convenience class used to build an Undertow server.
@@ -59,8 +52,6 @@ public final class Undertow {
     private final List<ListenerConfig> listeners = new ArrayList<>();
     private volatile List<ListenerInfo> listenerInfo;
     private final HttpHandler rootHandler;
-    private final UndertowOptionMap workerOptions;
-    private final UndertowOptionMap socketOptions;
     private final UndertowOptionMap serverOptions;
     private final int bufferSize;
     private final boolean directBuffers;
@@ -77,11 +68,7 @@ public final class Undertow {
     private final boolean internalWorker;
 
     private ExecutorService worker;
-    private EventLoopGroup bossGroup;
-    EventLoopGroup workerGroup;
-    List<Channel> channels;
-    List<VertxHttpServerInitializer> initializers = new ArrayList<>();
-    Vertx vertx;
+    UndertowEngine.EngineInstance engineInstance;
 
     private Undertow(Builder builder) {
         this.ioThreads = builder.ioThreads;
@@ -92,8 +79,6 @@ public final class Undertow {
         this.bufferSize = builder.bufferSize;
         this.directBuffers = builder.directBuffers;
         this.internalWorker = builder.worker == null;
-        this.workerOptions = builder.workerOptions.getMap();
-        this.socketOptions = builder.socketOptions.getMap();
         this.serverOptions = builder.serverOptions.getMap();
     }
 
@@ -105,30 +90,62 @@ public final class Undertow {
     }
 
     public synchronized void start() {
-        vertx = Vertx.vertx();
         UndertowLogger.ROOT_LOGGER.debugf("starting undertow server %s", this);
+
+        UndertowEngine engine = ServiceLoader.load(UndertowEngine.class).iterator().next();
+
+
+        BufferAllocator allocator = new BufferAllocator() {
+            @Override
+            public ByteBuf allocateBuffer() {
+                return PooledByteBufAllocator.DEFAULT.buffer(bufferSize);
+            }
+
+            @Override
+            public ByteBuf allocateBuffer(boolean direct) {
+                if (direct) {
+                    return PooledByteBufAllocator.DEFAULT.directBuffer(bufferSize);
+                } else {
+                    return PooledByteBufAllocator.DEFAULT.heapBuffer(bufferSize);
+                }
+            }
+
+            @Override
+            public ByteBuf allocateBuffer(int bufferSize) {
+                return PooledByteBufAllocator.DEFAULT.buffer(bufferSize);
+            }
+
+            @Override
+            public ByteBuf allocateBuffer(boolean direct, int bufferSize) {
+                if (direct) {
+                    return PooledByteBufAllocator.DEFAULT.directBuffer(bufferSize);
+                } else {
+                    return PooledByteBufAllocator.DEFAULT.heapBuffer(bufferSize);
+                }
+            }
+
+            @Override
+            public int getBufferSize() {
+                return bufferSize;
+            }
+        };
+
         try {
 
             if (internalWorker) {
                 worker = Executors.newFixedThreadPool(workerThreads);
             }
+            engineInstance = engine.start(ioThreads, worker, allocator);
 
-            channels = new ArrayList<>();
+            DefaultExchangeHandler handler = new DefaultExchangeHandler(rootHandler);
             listenerInfo = new ArrayList<>();
             for (ListenerConfig listener : listeners) {
                 UndertowLogger.ROOT_LOGGER.debugf("Configuring listener with getProtocol %s for interface %s and port %s", listener.type, listener.host, listener.port);
-                final HttpHandler rootHandler = listener.rootHandler != null ? listener.rootHandler : this.rootHandler;
                 if (listener.type == ListenerType.HTTP) {
-                    VertxHttpServerInitializer vertxHttpServerInitializer = new VertxHttpServerInitializer(worker, rootHandler, bufferSize, vertx, directBuffers, ioThreads);
-                    vertxHttpServerInitializer.runServer(listener.host, listener.port, new HttpServerOptions());
-                    initializers.add(vertxHttpServerInitializer);
+                    engine.bindHttp(engineInstance, handler, listener.port, listener.host, listener.options);
 
                 } else if (listener.type == ListenerType.HTTPS) {
-                    VertxHttpServerInitializer vertxHttpServerInitializer = new VertxHttpServerInitializer(worker, rootHandler, bufferSize, vertx, directBuffers, ioThreads);
-                    vertxHttpServerInitializer.runServer(listener.host, listener.port, new HttpServerOptions().setSsl(true)
-                            .setKeyStoreOptions(listener.keyStoreOptions)
-                            .setTrustStoreOptions(listener.trustStoreOptions));
-                    initializers.add(vertxHttpServerInitializer);
+                    engine.bindHttps(engineInstance, handler, listener.port, listener.host, listener.keyStore, listener.keyStorePassword, listener.trustStore, listener.trustStorePassword, listener.options);
                 }
             }
 
@@ -140,37 +157,14 @@ public final class Undertow {
         }
     }
 
-    private ServerBootstrap bootstrap() {
-        ByteBufAllocator allocator = PooledByteBufAllocator.DEFAULT;
-        return new ServerBootstrap()
-                .option(ChannelOption.ALLOCATOR, allocator)
-                .option(ChannelOption.SO_BACKLOG, socketOptions.get(UndertowOptions.BACKLOG, 1024))
-                .option(ChannelOption.SO_REUSEADDR, socketOptions.get(UndertowOptions.REUSE_ADDRESSES, true))
-                .childOption(ChannelOption.ALLOCATOR, allocator)
-                .childOption(ChannelOption.SO_KEEPALIVE, socketOptions.get(UndertowOptions.KEEP_ALIVE, false))
-                .childOption(ChannelOption.TCP_NODELAY, socketOptions.get(UndertowOptions.TCP_NODELAY, true))
-                // Requires EpollServerSocketChannel
-//                .childOption(EpollChannelOption.TCP_CORK, socketOptions.get(UndertowOptions.CORK, true))
-                .group(bossGroup, workerGroup)
-                .channel(NioServerSocketChannel.class);
-    }
-
-
     public synchronized void stop() {
-        if(bossGroup == null) {
+        UndertowLogger.ROOT_LOGGER.debugf("stopping undertow server %s", this);
+
+        if(engineInstance == null) {
             return;
         }
-        UndertowLogger.ROOT_LOGGER.debugf("stopping undertow server %s", this);
-        if (channels != null) {
-            for (VertxHttpServerInitializer channel : initializers) {
-                channel.close();
-            }
-            channels = null;
-        }
-
-        bossGroup.shutdownGracefully();
-        workerGroup.shutdownGracefully();
-
+        engineInstance.close();
+        engineInstance = null;
         /*
          * Only shutdown the worker if it was created during start()
          */
@@ -192,19 +186,10 @@ public final class Undertow {
             worker = null;
         }
         listenerInfo = null;
-        vertx.close();
     }
 
     public ExecutorService getWorker() {
         return worker;
-    }
-
-    public EventLoopGroup getBossGroup() {
-        return bossGroup;
-    }
-
-    public EventLoopGroup getWorkerGroup() {
-        return workerGroup;
     }
 
     public List<ListenerInfo> getListenerInfo() {
@@ -225,32 +210,22 @@ public final class Undertow {
         final ListenerType type;
         final int port;
         final String host;
-        final JksOptions keyStoreOptions;
-        final JksOptions trustStoreOptions;
-        final HttpHandler rootHandler;
-        final UndertowOptionMap overrideSocketOptions;
-        final boolean useProxyProtocol;
+        final String keyStore;
+        final String trustStore;
+        final String keyStorePassword;
+        final String trustStorePassword;
 
-        private ListenerConfig(final ListenerType type, final int port, final String host, JksOptions keyStoreOptions, JksOptions trustStoreOptions, HttpHandler rootHandler) {
-            this.type = type;
-            this.port = port;
-            this.host = host;
-            this.keyStoreOptions = keyStoreOptions;
-            this.trustStoreOptions = trustStoreOptions;
-            this.rootHandler = rootHandler;
-            this.overrideSocketOptions = UndertowOptionMap.EMPTY;
-            this.useProxyProtocol = false;
-        }
+        final Object options;
 
         private ListenerConfig(final ListenerBuilder listenerBuilder) {
             this.type = listenerBuilder.type;
             this.port = listenerBuilder.port;
             this.host = listenerBuilder.host;
-            this.rootHandler = listenerBuilder.rootHandler;
-            this.keyStoreOptions = listenerBuilder.keyStoreOptions;
-            this.trustStoreOptions = listenerBuilder.trustStoreOptions;
-            this.overrideSocketOptions = listenerBuilder.overrideSocketOptions;
-            this.useProxyProtocol = listenerBuilder.useProxyProtocol;
+            this.keyStorePassword = listenerBuilder.keyStorePassword;
+            this.trustStorePassword = listenerBuilder.trustStorePassword;
+            this.trustStore = listenerBuilder.trustStore;
+            this.keyStore = listenerBuilder.keyStore;
+            this.options = listenerBuilder.options;
         }
     }
 
@@ -259,12 +234,13 @@ public final class Undertow {
         ListenerType type;
         int port;
         String host;
-        JksOptions keyStoreOptions;
-        JksOptions trustStoreOptions;
-        SSLContext sslContext;
+        String keyStore;
+        String trustStore;
+        String keyStorePassword;
+        String trustStorePassword;
+
+        Object options;
         HttpHandler rootHandler;
-        UndertowOptionMap overrideSocketOptions = UndertowOptionMap.EMPTY;
-        boolean useProxyProtocol;
 
         public ListenerBuilder setType(ListenerType type) {
             this.type = type;
@@ -281,34 +257,70 @@ public final class Undertow {
             return this;
         }
 
-        public ListenerBuilder setKeyStoreOptions(JksOptions keyStoreOptions) {
-            this.keyStoreOptions = keyStoreOptions;
-            return this;
-        }
-
-        public ListenerBuilder setTrustStoreOptions(JksOptions trustStoreOptions) {
-            this.trustStoreOptions = trustStoreOptions;
-            return this;
-        }
-
-        public ListenerBuilder setSslContext(SSLContext sslContext) {
-            this.sslContext = sslContext;
-            return this;
-        }
-
         public ListenerBuilder setRootHandler(HttpHandler rootHandler) {
             this.rootHandler = rootHandler;
             return this;
         }
 
-        public ListenerBuilder setOverrideSocketOptions(UndertowOptionMap overrideSocketOptions) {
-            this.overrideSocketOptions = overrideSocketOptions;
+        public ListenerType getType() {
+            return type;
+        }
+
+        public int getPort() {
+            return port;
+        }
+
+        public String getHost() {
+            return host;
+        }
+
+        public String getKeyStore() {
+            return keyStore;
+        }
+
+        public ListenerBuilder setKeyStore(String keyStore) {
+            this.keyStore = keyStore;
             return this;
         }
 
-        public ListenerBuilder setUseProxyProtocol(boolean useProxyProtocol) {
-            this.useProxyProtocol = useProxyProtocol;
+        public String getTrustStore() {
+            return trustStore;
+        }
+
+        public ListenerBuilder setTrustStore(String trustStore) {
+            this.trustStore = trustStore;
             return this;
+        }
+
+        public String getKeyStorePassword() {
+            return keyStorePassword;
+        }
+
+        public ListenerBuilder setKeyStorePassword(String keyStorePassword) {
+            this.keyStorePassword = keyStorePassword;
+            return this;
+        }
+
+        public String getTrustStorePassword() {
+            return trustStorePassword;
+        }
+
+        public ListenerBuilder setTrustStorePassword(String trustStorePassword) {
+            this.trustStorePassword = trustStorePassword;
+            return this;
+        }
+
+        public Object getOptions() {
+            return options;
+        }
+
+        public ListenerBuilder setOptions(Object options) {
+            this.options = options;
+            return this;
+        }
+
+        public HttpHandler getRootHandler() {
+            return rootHandler;
         }
     }
 
@@ -322,8 +334,6 @@ public final class Undertow {
         HttpHandler handler;
         ExecutorService worker;
 
-        final UndertowOptionMap.Builder workerOptions = UndertowOptionMap.builder();
-        final UndertowOptionMap.Builder socketOptions = UndertowOptionMap.builder();
         final UndertowOptionMap.Builder serverOptions = UndertowOptionMap.builder();
 
         private Builder() {
@@ -352,17 +362,6 @@ public final class Undertow {
             return new Undertow(this);
         }
 
-        @Deprecated
-        public Builder addListener(int port, String host) {
-            listeners.add(new ListenerConfig(ListenerType.HTTP, port, host, null, null, null));
-            return this;
-        }
-
-        @Deprecated
-        public Builder addListener(int port, String host, ListenerType listenerType) {
-            listeners.add(new ListenerConfig(listenerType, port, host, null, null, null));
-            return this;
-        }
 
         public Builder addListener(ListenerBuilder listenerBuilder) {
             listeners.add(new ListenerConfig(listenerBuilder));
@@ -370,33 +369,12 @@ public final class Undertow {
         }
 
         public Builder addHttpListener(int port, String host) {
-            listeners.add(new ListenerConfig(ListenerType.HTTP, port, host, null, null, null));
+            listeners.add(new ListenerConfig(new ListenerBuilder().setType(ListenerType.HTTP).setHost(host).setPort(port)));
             return this;
         }
-
-        public Builder addHttpsListener(int port, String host, JksOptions keyManagers, JksOptions trustManagers) {
-            listeners.add(new ListenerConfig(ListenerType.HTTPS, port, host, keyManagers, trustManagers, null));
-            return this;
-        }
-
-        public Builder addHttpListener(int port, String host, HttpHandler rootHandler) {
-            listeners.add(new ListenerConfig(ListenerType.HTTP, port, host, null, null, rootHandler));
-            return this;
-        }
-
-        public Builder addHttpsListener(int port, String host, JksOptions keystoreOptions, JksOptions trustStoreOptions, HttpHandler rootHandler) {
-            listeners.add(new ListenerConfig(ListenerType.HTTPS, port, host, keystoreOptions, trustStoreOptions, rootHandler));
-            return this;
-        }
-
 
         public Builder setBufferSize(final int bufferSize) {
             this.bufferSize = bufferSize;
-            return this;
-        }
-
-        @Deprecated
-        public Builder setBuffersPerRegion(final int buffersPerRegion) {
             return this;
         }
 
@@ -425,16 +403,6 @@ public final class Undertow {
             return this;
         }
 
-        public <T> Builder setSocketOption(final UndertowOption<T> option, final T value) {
-            socketOptions.set(option, value);
-            return this;
-        }
-
-        public <T> Builder setWorkerOption(final UndertowOption<T> option, final T value) {
-            workerOptions.set(option, value);
-            return this;
-        }
-
         public <T> Builder setWorker(ExecutorService worker) {
             this.worker = worker;
             return this;
@@ -445,13 +413,10 @@ public final class Undertow {
 
         private final String protcol;
         private final SocketAddress address;
-        private final OpenListener openListener;
-        private volatile boolean suspended = false;
 
-        public ListenerInfo(String protcol, SocketAddress address, OpenListener openListener) {
+        public ListenerInfo(String protcol, SocketAddress address) {
             this.protcol = protcol;
             this.address = address;
-            this.openListener = openListener;
         }
 
         public String getProtcol() {
@@ -464,56 +429,6 @@ public final class Undertow {
 
         public SSLContext getSslContext() {
             return null;
-        }
-
-        public void setSslContext(SSLContext sslContext) {
-//sslContext            if (ssl != null) {
-//                //just ignore it if this is not a SSL listener
-//                ssl.updateSSLContext(sslContext);
-//            }
-        }
-
-        public synchronized void suspend() {
-//            suspended = true;
-//            channel.suspendAccepts();
-//            CountDownLatch latch = new CountDownLatch(1);
-//            //the channel may be in the middle of an accept, we need to close from the IO thread
-//            channel.getIoThread().execute(new Runnable() {
-//                @Override
-//                public void run() {
-//                    try {
-//                        openListener.closeConnections();
-//                    } finally {
-//                        latch.countDown();
-//                    }
-//                }
-//            });
-//            try {
-//                latch.await();
-//            } catch (InterruptedException e) {
-//                throw new RuntimeException(e);
-//            }
-        }
-
-        public synchronized void resume() {
-//            suspended = false;
-//            channel.resumeAccepts();
-        }
-
-        public boolean isSuspended() {
-            return suspended;
-        }
-
-        public ConnectorStatistics getConnectorStatistics() {
-            return openListener.getConnectorStatistics();
-        }
-//
-//        public <T> void setSocketOption(Option<T> option, T value) throws IOException {
-//            channel.setOption(option, value);
-//        }
-
-        public void setServerOptions(UndertowOptionMap options) {
-            openListener.setUndertowOptions(options);
         }
 
         @Override

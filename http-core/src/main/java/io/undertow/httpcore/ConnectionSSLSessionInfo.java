@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-package io.undertow.server;
+package io.undertow.httpcore;
 
 import java.io.IOException;
 import java.security.cert.Certificate;

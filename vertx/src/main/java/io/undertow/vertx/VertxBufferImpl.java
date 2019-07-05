@@ -1,4 +1,4 @@
-package io.undertow.protocol.http;
+package io.undertow.vertx;
 
 
 import io.netty.buffer.ByteBuf;
