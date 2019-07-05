@@ -103,6 +103,7 @@ public abstract class AbstractServletInputStreamTestCase {
                 }
                 String message = builder.toString();
                 runTest(message, ASYNC_SERVLET, true, false);
+                System.out.println("test complete");
             } catch (Throwable e) {
                 throw new RuntimeException("test failed with i equal to " + i, e);
             }

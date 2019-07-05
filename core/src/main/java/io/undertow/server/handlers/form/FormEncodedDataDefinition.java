@@ -16,10 +16,12 @@
 package io.undertow.server.handlers.form;
 
 import java.io.IOException;
+import java.util.function.BiConsumer;
 
 import io.netty.buffer.ByteBuf;
 import io.undertow.UndertowLogger;
 import io.undertow.httpcore.HttpExchange;
+import io.undertow.httpcore.InputChannel;
 import io.undertow.httpcore.IoCallback;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -81,7 +83,7 @@ public class FormEncodedDataDefinition implements FormParserFactory.ParserDefini
         return this;
     }
 
-    private static final class FormEncodedDataParser implements IoCallback<ByteBuf>, FormDataParser {
+    private static final class FormEncodedDataParser implements BiConsumer<InputChannel, HttpServerExchange>, FormDataParser {
 
         private final HttpServerExchange exchange;
         private final FormData data;
@@ -195,7 +197,7 @@ public class FormEncodedDataDefinition implements FormParserFactory.ParserDefini
                 return;
             }
             this.handler = handler;
-            exchange.readAsync(this);
+            accept(exchange.getInputChannel(), exchange);
 
         }
 
@@ -223,19 +225,20 @@ public class FormEncodedDataDefinition implements FormParserFactory.ParserDefini
         }
 
         @Override
-        public void onComplete(HttpExchange ec, ByteBuf buffer) {
-            doParse(buffer);
-            if (state != 4) {
-                exchange.getInputChannel().readAsync(this);
-            } else {
-                ((HttpServerExchange)exchange).dispatch(SameThreadExecutor.INSTANCE, handler);
+        public void accept(InputChannel inputChannel, HttpServerExchange exchange) {
+            while (inputChannel.isReadable()) {
+                try {
+                    doParse(inputChannel.readAsync());
+                    if (state == 4) {
+                        exchange.dispatch(SameThreadExecutor.INSTANCE, handler);
+                        return;
+                    }
+                } catch (IOException e) {
+                    UndertowLogger.REQUEST_IO_LOGGER.ioExceptionReadingFromChannel(e);
+                    exchange.close();
+                }
             }
-        }
-
-        @Override
-        public void onException(HttpExchange exchange, ByteBuf context, IOException exception) {
-            UndertowLogger.REQUEST_IO_LOGGER.ioExceptionReadingFromChannel(exception);
-            exchange.close();
+            exchange.getInputChannel().setReadHandler(this, exchange);
         }
     }
 

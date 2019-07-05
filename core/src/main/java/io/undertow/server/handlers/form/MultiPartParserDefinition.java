@@ -30,12 +30,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.UndertowLogger;
 import io.undertow.UndertowMessages;
 import io.undertow.httpcore.HttpExchange;
+import io.undertow.httpcore.InputChannel;
 import io.undertow.httpcore.IoCallback;
 import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
@@ -194,7 +197,7 @@ public class MultiPartParserDefinition implements FormParserFactory.ParserDefini
             } else {
                 task = new NonBlockingParseTask(executor);
             }
-            exchange.readAsync(task);
+            exchange.dispatch(executor, task);
         }
 
         @Override
@@ -358,50 +361,44 @@ public class MultiPartParserDefinition implements FormParserFactory.ParserDefini
             parser.setCharacterEncoding(encoding);
         }
 
-        private final class NonBlockingParseTask implements IoCallback<ByteBuf>, Runnable {
+        private final class NonBlockingParseTask implements BiConsumer<InputChannel, HttpServerExchange>, Runnable {
 
             private final Executor executor;
-            private ByteBuf buffer;
 
             private NonBlockingParseTask(Executor executor) {
                 this.executor = executor;
             }
 
-
-            @Override
-            public void onComplete(HttpExchange exchange, ByteBuf context) {
-                buffer = context;
-                executor.execute(this);
-            }
-
-            @Override
-            public void onException(HttpExchange exchange, ByteBuf context, IOException exception) {
-                UndertowLogger.REQUEST_IO_LOGGER.debug("Exception parsing data", exception);
-                exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                exchange.close();
-            }
-
             @Override
             public void run() {
-                try {
-                    if (buffer == null) {
-                        if (parser.isComplete()) {
-                            exchange.putAttachment(FORM_DATA, data);
-                            exchange.dispatch(SameThreadExecutor.INSTANCE, handler);
+                while (exchange.isReadable()) {
+                    try {
+                        ByteBuf buffer = exchange.readAsync();
+                        if (buffer == null) {
+                            if (parser.isComplete()) {
+                                exchange.putAttachment(FORM_DATA, data);
+                                exchange.dispatch(SameThreadExecutor.INSTANCE, handler);
+                            } else {
+                                UndertowLogger.REQUEST_IO_LOGGER.ioException(UndertowMessages.MESSAGES.connectionTerminatedReadingMultiPartData());
+                                exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+                                exchange.endExchange();
+                            }
+                            return;
                         } else {
-                            UndertowLogger.REQUEST_IO_LOGGER.ioException(UndertowMessages.MESSAGES.connectionTerminatedReadingMultiPartData());
-                            exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                            exchange.endExchange();
+                            parser.parse(buffer);
                         }
-                    } else {
-                        parser.parse(buffer);
-                        exchange.readAsync(this);
+                    } catch (IOException e) {
+                        UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
+                        exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
+                        exchange.endExchange();
                     }
-                } catch (IOException e) {
-                    UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
-                    exchange.setStatusCode(StatusCodes.INTERNAL_SERVER_ERROR);
-                    exchange.endExchange();
                 }
+                exchange.setReadHandler(this, exchange);
+            }
+
+            @Override
+            public void accept(InputChannel input, HttpServerExchange exchange) {
+                exchange.dispatch(executor, this);
             }
         }
     }

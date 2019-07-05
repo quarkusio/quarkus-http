@@ -95,7 +95,7 @@ public class AsyncInputStreamServlet extends HttpServlet {
                 dataToWrite.reset();
                 if (done) {
                     context.complete();
-                    System.out.println("WRITTEN " + written);
+                    System.out.println("WRITTEN POSSIBLE" + written);
                 }
             }
         }

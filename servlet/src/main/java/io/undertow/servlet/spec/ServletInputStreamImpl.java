@@ -24,13 +24,13 @@ import static io.undertow.util.Bits.anyAreSet;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
+import java.util.function.BiConsumer;
 
 import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 
 import io.netty.buffer.ByteBuf;
-import io.undertow.httpcore.HttpExchange;
-import io.undertow.httpcore.IoCallback;
+import io.undertow.httpcore.InputChannel;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.UndertowServletMessages;
 
@@ -51,7 +51,6 @@ public class ServletInputStreamImpl extends ServletInputStream {
     /**
      * If this stream is ready for a read
      */
-    private static final int FLAG_READY = 1;
     private static final int FLAG_CLOSED = 1 << 1;
     private static final int FLAG_FINISHED = 1 << 2;
     private static final int FLAG_ON_DATA_READ_CALLED = 1 << 3;
@@ -82,16 +81,17 @@ public class ServletInputStreamImpl extends ServletInputStream {
                 exchange.getIoThread().execute(new Runnable() {
                     @Override
                     public void run() {
-
-                        setFlags(FLAG_ON_DATA_READ_CALLED);
-                        request.getServletContext().invokeOnAllDataRead(request.getExchange(), listener);
+                        if (anyAreClear(state, FLAG_ON_DATA_READ_CALLED)) {
+                            setFlags(FLAG_ON_DATA_READ_CALLED);
+                            request.getServletContext().invokeOnAllDataRead(request.getExchange(), listener);
+                        }
                     }
                 });
             }
         }
-        boolean ready = anyAreSet(state, FLAG_READY) && !finished;
+        boolean ready = exchange.isReadable() && !finished;
         if (!ready && listener != null && !finished) {
-            exchange.readAsync(internalListener);
+            exchange.setReadHandler(internalListener, exchange);
         }
         if (ready) {
             setFlags(FLAG_IS_READY_CALLED);
@@ -115,23 +115,16 @@ public class ServletInputStreamImpl extends ServletInputStream {
         listener = readListener;
         internalListener = new ServletInputStreamChannelListener();
 
-        ByteBuf existing = pooled;
-        pooled = null;
-
         //we resume from an async task, after the request has been dispatched
         asyncContext.addAsyncTask(new Runnable() {
             @Override
             public void run() {
-                if(existing != null) {
-                    exchange.getIoThread().execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            internalListener.onComplete(null, existing);
-                        }
-                    });
-                } else {
-                    exchange.readAsync(internalListener);
-                }
+                exchange.getIoThread().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        internalListener.accept(exchange, exchange);
+                    }
+                });
             }
         });
     }
@@ -157,13 +150,13 @@ public class ServletInputStreamImpl extends ServletInputStream {
             throw UndertowServletMessages.MESSAGES.streamIsClosed();
         }
         if (listener != null) {
-            if (anyAreClear(state, FLAG_READY | FLAG_IS_READY_CALLED)) {
+            if (anyAreClear(state, FLAG_IS_READY_CALLED)) {
                 throw UndertowServletMessages.MESSAGES.streamNotReady();
             }
             clearFlags(FLAG_IS_READY_CALLED);
-        } else {
-            readIntoBuffer();
         }
+        readIntoBuffer(false);
+
         if (anyAreSet(state, FLAG_FINISHED)) {
             return -1;
         }
@@ -176,14 +169,13 @@ public class ServletInputStreamImpl extends ServletInputStream {
         if (!buffer.isReadable()) {
             pooled.release();
             pooled = null;
-            clearFlags(FLAG_READY);
         }
         return copied;
     }
 
-    private void readIntoBuffer() throws IOException {
+    private void readIntoBuffer(boolean close) throws IOException {
         if (pooled == null && !anyAreSet(state, FLAG_FINISHED)) {
-            pooled = exchange.readBlocking();
+            pooled = listener == null || close ? exchange.readBlocking() : exchange.readAsync();
             if (pooled == null) {
                 setFlags(FLAG_FINISHED);
                 pooled = null;
@@ -211,7 +203,7 @@ public class ServletInputStreamImpl extends ServletInputStream {
         setFlags(FLAG_CLOSED);
         try {
             while (allAreClear(state, FLAG_FINISHED)) {
-                readIntoBuffer();
+                readIntoBuffer(true);
                 if (pooled != null) {
                     pooled.release();
                     pooled = null;
@@ -227,11 +219,10 @@ public class ServletInputStreamImpl extends ServletInputStream {
         }
     }
 
-    private class ServletInputStreamChannelListener implements IoCallback<ByteBuf> {
-
+    private class ServletInputStreamChannelListener implements BiConsumer<InputChannel, HttpServerExchange> {
 
         @Override
-        public void onComplete(HttpExchange ex, ByteBuf context) {
+        public void accept(InputChannel inputChannel, HttpServerExchange exchange) {
             try {
                 if (asyncContext.isDispatched()) {
                     //this is no longer an async request
@@ -239,44 +230,39 @@ public class ServletInputStreamImpl extends ServletInputStream {
                     //TODO: what do we do here? Revert back to blocking mode?
                     return;
                 }
-                pooled = context;
                 if (anyAreSet(state, FLAG_FINISHED)) {
                     if (pooled != null) {
                         pooled.release();
                     }
                     return;
                 }
-                if (pooled != null) {
-                    setFlags(FLAG_READY);
-                    if (!anyAreSet(state, FLAG_FINISHED)) {
+                if (!anyAreSet(state, FLAG_FINISHED)) {
+                    try {
+                        request.getServletContext().invokeOnDataAvailable(request.getExchange(), listener);
+                    } catch (Throwable e) {
                         try {
-                            request.getServletContext().invokeOnDataAvailable(request.getExchange(), listener);
-                        } catch (Throwable e) {
-                            try {
-                                request.getServletContext().invokeRunnable(request.getExchange(), new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        listener.onError(e);
-                                    }
-                                });
-                            } finally {
-                                if (pooled != null) {
-                                    pooled.release();
-                                    pooled = null;
+                            request.getServletContext().invokeRunnable(request.getExchange(), new Runnable() {
+                                @Override
+                                public void run() {
+                                    listener.onError(e);
                                 }
-                                exchange.discardRequest();
+                            });
+                        } finally {
+                            if (pooled != null) {
+                                pooled.release();
+                                pooled = null;
                             }
+                            exchange.discardRequest();
                         }
                     }
-                } else if (pooled == null) {
-                    setFlags(FLAG_FINISHED);
-                    if (allAreClear(state, FLAG_ON_DATA_READ_CALLED)) {
-                        setFlags(FLAG_ON_DATA_READ_CALLED);
-                        request.getServletContext().invokeOnAllDataRead(request.getExchange(), listener);
+                    if (anyAreSet(state, FLAG_FINISHED)) {
+                        if (allAreClear(state, FLAG_ON_DATA_READ_CALLED)) {
+                            setFlags(FLAG_ON_DATA_READ_CALLED);
+                            request.getServletContext().invokeOnAllDataRead(request.getExchange(), listener);
+                        }
                     }
-                } else {
-                    exchange.readAsync(this);
                 }
+
             } catch (final Throwable e) {
                 try {
                     request.getServletContext().invokeRunnable(request.getExchange(), new Runnable() {
@@ -292,25 +278,6 @@ public class ServletInputStreamImpl extends ServletInputStream {
                     }
                     exchange.discardRequest();
                 }
-            }
-        }
-
-        @Override
-        public void onException(HttpExchange ex, ByteBuf context, IOException exception) {
-
-            try {
-                request.getServletContext().invokeRunnable(request.getExchange(), new Runnable() {
-                    @Override
-                    public void run() {
-                        listener.onError(exception);
-                    }
-                });
-            } finally {
-                if (pooled != null) {
-                    pooled.release();
-                    pooled = null;
-                }
-                exchange.discardRequest();
             }
         }
     }

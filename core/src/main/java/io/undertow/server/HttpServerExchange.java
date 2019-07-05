@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import io.netty.buffer.ByteBuf;
@@ -86,19 +87,20 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      */
     public static final AttachmentKey<Boolean> SECURE_REQUEST = AttachmentKey.create(Boolean.class);
 
-    private static final IoCallback<ByteBuf> DRAIN_CALLBACK = new IoCallback<ByteBuf>() {
+    private static final BiConsumer<InputChannel, HttpServerExchange> DRAIN_CALLBACK = new BiConsumer<InputChannel, HttpServerExchange>() {
         @Override
-        public void onComplete(HttpExchange exchange, ByteBuf context) {
-            if (context != null) {
-                context.release();
-                exchange.getInputChannel().readAsync(this);
+        public void accept(InputChannel channel, HttpServerExchange exchange) {
+            while (channel.isReadable()) {
+                try {
+                    if(channel.readAsync() == null) {
+                        return;
+                    }
+                } catch (IOException e) {
+                    UndertowLogger.REQUEST_IO_LOGGER.ioException(e);
+                    exchange.delegate.close();
+                }
             }
-
-        }
-
-        @Override
-        public void onException(HttpExchange exchange, ByteBuf context, IOException exception) {
-            exchange.close();
+            channel.setReadHandler(this, exchange);
         }
     };
 
@@ -1325,7 +1327,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             }
         }
         if (!isRequestComplete()) {
-            delegate.getInputChannel().readAsync(DRAIN_CALLBACK);
+            DRAIN_CALLBACK.accept(this, this);
         }
 
         if (!isResponseComplete() && allAreClear(state, FLAG_LAST_DATA_QUEUED)) {
@@ -1401,8 +1403,19 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         writeFunctions[writeFunctionCount] = listener;
     }
 
-    public void readAsync(IoCallback<ByteBuf> cb) {
-        delegate.getInputChannel().readAsync(cb);
+    @Override
+    public ByteBuf readAsync() throws IOException {
+        return delegate.getInputChannel().readAsync();
+    }
+
+    @Override
+    public boolean isReadable() {
+        return delegate.getInputChannel().isReadable();
+    }
+
+    @Override
+    public <T> void setReadHandler(BiConsumer<InputChannel, T> handler, T context) {
+        delegate.getInputChannel().setReadHandler(handler, context);
     }
 
     public int readBytesAvailable() {

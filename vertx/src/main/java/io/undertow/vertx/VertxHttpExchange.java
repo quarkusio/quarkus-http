@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import javax.net.ssl.SSLSession;
@@ -54,17 +55,19 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     private Buffer input1;
     private Deque<Buffer> inputOverflow;
     private boolean waiting = false;
-
-    private IoCallback<ByteBuf> readCallback;
+    private BiConsumer<InputChannel, Object> readHandler;
+    private Object readHandlerContext;
 
     private IoCallback<Object> writeCallback;
     private Object writeContext;
 
     private boolean eof = false;
+    private boolean eofRead = false;
 
     private boolean waitingForDrain;
     private boolean drainHandlerRegistered;
     private volatile boolean writeQueued = false;
+    private IOException readError;
 
 
     public VertxHttpExchange(HttpServerRequest request, BufferAllocator allocator, Executor worker) {
@@ -75,22 +78,37 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         this.worker = worker;
         if (!request.isEnded()) {
             request.handler(this);
+            request.exceptionHandler(new Handler<Throwable>() {
+                @Override
+                public void handle(Throwable event) {
+                    synchronized (request.connection()) {
+                        if(event instanceof IOException) {
+                            readError = (IOException) event;
+                        } else {
+                            readError = new IOException(event);
+                        }
+                    }
+                }
+            });
             request.endHandler(new Handler<Void>() {
                 @Override
                 public void handle(Void event) {
-                    IoCallback<ByteBuf> readCallback = null;
+                    BiConsumer<InputChannel, Object> readCallback = null;
+                    Object readContext = null;
                     synchronized (request.connection()) {
                         eof = true;
                         if (waiting) {
                             request.connection().notify();
                         }
-                        if (VertxHttpExchange.this.readCallback != null) {
-                            readCallback = VertxHttpExchange.this.readCallback;
-                            VertxHttpExchange.this.readCallback = null;
+                        if (VertxHttpExchange.this.readHandler != null) {
+                            readCallback = VertxHttpExchange.this.readHandler;
+                            VertxHttpExchange.this.readHandler = null;
+                            readContext = readHandlerContext;
+                            VertxHttpExchange.this.readHandlerContext = null;
                         }
                     }
                     if (readCallback != null) {
-                        readCallback.onComplete(VertxHttpExchange.this, null);
+                        readCallback.accept(VertxHttpExchange.this, readContext);
                     }
                     if (input1 == null) {
                         terminateRequest();
@@ -310,46 +328,52 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     }
 
     @Override
-    public void readAsync(IoCallback<ByteBuf> callback) {
-        boolean doReadCallback = false;
-        ByteBuf ret = null;
-        boolean needMore = false;
+    public ByteBuf readAsync() throws IOException {
         synchronized (request.connection()) {
-            if (input1 != null) {
-                ret = input1.getByteBuf();
+            if(readError != null) {
+                throw new IOException(readError);
+            } else if(input1 != null) {
+                ByteBuf ret = input1.getByteBuf();
                 if (inputOverflow != null) {
                     input1 = inputOverflow.poll();
-                    needMore = input1 == null;
-                } else {
-                    needMore = true;
-                    input1 = null;
-                }
-                doReadCallback = true;
-            } else if (eof) {
-                doReadCallback = true;
-            } else {
-                this.readCallback = callback;
-            }
-            if (needMore) {
-                request.fetch(1);
-            }
-        }
-        if (doReadCallback) {
-            ByteBuf b = ret;
-            getIoThread().execute(new Runnable() {
-                @Override
-                public void run() {
-                    if (b == null) {
-                        terminateRequest();
+                    if(input1 == null) {
+                        request.fetch(1);
                     }
-                    callback.onComplete(VertxHttpExchange.this, b);
+                } else {
+                    input1 = null;
+                    request.fetch(1);
                 }
-            });
+                return ret;
+            } else if (eof){
+                eofRead = true;
+                return null;
+            } else {
+                throw new IllegalStateException("readAsync called when isReadable is false");
+            }
         }
     }
 
     @Override
+    public boolean isReadable() {
+        synchronized (request.connection()) {
+            if(eofRead) {
+                return false;
+            }
+            return input1 != null || eof || readError != null;
+        }
+    }
+
+    @Override
+    public <T> void setReadHandler(BiConsumer<InputChannel, T> handler, T context) {
+        this.readHandler = (BiConsumer<InputChannel, Object>) handler;
+        this.readHandlerContext = context;
+    }
+
+    @Override
     public int readBytesAvailable() {
+        if(input1 != null) {
+            return input1.getByteBuf().readableBytes();
+        }
         return 0;
     }
 
@@ -386,7 +410,8 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void close() {
-
+        //TODO: What does close actually mean?
+        request.response().end();
     }
 
     @Override
@@ -515,32 +540,34 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void handle(Buffer event) {
-        IoCallback<ByteBuf> readCallback = null;
+        BiConsumer<InputChannel, Object> readCallback = null;
+        Object context = null;
         synchronized (request.connection()) {
-            if (this.readCallback != null) {
-                readCallback = this.readCallback;
-                this.readCallback = null;
-                request.fetch(1);
+            if (input1 == null) {
+                input1 = event;
             } else {
-                if (input1 == null) {
-                    input1 = event;
-                } else {
-                    if (inputOverflow == null) {
-                        inputOverflow = new ArrayDeque<>();
-                    }
-                    inputOverflow.add(event);
+                if (inputOverflow == null) {
+                    inputOverflow = new ArrayDeque<>();
                 }
-                if (waiting) {
-                    request.connection().notifyAll();
-                }
+                inputOverflow.add(event);
+            }
+            if (waiting) {
+                request.connection().notifyAll();
+            }
+            if(readHandler != null) {
+                readCallback = readHandler;
+                readHandler = null;
+                context = readHandlerContext;
+                readHandlerContext = null;
             }
         }
         if (readCallback != null) {
-            IoCallback<ByteBuf> f = readCallback;
+            BiConsumer<InputChannel, Object> f = readCallback;
+            Object c = context;
             getIoThread().execute(new Runnable() {
                 @Override
                 public void run() {
-                    f.onComplete(VertxHttpExchange.this, event.getByteBuf());
+                    f.accept(VertxHttpExchange.this, c);
                 }
             });
         }
@@ -563,7 +590,9 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void discardRequest() {
-        request.connection().close();
+        if(!eof) {
+            request.connection().close();
+        }
     }
 
     @Override
@@ -582,7 +611,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public boolean isIoOperationQueued() {
-        return readCallback != null || writeQueued;
+        return readHandler != null || writeQueued;
     }
 
     @Override
