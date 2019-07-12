@@ -18,9 +18,7 @@
 
 package io.undertow.server;
 
-import static io.undertow.util.Bits.allAreClear;
 import static io.undertow.util.Bits.allAreSet;
-import static io.undertow.util.Bits.anyAreClear;
 import static io.undertow.util.Bits.anyAreSet;
 
 import java.io.IOException;
@@ -57,17 +55,16 @@ import io.undertow.httpcore.OutputChannel;
 import io.undertow.httpcore.PreCommitListener;
 import io.undertow.httpcore.SSLSessionInfo;
 import io.undertow.httpcore.StatusCodes;
+import io.undertow.httpcore.UndertowOptionMap;
+import io.undertow.httpcore.UndertowOptions;
 import io.undertow.httpcore.WriteFunction;
 import io.undertow.security.api.SecurityContext;
 import io.undertow.server.handlers.Cookie;
-import io.undertow.server.handlers.resource.CachedResource;
 import io.undertow.util.AbstractAttachable;
 import io.undertow.util.AttachmentKey;
 import io.undertow.util.Cookies;
 import io.undertow.util.NetworkUtils;
 import io.undertow.util.Rfc6265CookieSupport;
-import io.undertow.httpcore.UndertowOptionMap;
-import io.undertow.httpcore.UndertowOptions;
 
 /**
  * An HTTP server request/response exchange.  An instance of this class is constructed as soon as the request headers are
@@ -99,7 +96,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     private int responseCommitListenerCount;
     private ResponseCommitListener[] responseCommitListeners;
 
-
     private Map<String, Deque<String>> queryParameters;
     private Map<String, Deque<String>> pathParameters;
 
@@ -117,7 +113,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
 
     private int state = 200;
     private String requestMethod;
-
     private String requestScheme;
 
     /**
@@ -191,11 +186,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      */
     private Executor dispatchExecutor;
 
-    /**
-     * The number of bytes that have been sent to the remote client. This does not include headers,
-     * only the entity body, and does not take any transfer or content encoding into account.
-     */
-    private long responseBytesSent = 0;
 
     /**
      * Flag that is set when the response sending begins
@@ -264,7 +254,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @return the request getProtocol string
      */
     public String getProtocol() {
-        if(protocol != null) {
+        if (protocol != null) {
             return protocol;
         } else {
             return delegate.getProtocol();
@@ -299,7 +289,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @return the HTTP request method
      */
     public String getRequestMethod() {
-        if(requestMethod == null) {
+        if (requestMethod == null) {
             return delegate.getRequestMethod();
         }
         return requestMethod;
@@ -321,7 +311,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @return the request URI scheme
      */
     public String getRequestScheme() {
-        if(requestScheme == null) {
+        if (requestScheme == null) {
             return delegate.getRequestScheme();
         }
         return requestScheme;
@@ -348,7 +338,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * POST /my+File.jsf?foo=bar HTTP/1.1 -&gt; '/my+File.jsf'
      */
     public String getRequestURI() {
-        if(requestURI == null) {
+        if (requestURI == null) {
             return delegate.getRequestURI();
         }
         return requestURI;
@@ -494,6 +484,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     public long getResponseContentLength() {
         return delegate.getResponseContentLength();
     }
+
     /**
      * Return the host that this request was sent to, in general this will be the
      * value of the Host header, minus the port specifier.
@@ -589,22 +580,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * @return The number of bytes sent in the entity body
      */
     public long getResponseBytesSent() {
-        if (Connectors.isEntityBodyAllowed(this) && !getRequestMethod().equals(HttpMethodNames.HEAD)) {
-            return responseBytesSent;
-        } else {
-            return 0; //body is not allowed, even if we attempt to write it will be ignored
-        }
-    }
-
-    /**
-     * Updates the number of response bytes sent. Used when compression is in use
-     *
-     * @param bytes The number of bytes to increase the response size by. May be negative
-     */
-    void updateBytesSent(long bytes) {
-        if (Connectors.isEntityBodyAllowed(this) && !getRequestMethod().equals(HttpMethodNames.HEAD)) {
-            responseBytesSent += bytes;
-        }
+        return delegate.getResponseBytesSent();
     }
 
     public HttpServerExchange setPersistent(final boolean persistent) {
@@ -958,7 +934,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     public void send1ContinueIfRequired() {
-        if(HttpContinue.requiresContinueResponse(this)) {
+        if (HttpContinue.requiresContinueResponse(this)) {
             delegate.sendContinue();
         }
     }
@@ -1007,17 +983,14 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
             state |= FLAG_LAST_DATA_QUEUED;
         }
 
-        if(data != null) {
-            updateBytesSent(data.readableBytes());
-        }
-        delegate.getOutputChannel().writeAsync(data, last,  callback, context);
+        delegate.getOutputChannel().writeAsync(data, last, callback, context);
     }
 
     public void writeBlocking(ByteBuf data, boolean last) throws IOException {
         if (data == null && !last) {
             throw new IllegalArgumentException("cannot call write with a null buffer and last being false");
         }
-        if (isResponseComplete() || anyAreSet(state,  FLAG_LAST_DATA_QUEUED)) {
+        if (isResponseComplete() || anyAreSet(state, FLAG_LAST_DATA_QUEUED)) {
             if (last && data == null) {
                 return;
             }
@@ -1025,9 +998,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         }
         if (last) {
             state |= FLAG_LAST_DATA_QUEUED;
-        }
-        if(data != null) {
-            updateBytesSent(data.readableBytes());
         }
         delegate.getOutputChannel().writeBlocking(data, last);
     }
@@ -1137,7 +1107,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         delegate.setStatusCode(statusCode);
         return this;
     }
-
 
 
     /**
@@ -1450,4 +1419,5 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     public void addWriteFunction(WriteFunction function) {
         delegate.addWriteFunction(function);
     }
+
 }

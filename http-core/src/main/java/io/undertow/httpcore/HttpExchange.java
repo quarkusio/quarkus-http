@@ -188,4 +188,5 @@ public interface HttpExchange extends Closeable {
 
     void endExchange();
 
+    long getResponseBytesSent();
 }

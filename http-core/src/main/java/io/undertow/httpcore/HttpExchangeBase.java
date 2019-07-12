@@ -10,6 +10,7 @@ import java.util.function.BiConsumer;
 import org.jboss.logging.Logger;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
 
@@ -42,6 +43,12 @@ public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
     private WriteFunction[] writeFunctions;
     protected PreCommitListener preCommitListener;
     private boolean responseStarted;
+
+    /**
+     * The number of bytes that have been sent to the remote client. This does not include headers,
+     * only the entity body, and does not take any transfer or content encoding into account.
+     */
+    private long responseBytesSent = 0;
 
     @Override
     public void setCompletedListener(CompletedListener listener) {
@@ -229,12 +236,32 @@ public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
     protected abstract void writeBlocking0(ByteBuf data, boolean last) throws IOException;
 
 
+    /**
+     * @return The number of bytes sent in the entity body
+     */
+    public long getResponseBytesSent() {
+        if (isEntityBodyAllowed() && !getRequestMethod().equals(HttpMethodNames.HEAD)) {
+            return responseBytesSent;
+        } else {
+            return 0; //body is not allowed, even if we attempt to write it will be ignored
+        }
+    }
+
     private ByteBuf processData(ByteBuf data, boolean last) {
         if (!responseStarted) {
             if(preCommitListener != null) {
                 preCommitListener.preCommit(this);
             }
-            if (writeFunctions != null) {
+            if(!isEntityBodyAllowed()) {
+                addWriteFunction(new WriteFunction() {
+                    @Override
+                    public ByteBuf preWrite(ByteBuf data, boolean last) {
+                        data.release();
+                        return Unpooled.EMPTY_BUFFER;
+                    }
+                });
+            }
+            if (writeFunctions != null && data != null) {
                 for (int i = 0; i < writeFunctionCount; ++i) {
                     data = writeFunctions[i].preWrite(data, last);
                 }
@@ -256,12 +283,34 @@ public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
             }
             responseStarted = true;
         } else {
-            if (writeFunctions != null) {
+            if (writeFunctions != null && data != null) {
                 for (int i = 0; i < writeFunctionCount; ++i) {
                     data = writeFunctions[i].preWrite(data, last);
                 }
             }
         }
+        if(data != null && !isEntityBodyAllowed()) {
+            data.release();
+            return Unpooled.EMPTY_BUFFER;
+        }
+        if(data != null) {
+            responseBytesSent += data.readableBytes();
+        }
         return data;
+    }
+
+
+    protected boolean isEntityBodyAllowed() {
+        if(getRequestMethod().equals(HttpMethodNames.HEAD)) {
+            return false;
+        }
+        int code = getStatusCode();
+        if (code >= 100 && code < 200) {
+            return false;
+        }
+        if (code == 204 || code == 304) {
+            return false;
+        }
+        return true;
     }
 }

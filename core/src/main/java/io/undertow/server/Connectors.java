@@ -412,23 +412,4 @@ public class Connectors {
         exchange.setRelativePath(part);
         exchange.setRequestURI(encodedPath);
     }
-
-    public static boolean isEntityBodyAllowed(HttpServerExchange exchange) {
-        int code = exchange.getStatusCode();
-        return isEntityBodyAllowed(code);
-    }
-
-    public static boolean isEntityBodyAllowed(int code) {
-        if (code >= 100 && code < 200) {
-            return false;
-        }
-        if (code == 204 || code == 304) {
-            return false;
-        }
-        return true;
-    }
-
-    public static void updateResponseBytesSent(HttpServerExchange exchange, long bytes) {
-        exchange.updateBytesSent(bytes);
-    }
 }
