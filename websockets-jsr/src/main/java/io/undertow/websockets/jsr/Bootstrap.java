@@ -85,7 +85,7 @@ public class Bootstrap implements ServletExtension {
             @Override
             public Executor get() {
                 if (info.getExecutor() != null) {
-                    return info.getExecutor();
+                    return info.getExecutor().get();
                 }
                 return GlobalEventExecutor.INSTANCE;
             }

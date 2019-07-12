@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 import javax.websocket.server.ServerEndpointConfig;
 
@@ -45,7 +46,7 @@ public class WebSocketDeploymentInfo implements Cloneable {
     private String clientBindAddress = null;
     private WebSocketReconnectHandler reconnectHandler;
     private EventLoopGroup eventLoopGroup;
-    private Executor executor;
+    private Supplier<Executor> executor;
 
     public WebSocketDeploymentInfo addEndpoint(final Class<?> annotated) {
         this.annotatedEndpoints.add(annotated);
@@ -71,11 +72,11 @@ public class WebSocketDeploymentInfo implements Cloneable {
         return eventLoopGroup;
     }
 
-    public Executor getExecutor() {
+    public Supplier<Executor> getExecutor() {
         return executor;
     }
 
-    public WebSocketDeploymentInfo setExecutor(Executor executor) {
+    public WebSocketDeploymentInfo setExecutor(Supplier<Executor> executor) {
         this.executor = executor;
         return this;
     }
