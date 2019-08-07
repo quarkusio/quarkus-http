@@ -23,6 +23,7 @@ import javax.websocket.RemoteEndpoint;
 public class WebSocketWriter extends Writer {
 
     final WebSocketSessionRemoteEndpoint.Basic basic;
+    private boolean closed;
 
     public WebSocketWriter(RemoteEndpoint.Basic basic) {
         this.basic = basic;
@@ -30,6 +31,9 @@ public class WebSocketWriter extends Writer {
 
     @Override
     public void write(char[] cbuf, int off, int len) throws IOException {
+        if(closed) {
+            throw new IOException("closed");
+        }
         basic.sendText(new String(cbuf, off, len), false);
     }
 
@@ -40,6 +44,9 @@ public class WebSocketWriter extends Writer {
 
     @Override
     public void close() throws IOException {
-        basic.sendText("", true);
+        if(!closed) {
+            closed = true;
+            basic.sendText("", true);
+        }
     }
 }

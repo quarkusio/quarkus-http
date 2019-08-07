@@ -45,6 +45,9 @@ public class BinaryOutputStream extends OutputStream {
 
     @Override
     public void close() throws IOException {
-        basic.sendBinary(ByteBuffer.allocate(0), true);
+        if(!closed) {
+            closed = true;
+            basic.sendBinary(ByteBuffer.allocate(0), true);
+        }
     }
 }
