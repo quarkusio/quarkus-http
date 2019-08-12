@@ -22,7 +22,6 @@ import io.undertow.httpcore.BufferAllocator;
 import io.undertow.httpcore.ConnectionSSLSessionInfo;
 import io.undertow.httpcore.HttpExchange;
 import io.undertow.httpcore.HttpExchangeBase;
-import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.httpcore.InputChannel;
 import io.undertow.httpcore.IoCallback;
 import io.undertow.httpcore.OutputChannel;
@@ -47,21 +46,17 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     //io
     private final BufferAllocator allocator;
     private final Executor worker;
-    private boolean inHandlerChain;
 
     private Buffer input1;
     private Deque<Buffer> inputOverflow;
-    private boolean waiting = false;
+    private boolean waitingForRead = false;
     private BiConsumer<InputChannel, Object> readHandler;
     private Object readHandlerContext;
-
-    private IoCallback<Object> writeCallback;
-    private Object writeContext;
 
     private boolean eof = false;
     private boolean eofRead = false;
 
-    private boolean waitingForDrain;
+    private boolean waitingForWrite;
     private boolean drainHandlerRegistered;
     private volatile boolean writeQueued = false;
     private IOException readError;
@@ -94,7 +89,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                     Object readContext = null;
                     synchronized (request.connection()) {
                         eof = true;
-                        if (waiting) {
+                        if (waitingForRead) {
                             request.connection().notify();
                         }
                         if (VertxHttpExchange.this.readHandler != null) {
@@ -134,7 +129,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             @Override
             public void handle(Void event) {
                 synchronized (request.connection()) {
-                    if (waiting) {
+                    if (waitingForWrite || waitingForRead) {
                         request.connection().notify();
                     }
                 }
@@ -355,12 +350,12 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         synchronized (request.connection()) {
             while (input1 == null && !eof) {
                 try {
-                    waiting = true;
+                    waitingForRead = true;
                     request.connection().wait();
                 } catch (InterruptedException e) {
                     throw new InterruptedIOException(e.getMessage());
                 } finally {
-                    waiting = false;
+                    waitingForRead = false;
                 }
             }
             Buffer ret = input1;
@@ -424,19 +419,19 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 request.response().drainHandler(new Handler<Void>() {
                     @Override
                     public void handle(Void event) {
-                        if (waitingForDrain) {
+                        if (waitingForWrite) {
                             request.connection().notifyAll();
                         }
                     }
                 });
             }
             try {
-                waitingForDrain = true;
+                waitingForWrite = true;
                 request.connection().wait();
             } catch (InterruptedException e) {
                 throw new InterruptedIOException(e.getMessage());
             } finally {
-                waitingForDrain = false;
+                waitingForWrite = false;
             }
         }
     }
@@ -502,7 +497,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 }
                 inputOverflow.add(event);
             }
-            if (waiting) {
+            if (waitingForRead) {
                 request.connection().notifyAll();
             }
             if(readHandler != null) {
