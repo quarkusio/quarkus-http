@@ -23,13 +23,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.undertow</groupId>
-        <artifactId>undertow-parent</artifactId>
+        <groupId>io.quarkus.http</groupId>
+        <artifactId>quarkus-http-parent</artifactId>
         <version>3.0.0.Alpha1-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.undertow</groupId>
-    <artifactId>undertow-dist</artifactId>
+    <groupId>io.quarkus.http</groupId>
+    <artifactId>quarkus-http-dist</artifactId>
     <version>3.0.0.Alpha1-SNAPSHOT</version>
 
     <name>Undertow: Distribution</name>
@@ -38,16 +38,16 @@
 
     <dependencies>
         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-core</artifactId>
+            <groupId>io.quarkus.http</groupId>
+            <artifactId>quarkus-http-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-servlet</artifactId>
+            <groupId>io.quarkus.http</groupId>
+            <artifactId>quarkus-http-servlet</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-examples</artifactId>
+            <groupId>io.quarkus.http</groupId>
+            <artifactId>quarkus-http-examples</artifactId>
         </dependency>
     </dependencies>
 
@@ -75,7 +75,7 @@
                                     <descriptors>
                                         <descriptor>assembly.xml</descriptor>
                                     </descriptors>
-                                    <finalName>undertow-${project.version}</finalName>
+                                    <finalName>quarkus-http-${project.version}</finalName>
                                     <appendAssemblyId>false</appendAssemblyId>
                                     <outputDirectory>target/</outputDirectory>
                                     <workDirectory>target/assembly/work</workDirectory>
@@ -92,7 +92,7 @@
                                     <descriptors>
                                         <descriptor>assembly-src.xml</descriptor>
                                     </descriptors>
-                                    <finalName>undertow-${project.version}</finalName>
+                                    <finalName>quarkus-http-${project.version}</finalName>
                                     <appendAssemblyId>true</appendAssemblyId>
                                     <outputDirectory>target/</outputDirectory>
                                     <workDirectory>target/assembly-src/work</workDirectory>

@@ -42,7 +42,7 @@ public interface IoCallback<T> {
     IoCallback END_EXCHANGE = new IoCallback<Object>() {
         @Override
         public void onComplete(HttpExchange exchange, Object context) {
-            exchange.close();
+            exchange.endExchange();
         }
     };
 

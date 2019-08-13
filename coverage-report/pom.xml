@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>io.undertow</groupId>
-        <artifactId>undertow-parent</artifactId>
+        <groupId>io.quarkus.http</groupId>
+        <artifactId>quarkus-http-parent</artifactId>
         <version>3.0.0.Alpha1-SNAPSHOT</version>
     </parent>
-    <artifactId>undertow-coverage-report</artifactId>
+    <artifactId>quarkus-http-coverage-report</artifactId>
     <name>Undertow Test Coverage Report</name>
     <description>aggregates and compiles jacoco test coverage report</description>
     <packaging>pom</packaging>

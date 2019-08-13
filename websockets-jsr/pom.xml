@@ -23,13 +23,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.undertow</groupId>
-        <artifactId>undertow-parent</artifactId>
+        <groupId>io.quarkus.http</groupId>
+        <artifactId>quarkus-http-parent</artifactId>
         <version>3.0.0.Alpha1-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.undertow</groupId>
-    <artifactId>undertow-websockets-jsr</artifactId>
+    <groupId>io.quarkus.http</groupId>
+    <artifactId>quarkus-http-websockets-jsr</artifactId>
 
     <name>Undertow WebSockets JSR356 implementations</name>
 
@@ -43,16 +43,16 @@
     <dependencies>
 
         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-core</artifactId>
+            <groupId>io.quarkus.http</groupId>
+            <artifactId>quarkus-http-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-servlet</artifactId>
+            <groupId>io.quarkus.http</groupId>
+            <artifactId>quarkus-http-servlet</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-vertx-backend</artifactId>
+            <groupId>io.quarkus.http</groupId>
+            <artifactId>quarkus-http-vertx-backend</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -74,15 +74,15 @@
         <!-- Test dependencies -->
 
         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-core</artifactId>
+            <groupId>io.quarkus.http</groupId>
+            <artifactId>quarkus-http-core</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
 
         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-servlet</artifactId>
+            <groupId>io.quarkus.http</groupId>
+            <artifactId>quarkus-http-servlet</artifactId>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>

@@ -23,13 +23,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.undertow</groupId>
-        <artifactId>undertow-parent</artifactId>
+        <groupId>io.quarkus.http</groupId>
+        <artifactId>quarkus-http-parent</artifactId>
         <version>3.0.0.Alpha1-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.undertow</groupId>
-    <artifactId>undertow-examples</artifactId>
+    <groupId>io.quarkus.http</groupId>
+    <artifactId>quarkus-http-examples</artifactId>
     <version>3.0.0.Alpha1-SNAPSHOT</version>
 
     <name>Undertow Examples</name>
@@ -37,18 +37,18 @@
     <dependencies>
 
         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-core</artifactId>
+            <groupId>io.quarkus.http</groupId>
+            <artifactId>quarkus-http-core</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-servlet</artifactId>
+            <groupId>io.quarkus.http</groupId>
+            <artifactId>quarkus-http-servlet</artifactId>
         </dependency>
 
         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-websockets-jsr</artifactId>
+            <groupId>io.quarkus.http</groupId>
+            <artifactId>quarkus-http-websockets-jsr</artifactId>
         </dependency>
 
         <dependency>
@@ -70,7 +70,7 @@
     </dependencies>
 
     <build>
-        <finalName>undertow-examples</finalName>
+        <finalName>quarkus-http-examples</finalName>
         <resources>
             <resource>
                 <directory>src/main/java</directory>
@@ -102,7 +102,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>io.undertow.examples.Runner</mainClass>
+                            <mainClass>io.quarkus.http.examples.Runner</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

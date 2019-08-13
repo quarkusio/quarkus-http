@@ -23,13 +23,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>io.undertow</groupId>
-        <artifactId>undertow-parent</artifactId>
+        <groupId>io.quarkus.http</groupId>
+        <artifactId>quarkus-http-parent</artifactId>
         <version>3.0.0.Alpha1-SNAPSHOT</version>
     </parent>
 
-    <groupId>io.undertow</groupId>
-    <artifactId>undertow-vertx-backend</artifactId>
+    <groupId>io.quarkus.http</groupId>
+    <artifactId>quarkus-http-vertx-backend</artifactId>
     <version>3.0.0.Alpha1-SNAPSHOT</version>
 
     <name>Undertow Vertx Backend</name>
@@ -56,8 +56,8 @@
             <version>3.7.0</version>
         </dependency>
         <dependency>
-            <groupId>io.undertow</groupId>
-            <artifactId>undertow-http-core</artifactId>
+            <groupId>io.quarkus.http</groupId>
+            <artifactId>quarkus-http-http-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jboss.logging</groupId>
@@ -283,7 +283,6 @@
                             <enableAssertions>true</enableAssertions>
                             <runOrder>reversealphabetical</runOrder>
                             <systemPropertyVariables>
-                                <io.undertow.disable-jdk8-alpn>true</io.undertow.disable-jdk8-alpn>
                                 <test.proxy>true</test.proxy>
                                 <test.dump>${dump}</test.dump>
                                 <test.bufferSize>${bufferSize}</test.bufferSize>
