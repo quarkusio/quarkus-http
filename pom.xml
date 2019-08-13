@@ -28,7 +28,7 @@
 
     <groupId>io.quarkus.http</groupId>
     <artifactId>quarkus-http-parent</artifactId>
-    <version>3.0.0.Alpha1-SNAPSHOT</version>
+    <version>3.0.0.Alpha1</version>
 
     <name>Undertow</name>
     <description>Undertow</description>
@@ -47,7 +47,7 @@
         <connection>scm:git:git@github.com:quarkusio/quarkus-http.git</connection>
         <developerConnection>scm:git:git@github.com:quarkusio/quarkus-http.git</developerConnection>
         <url>https://github.com/quarkus/quarkus-http</url>
-        <tag>HEAD</tag>
+        <tag>3.0.0.Alpha1</tag>
     </scm>
 
     <properties>
@@ -81,10 +81,10 @@
 
         <!-- jacoco -->
         <version.org.jacoco>0.7.9</version.org.jacoco>
-        <jacoco.agent.argLine></jacoco.agent.argLine>
+        <jacoco.agent.argLine />
 
         <!-- Surefire args -->
-        <surefire.jpda.args/>
+        <surefire.jpda.args />
         <surefire.system.args>-ea ${surefire.jpda.args} -Xmx1024m</surefire.system.args>
         <!--by default run all tests-->
         <test.categories>io.undertow.testutils.category.UnitTest OR NOT io.undertow.testutils.category.UnitTest</test.categories>
@@ -154,7 +154,7 @@
                         <consoleOutput>true</consoleOutput>
                         <failsOnError>true</failsOnError>
                         <includeTestSourceDirectory>true</includeTestSourceDirectory>
-                        <useFile/>
+                        <useFile />
                         <sourceDirectories>
                             <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
                         </sourceDirectories>
@@ -232,7 +232,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>

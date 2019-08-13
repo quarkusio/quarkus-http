@@ -17,20 +17,18 @@
   ~ limitations under the License.
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>io.quarkus.http</groupId>
         <artifactId>quarkus-http-parent</artifactId>
-        <version>3.0.0.Alpha1-SNAPSHOT</version>
+        <version>3.0.0.Alpha1</version>
     </parent>
 
     <groupId>io.quarkus.http</groupId>
     <artifactId>quarkus-http-vertx-backend</artifactId>
-    <version>3.0.0.Alpha1-SNAPSHOT</version>
+    <version>3.0.0.Alpha1</version>
 
     <name>Undertow Vertx Backend</name>
 
@@ -43,9 +41,9 @@
         <openssl>false</openssl>
         <test.ipv6>false</test.ipv6>
         <bufferSize>8192</bufferSize>
-        <libraryPath></libraryPath>
-        <java.library.path></java.library.path>
-        <org.wildfly.openssl.path></org.wildfly.openssl.path>
+        <libraryPath />
+        <java.library.path />
+        <org.wildfly.openssl.path />
     </properties>
 
     <dependencies>
@@ -490,11 +488,7 @@
                                 <configuration>
                                     <tasks>
                                         <mkdir dir="${java9.build.outputDirectory}" />
-                                        <javac srcdir="${java9.sourceDirectory}"
-                                            destdir="${java9.build.outputDirectory}"
-                                            classpath="${project.build.outputDirectory}"
-                                            includeantruntime="false" 
-                                        />
+                                        <javac srcdir="${java9.sourceDirectory}" destdir="${java9.build.outputDirectory}" classpath="${project.build.outputDirectory}" includeantruntime="false" />
                                     </tasks>
                                 </configuration>
                                 <goals>
