@@ -16,7 +16,6 @@
 package io.undertow.httpcore;
 
 /**
- * NOTE: If you add a new method here you must also add it to {@link io.undertow.server.protocol.http.HttpRequestParser}
  *
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  */

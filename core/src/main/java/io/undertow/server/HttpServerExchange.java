@@ -1121,7 +1121,6 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
      * exchange objects, to allow handlers to modify the streams
      * that are being used.
      *
-     * @return The existing blocking exchange, if any
      */
     public void startBlocking(final BlockingHttpExchange httpExchange) {
         delegate.setBlockingHttpExchange(httpExchange);

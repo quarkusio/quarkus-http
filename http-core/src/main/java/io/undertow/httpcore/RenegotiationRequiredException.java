@@ -23,7 +23,7 @@ package io.undertow.httpcore;
  * in order to get a client cert.
  *
  * This will be thrown if a user attempts to retrieve a client cert and the SSL mode
- * is {@link org.xnio.SslClientAuthMode#NOT_REQUESTED}.
+ * does not allow it.
  *
  * @author Stuart Douglas
  */
