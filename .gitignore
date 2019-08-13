@@ -12,3 +12,6 @@ bin
 dependency-reduced-pom.xml
 hotspot.log
 .directory
+
+*.releaseBackup
+release.properties
