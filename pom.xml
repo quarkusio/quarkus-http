@@ -44,9 +44,10 @@
     </licenses>
 
     <scm>
-        <connection>scm:git://github.com/quarkus/quarkus-http.git</connection>
-        <developerConnection>scm:git://github.com/quarkus/quarkus-http.git</developerConnection>
+        <connection>scm:git:git@github.com/quarkus/quarkus-http.git</connection>
+        <developerConnection>scm:git:git@github.com/quarkus/quarkus-http.git</developerConnection>
         <url>https://github.com/quarkus/quarkus-http</url>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
