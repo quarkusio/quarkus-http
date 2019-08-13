@@ -32,7 +32,11 @@ public class DefaultBlockingHttpExchange implements BlockingHttpExchange {
 
     @Override
     public void close() throws IOException {
-        outputStream.close();
-        inputStream.close();
+        if(outputStream != null) {
+            outputStream.close();
+        }
+        if(inputStream != null) {
+            inputStream.close();
+        }
     }
 }

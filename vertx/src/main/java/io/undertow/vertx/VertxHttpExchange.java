@@ -55,6 +55,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     private boolean eof = false;
     private boolean eofRead = false;
+    private boolean responseDone = false;
 
     private boolean waitingForWrite;
     private boolean drainHandlerRegistered;
@@ -74,7 +75,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 @Override
                 public void handle(Throwable event) {
                     synchronized (request.connection()) {
-                        if(event instanceof IOException) {
+                        if (event instanceof IOException) {
                             readError = (IOException) event;
                         } else {
                             readError = new IOException(event);
@@ -298,13 +299,13 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     @Override
     public ByteBuf readAsync() throws IOException {
         synchronized (request.connection()) {
-            if(readError != null) {
+            if (readError != null) {
                 throw new IOException(readError);
-            } else if(input1 != null) {
+            } else if (input1 != null) {
                 ByteBuf ret = input1.getByteBuf();
                 if (inputOverflow != null) {
                     input1 = inputOverflow.poll();
-                    if(input1 == null) {
+                    if (input1 == null) {
                         request.fetch(1);
                     }
                 } else {
@@ -312,7 +313,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                     request.fetch(1);
                 }
                 return ret;
-            } else if (eof){
+            } else if (eof) {
                 eofRead = true;
                 return null;
             } else {
@@ -324,7 +325,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     @Override
     public boolean isReadable() {
         synchronized (request.connection()) {
-            if(eofRead) {
+            if (eofRead) {
                 return false;
             }
             return input1 != null || eof || readError != null;
@@ -339,7 +340,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public int readBytesAvailable() {
-        if(input1 != null) {
+        if (input1 != null) {
             return input1.getByteBuf().readableBytes();
         }
         return 0;
@@ -378,8 +379,9 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void close() {
-        //TODO: What does close actually mean?
-        request.response().end();
+        synchronized (request.connection()) {
+            request.connection().close();
+        }
     }
 
     @Override
@@ -390,6 +392,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     @Override
     public void writeBlocking0(ByteBuf data, boolean last) throws IOException {
         if (last && data == null) {
+            responseDone = true;
             request.response().end();
             return;
         }
@@ -398,6 +401,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             synchronized (request.connection()) {
                 awaitWriteable();
                 if (last) {
+                    responseDone = true;
                     request.response().end(createBuffer(data));
                 } else {
                     request.response().write(createBuffer(data));
@@ -440,6 +444,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     public <T> void writeAsync0(ByteBuf data, boolean last, IoCallback<T> callback, T context) {
         writeQueued = true;
         if (last && data == null) {
+            responseDone = true;
             request.response().end();
             queueWriteListener(callback, context, last);
             return;
@@ -449,6 +454,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 @Override
                 public void handle(Void event) {
                     if (last) {
+                        responseDone = true;
                         request.response().end(createBuffer(data));
                     } else {
                         request.response().write(createBuffer(data));
@@ -459,6 +465,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             });
         } else {
             if (last) {
+                responseDone = true;
                 request.response().end(createBuffer(data));
             } else {
                 request.response().write(createBuffer(data));
@@ -500,7 +507,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             if (waitingForRead) {
                 request.connection().notifyAll();
             }
-            if(readHandler != null) {
+            if (readHandler != null) {
                 readCallback = readHandler;
                 readHandler = null;
                 context = readHandlerContext;
@@ -536,7 +543,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void discardRequest() {
-        if(!eof) {
+        if (!eof) {
             request.connection().close();
         }
     }
