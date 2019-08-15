@@ -391,6 +391,12 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void writeBlocking0(ByteBuf data, boolean last) throws IOException {
+        if(responseDone) {
+            if(last && data == null) {
+                return;
+            }
+            throw new IOException("Response already complete");
+        }
         if (last && data == null) {
             responseDone = true;
             request.response().end();
@@ -442,6 +448,14 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public <T> void writeAsync0(ByteBuf data, boolean last, IoCallback<T> callback, T context) {
+        if(responseDone) {
+            if(last && data == null) {
+                callback.onComplete(this, context);
+            } else {
+                callback.onException(this, context, new IOException("Response already complete"));
+            }
+            return;
+        }
         writeQueued = true;
         if (last && data == null) {
             responseDone = true;
