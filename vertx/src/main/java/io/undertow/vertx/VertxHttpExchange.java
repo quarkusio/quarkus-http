@@ -69,7 +69,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         this.connectionBase = (ConnectionBase) request.connection();
         this.allocator = allocator;
         this.worker = worker;
-        if (!request.isEnded()) {
+        if (isRequestEntityBodyAllowed() && !request.isEnded()) {
             request.handler(this);
             request.exceptionHandler(new Handler<Throwable>() {
                 @Override

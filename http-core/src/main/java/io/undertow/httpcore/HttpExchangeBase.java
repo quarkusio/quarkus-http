@@ -240,7 +240,7 @@ public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
      * @return The number of bytes sent in the entity body
      */
     public long getResponseBytesSent() {
-        if (isEntityBodyAllowed() && !getRequestMethod().equals(HttpMethodNames.HEAD)) {
+        if (isResponseEntityBodyAllowed() && !getRequestMethod().equals(HttpMethodNames.HEAD)) {
             return responseBytesSent;
         } else {
             return 0; //body is not allowed, even if we attempt to write it will be ignored
@@ -252,7 +252,7 @@ public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
             if(preCommitListener != null) {
                 preCommitListener.preCommit(this);
             }
-            if(!isEntityBodyAllowed()) {
+            if(!isResponseEntityBodyAllowed()) {
                 addWriteFunction(new WriteFunction() {
                     @Override
                     public ByteBuf preWrite(ByteBuf data, boolean last) {
@@ -289,7 +289,7 @@ public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
                 }
             }
         }
-        if(data != null && !isEntityBodyAllowed()) {
+        if(data != null && !isResponseEntityBodyAllowed()) {
             data.release();
             return Unpooled.EMPTY_BUFFER;
         }
@@ -300,7 +300,7 @@ public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
     }
 
 
-    protected boolean isEntityBodyAllowed() {
+    protected boolean isResponseEntityBodyAllowed() {
         if(getRequestMethod().equals(HttpMethodNames.HEAD)) {
             return false;
         }
@@ -309,6 +309,15 @@ public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
             return false;
         }
         if (code == 204 || code == 304) {
+            return false;
+        }
+        return true;
+    }
+
+
+    protected boolean isRequestEntityBodyAllowed() {
+        String method = getRequestMethod();
+        if(method.equals(HttpMethodNames.GET) || method.equals(HttpMethodNames.HEAD)) {
             return false;
         }
         return true;
