@@ -267,7 +267,7 @@ public class ApplicationListeners implements Lifecycle {
     }
 
     public void servletRequestAttributeAdded(final HttpServletRequest request, final String name, final Object value) {
-        if(!started) {
+        if(!started || servletContextAttributeListeners.length == 0) {
             return;
         }
         final ServletRequestAttributeEvent sre = new ServletRequestAttributeEvent(servletContext, request, name, value);
@@ -277,7 +277,7 @@ public class ApplicationListeners implements Lifecycle {
     }
 
     public void servletRequestAttributeRemoved(final HttpServletRequest request, final String name, final Object value) {
-        if(!started) {
+        if(!started || servletContextAttributeListeners.length == 0) {
             return;
         }
         final ServletRequestAttributeEvent sre = new ServletRequestAttributeEvent(servletContext, request, name, value);
@@ -287,7 +287,7 @@ public class ApplicationListeners implements Lifecycle {
     }
 
     public void servletRequestAttributeReplaced(final HttpServletRequest request, final String name, final Object value) {
-        if(!started) {
+        if(!started || servletContextAttributeListeners.length == 0) {
             return;
         }
         final ServletRequestAttributeEvent sre = new ServletRequestAttributeEvent(servletContext, request, name, value);
