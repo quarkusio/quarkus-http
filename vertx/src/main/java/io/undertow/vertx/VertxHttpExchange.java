@@ -118,7 +118,6 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             public void handle(Throwable event) {
                 log.debugf(event, "IO Exception ");
                 //TODO: do we need this?
-                event.printStackTrace();
                 eof = true;
                 terminateRequest();
                 terminateResponse();
