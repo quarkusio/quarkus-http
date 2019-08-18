@@ -13,11 +13,6 @@ import java.util.function.Consumer;
 
 import javax.net.ssl.SSLSession;
 
-import org.jboss.logging.Logger;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.concurrent.EventExecutor;
 import io.undertow.httpcore.BufferAllocator;
 import io.undertow.httpcore.ConnectionSSLSessionInfo;
 import io.undertow.httpcore.HttpExchange;
@@ -27,6 +22,12 @@ import io.undertow.httpcore.IoCallback;
 import io.undertow.httpcore.OutputChannel;
 import io.undertow.httpcore.SSLSessionInfo;
 import io.undertow.httpcore.UndertowOptionMap;
+import io.undertow.httpcore.UndertowOptions;
+import org.jboss.logging.Logger;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.concurrent.EventExecutor;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
@@ -41,7 +42,8 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     private final HttpServerRequest request;
     private final HttpServerResponse response;
     private final ConnectionBase connectionBase;
-
+    private long maxEntitySize = UndertowOptions.DEFAULT_MAX_ENTITY_SIZE;
+    private long uploadSize = 0l;
 
     //io
     private final BufferAllocator allocator;
@@ -121,7 +123,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 eof = true;
                 terminateRequest();
                 terminateResponse();
-                request.connection().close();
+                VertxHttpExchange.this.close();
             }
         });
 
@@ -390,8 +392,8 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void writeBlocking0(ByteBuf data, boolean last) throws IOException {
-        if(responseDone) {
-            if(last && data == null) {
+        if (responseDone) {
+            if (last && data == null) {
                 return;
             }
             throw new IOException("Response already complete");
@@ -434,6 +436,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                     }
                 });
             }
+
             try {
                 waitingForWrite = true;
                 request.connection().wait();
@@ -445,11 +448,12 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         }
     }
 
+
     @Override
     public <T> void writeAsync0(ByteBuf data, boolean last, IoCallback<T> callback, T context) {
-        if(responseDone) {
+        if (responseDone) {
             if (callback != null) {
-                if(last && data == null) {
+                if (last && data == null) {
                     callback.onComplete(this, context);
                 } else {
                     callback.onException(this, context, new IOException("Response already complete"));
@@ -511,6 +515,16 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         BiConsumer<InputChannel, Object> readCallback = null;
         Object context = null;
         synchronized (request.connection()) {
+            uploadSize += event.length();
+            if (maxEntitySize != UndertowOptions.DEFAULT_MAX_ENTITY_SIZE && uploadSize > maxEntitySize) {
+                responseDone = true;
+                terminateRequest();
+                response.setStatusCode(413);
+                response.end("Request body too large");
+                VertxHttpExchange.this.close();
+                return;
+            }
+
             if (input1 == null) {
                 input1 = event;
             } else {
@@ -584,12 +598,12 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void setMaxEntitySize(long maxEntitySize) {
-
+        this.maxEntitySize = maxEntitySize;
     }
 
     @Override
     public long getMaxEntitySize() {
-        return 0;
+        return this.maxEntitySize;
     }
 
     @Override
