@@ -349,12 +349,18 @@
                 <artifactId>netty-all</artifactId>
                 <version>${version.netty}</version>
             </dependency>
-
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-buffer</artifactId>
                 <version>${version.netty}</version>
             </dependency>
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-codec-http</artifactId>
+                <version>${version.netty}</version>
+            </dependency>
+
+            
             <dependency>
                 <groupId>com.twitter</groupId>
                 <artifactId>hpack</artifactId>
