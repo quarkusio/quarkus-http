@@ -90,7 +90,9 @@ public class ResponseWriterTestCase {
             HttpResponse result = client.execute(get);
             Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
             String data = FileUtils.readFile(result.getEntity().getContent());
-            Assert.assertEquals(LargeResponseWriterServlet.getMessage(), data);
+            String message = LargeResponseWriterServlet.getMessage();
+            //Assert.assertEquals(message.length(), data.length());
+            Assert.assertEquals(message, data);
 
         } finally {
             client.getConnectionManager().shutdown();

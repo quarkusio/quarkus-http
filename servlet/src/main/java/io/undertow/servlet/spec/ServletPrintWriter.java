@@ -106,7 +106,7 @@ public class ServletPrintWriter {
                     }
                     CoderResult result = doEncoding(buffer, out, true);
                     if (result.isOverflow()) {
-                        outputStream.flushInternal();
+                        out = outputStream.flushInternal();
                         if (!out.isWritable()) {
                             outputStream.close();
                             error = true;
@@ -145,7 +145,7 @@ public class ServletPrintWriter {
         }
         try {
             if (!buffer.isWritable()) {
-                outputStream.flushInternal();
+                buffer = outputStream.flushInternal();
                 if (!buffer.isWritable()) {
                     error = true;
                     return;
@@ -171,11 +171,7 @@ public class ServletPrintWriter {
                 CoderResult result = doEncoding(cb, buffer, false);
                 outputStream.updateWritten(remaining - buffer.writableBytes());
                 if (result.isOverflow() || !buffer.isWritable()) {
-                    outputStream.flushInternal();
-                    if (!buffer.isWritable()) {
-                        error = true;
-                        return;
-                    }
+                    buffer = outputStream.flushInternal();
                 }
                 if (result.isUnderflow()) {
                     underflow = new char[cb.remaining()];
@@ -236,7 +232,7 @@ public class ServletPrintWriter {
                         }
                     }
                     if (i == flushPos) {
-                        outputStream.flushInternal();
+                        buffer = outputStream.flushInternal();
                         flushPos = i + buffer.writableBytes();
                     }
                 }
@@ -280,8 +276,7 @@ public class ServletPrintWriter {
                 int fpos = i + remaining;
                 for (; i < end; ++i) {
                     if (i == fpos) {
-                        outputStream.flushInternal();
-                        buffer = outputStream.underlyingBuffer();
+                        buffer = outputStream.flushInternal();
                         fpos = i + buffer.writableBytes();
                     }
                     char c = s.charAt(i);

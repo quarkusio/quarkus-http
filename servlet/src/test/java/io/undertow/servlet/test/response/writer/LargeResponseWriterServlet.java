@@ -33,7 +33,8 @@ public class LargeResponseWriterServlet extends HttpServlet {
     @Override
     protected void doGet(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
         String msg = getMessage();
-        resp.setContentLength(msg.length());
+        resp.setCharacterEncoding("UTF-8");
+        //resp.setContentLength(msg.length());
         resp.getWriter().write(msg);
     }
 
@@ -41,7 +42,7 @@ public class LargeResponseWriterServlet extends HttpServlet {
 
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 10000; ++i) {
-            sb.append("asdfasdjgabckaslfjdsakl");
+            sb.append("-" + i + "-asdfasdjgabckaslfjdsaklčšž");
         }
         return sb.toString();
     }

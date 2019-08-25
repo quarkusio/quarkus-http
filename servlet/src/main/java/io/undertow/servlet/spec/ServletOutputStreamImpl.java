@@ -280,8 +280,9 @@ public class ServletOutputStreamImpl extends ServletOutputStream {
         return pooledBuffer;
     }
 
-    public void flushInternal() throws IOException {
+    public ByteBuf flushInternal() throws IOException {
         flush();
+        return underlyingBuffer();
     }
 
     public void updateWritten(int len) {

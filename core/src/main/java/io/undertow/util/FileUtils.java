@@ -19,6 +19,7 @@
 package io.undertow.util;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -57,12 +58,12 @@ public class FileUtils {
     public static String readFile(InputStream file) {
         try (BufferedInputStream stream = new BufferedInputStream(file)) {
             byte[] buff = new byte[1024];
-            StringBuilder builder = new StringBuilder();
+            ByteArrayOutputStream builder = new ByteArrayOutputStream();
             int read;
             while ((read = stream.read(buff)) != -1) {
-                builder.append(new String(buff, 0, read, StandardCharsets.UTF_8));
+                builder.write(buff, 0, read);
             }
-            return builder.toString();
+            return new String(builder.toByteArray(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
