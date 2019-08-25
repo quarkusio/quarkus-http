@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 
 import org.jboss.logging.Logger;
@@ -218,6 +219,9 @@ public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
     }
     @Override
     public final <T> void writeAsync(ByteBuf data, boolean last, IoCallback<T> callback, T context) {
+        if(!last) {
+            Objects.requireNonNull(callback, "Callback cannot be null");
+        }
         data = processData(data, last);
         writeAsync0(data, last, callback, context);
     }

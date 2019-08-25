@@ -133,8 +133,16 @@ public class VertxUndertowEngine implements UndertowEngine {
                 rootHandler.handle(delegate);
             });
 
-            server.listen(port, host);
-            startFuture.complete();
+            server.listen(port, host, new Handler<AsyncResult<HttpServer>>() {
+                @Override
+                public void handle(AsyncResult<HttpServer> event) {
+                    if(event.failed()) {
+                        startFuture.fail(event.cause());
+                    } else {
+                        startFuture.complete();
+                    }
+                }
+            });
         }
 
         @Override
