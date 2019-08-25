@@ -77,7 +77,7 @@ public class ServletOutputStreamImpl extends ServletOutputStream {
     private static final int FLAG_EXCHANGE_LAST_SENT = 1 << 4;
 
     private WriteListener listener;
-    private ListenerCallback listenerCallback;
+    private volatile ListenerCallback listenerCallback;
 
     /**
      * Construct a new instance.  No write timeout is configured.
