@@ -516,13 +516,16 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         Object context = null;
         synchronized (request.connection()) {
             uploadSize += event.length();
-            if (maxEntitySize != UndertowOptions.DEFAULT_MAX_ENTITY_SIZE && uploadSize > maxEntitySize) {
-                responseDone = true;
-                terminateRequest();
-                response.setStatusCode(413);
-                response.end("Request body too large");
-                VertxHttpExchange.this.close();
-                return;
+            if (maxEntitySizeReached()) {
+                if (!responseDone) {
+                    responseDone = true;
+                    terminateRequest();
+                    response.setStatusCode(413);
+                    response.putHeader("Connection", "close");
+                    response.end("Request body too large");
+                    VertxHttpExchange.this.close();
+                    return;
+                }
             }
 
             if (input1 == null) {
@@ -553,6 +556,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 }
             });
         }
+    }
+
+    private boolean maxEntitySizeReached() {
+        return maxEntitySize != UndertowOptions.DEFAULT_MAX_ENTITY_SIZE && uploadSize > maxEntitySize;
     }
 
     @Override
