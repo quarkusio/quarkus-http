@@ -448,10 +448,12 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     @Override
     public <T> void writeAsync0(ByteBuf data, boolean last, IoCallback<T> callback, T context) {
         if(responseDone) {
-            if(last && data == null) {
-                callback.onComplete(this, context);
-            } else {
-                callback.onException(this, context, new IOException("Response already complete"));
+            if (callback != null) {
+                if(last && data == null) {
+                    callback.onComplete(this, context);
+                } else {
+                    callback.onException(this, context, new IOException("Response already complete"));
+                }
             }
             return;
         }
