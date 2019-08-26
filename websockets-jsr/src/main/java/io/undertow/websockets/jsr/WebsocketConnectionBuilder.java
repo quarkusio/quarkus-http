@@ -227,7 +227,7 @@ class WebsocketConnectionBuilder {
 
         @Override
         public synchronized void handlerAdded(ChannelHandlerContext ctx) {
-            if (handshakeFuture != null) {
+            if (handshakeFuture == null) {
                 handshakeFuture = ctx.newPromise();
             }
         }
