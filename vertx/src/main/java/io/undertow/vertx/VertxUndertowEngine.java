@@ -147,8 +147,16 @@ public class VertxUndertowEngine implements UndertowEngine {
 
         @Override
         public void stop(Future<Void> stopFuture) throws Exception {
-            server.close();
-            stopFuture.complete();
+            server.close(new Handler<AsyncResult<Void>>() {
+                @Override
+                public void handle(AsyncResult<Void> event) {
+                    if(event.failed()) {
+                        stopFuture.fail(event.cause());
+                    } else {
+                        stopFuture.complete();
+                    }
+                }
+            });
         }
     }
 }
