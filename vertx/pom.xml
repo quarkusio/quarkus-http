@@ -50,8 +50,7 @@
 
         <dependency>
             <groupId>io.vertx</groupId>
-            <artifactId>vertx-web</artifactId>
-            <version>3.7.0</version>
+            <artifactId>vertx-core</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus.http</groupId>
