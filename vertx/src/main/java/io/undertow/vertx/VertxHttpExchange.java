@@ -500,7 +500,11 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 if (last) {
                     terminateResponse();
                 }
-                callback.onComplete(VertxHttpExchange.this, context);
+
+                if (callback != null) {
+                    callback.onComplete(VertxHttpExchange.this, context);
+                }
+
                 writeQueued = false;
             }
         });
