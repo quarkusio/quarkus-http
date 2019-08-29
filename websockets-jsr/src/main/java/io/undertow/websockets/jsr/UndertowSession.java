@@ -26,9 +26,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import javax.websocket.CloseReason;
 import javax.websocket.Endpoint;
@@ -221,26 +224,26 @@ public final class UndertowSession implements Session {
         channel.eventLoop().schedule(new Runnable() {
             @Override
             public void run() {
-                ChannelFuture channelFuture = clientConnectionBuilder.connect();
-                channelFuture
-                        .addListener(new GenericFutureListener<Future<? super Void>>() {
-                            @Override
-                            public void operationComplete(Future<? super Void> future) throws Exception {
-                                if (!future.isSuccess()) {
-                                    long timeout = container.getWebSocketReconnectHandler().reconnectFailed(new IOException(future.cause()), getRequestURI(), UndertowSession.this, ++failedCount);
-                                    if (timeout >= 0) {
-                                        handleReconnect(timeout);
-                                    }
-                                } else {
-                                    closed.set(false);
-                                    channel = channelFuture.channel();
-                                    UndertowSession.this.setupWebSocketChannel(channel);
-                                    localClose = false;
-                                    endpoint.getInstance().onOpen(UndertowSession.this, config);
-
-                                }
-                            }
-                        });
+                CompletableFuture<Void> channelFuture = clientConnectionBuilder.connect(new Function<Channel, Void>() {
+                    @Override
+                    public Void apply(Channel channel) {
+                        closed.set(false);
+                        UndertowSession.this.setupWebSocketChannel(channel);
+                        localClose = false;
+                        endpoint.getInstance().onOpen(UndertowSession.this, config);
+                        return null;
+                    }
+                });
+                channelFuture.exceptionally(new Function<Throwable, Void>() {
+                    @Override
+                    public Void apply(Throwable throwable) {
+                        long timeout = container.getWebSocketReconnectHandler().reconnectFailed(new IOException(throwable), getRequestURI(), UndertowSession.this, ++failedCount);
+                        if (timeout >= 0) {
+                            handleReconnect(timeout);
+                        }
+                        return null;
+                    }
+                });
             }
         }, reconnect, TimeUnit.MILLISECONDS);
     }

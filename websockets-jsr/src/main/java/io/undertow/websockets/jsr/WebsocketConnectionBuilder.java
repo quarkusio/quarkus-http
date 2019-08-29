@@ -18,6 +18,8 @@ package io.undertow.websockets.jsr;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.channels.ClosedChannelException;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -27,7 +29,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.ChannelPromise;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
@@ -40,13 +41,10 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker13;
-import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.CharsetUtil;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import io.undertow.httpcore.UndertowOptionMap;
 
 class WebsocketConnectionBuilder {
@@ -144,7 +142,7 @@ class WebsocketConnectionBuilder {
         return this;
     }
 
-    public ChannelFuture connect() {
+    public <R> CompletableFuture<R> connect(Function<Channel, R> connectFunction) {
         io.netty.bootstrap.Bootstrap b = new io.netty.bootstrap.Bootstrap();
         String protocol = uri.getScheme();
 //        if (!"ws".equals(protocol)) {
@@ -160,10 +158,10 @@ class WebsocketConnectionBuilder {
                             @Override
                             protected FullHttpRequest newHandshakeRequest() {
                                 FullHttpRequest request = super.newHandshakeRequest();
-                                if(clientNegotiation.getSupportedSubProtocols() != null) {
+                                if (clientNegotiation.getSupportedSubProtocols() != null) {
                                     StringBuilder sb = new StringBuilder();
-                                    for(int i = 0; i < clientNegotiation.getSupportedSubProtocols().size(); ++i) {
-                                        if(i > 0) {
+                                    for (int i = 0; i < clientNegotiation.getSupportedSubProtocols().size(); ++i) {
+                                        if (i > 0) {
                                             sb.append(", ");
                                         }
                                         sb.append(clientNegotiation.getSupportedSubProtocols().get(i));
@@ -179,7 +177,7 @@ class WebsocketConnectionBuilder {
                                 super.verify(response);
                                 clientNegotiation.afterRequest(response.headers());
                             }
-                        });
+                        }, connectFunction);
 
         b.group(eventLoopGroup)
                 .channel(NioSocketChannel.class)
@@ -205,31 +203,25 @@ class WebsocketConnectionBuilder {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        ChannelPromise promise = future.channel().newPromise();
-        handler.setExternalPromise(promise);
-        return promise;
+
+
+        return handler.handshakeFuture;
     }
 
 
-    private class WebSocketClientHandler extends SimpleChannelInboundHandler<Object> {
+    private class WebSocketClientHandler<R> extends SimpleChannelInboundHandler<Object> {
 
         private final WebSocketClientHandshaker handshaker;
-        private volatile ChannelPromise handshakeFuture;
-        private ChannelPromise promise;
+        private final CompletableFuture<R> handshakeFuture = new CompletableFuture<>();
+        private final Function<Channel, R> connectFunction;
 
-        public WebSocketClientHandler(WebSocketClientHandshaker handshaker) {
+        public WebSocketClientHandler(WebSocketClientHandshaker handshaker, Function<Channel, R> connectFunction) {
             this.handshaker = handshaker;
+            this.connectFunction = connectFunction;
         }
 
-        public ChannelFuture handshakeFuture() {
+        public CompletableFuture<R> handshakeFuture() {
             return handshakeFuture;
-        }
-
-        @Override
-        public synchronized void handlerAdded(ChannelHandlerContext ctx) {
-            if (handshakeFuture == null) {
-                handshakeFuture = ctx.newPromise();
-            }
         }
 
         @Override
@@ -239,7 +231,7 @@ class WebsocketConnectionBuilder {
 
         @Override
         public void channelInactive(ChannelHandlerContext ctx) {
-            handshakeFuture.setFailure(new ClosedChannelException());
+            handshakeFuture.completeExceptionally(new ClosedChannelException());
         }
 
         @Override
@@ -248,10 +240,11 @@ class WebsocketConnectionBuilder {
             if (!handshaker.isHandshakeComplete()) {
                 try {
                     handshaker.finishHandshake(ch, (FullHttpResponse) msg);
-                    handshakeFuture.setSuccess();
+                    handshakeFuture.complete(connectFunction.apply(ch));
                     ch.pipeline().remove(this);
-                } catch (WebSocketHandshakeException e) {
-                    handshakeFuture.setFailure(e);
+
+                } catch (Exception e) {
+                    handshakeFuture.completeExceptionally(e);
                 }
                 return;
             }
@@ -267,26 +260,9 @@ class WebsocketConnectionBuilder {
         @Override
         public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
             if (!handshakeFuture.isDone()) {
-                handshakeFuture.setFailure(cause);
+                handshakeFuture.completeExceptionally(cause);
             }
             ctx.close();
-        }
-
-        public synchronized void setExternalPromise(ChannelPromise promise) {
-            if (handshakeFuture == null) {
-                handshakeFuture = promise;
-            } else {
-                handshakeFuture.addListener(new GenericFutureListener<Future<? super Void>>() {
-                    @Override
-                    public void operationComplete(Future<? super Void> future) throws Exception {
-                        if (future.isSuccess()) {
-                            promise.setSuccess();
-                        } else {
-                            promise.setFailure(future.cause());
-                        }
-                    }
-                });
-            }
         }
     }
 
