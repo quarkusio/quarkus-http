@@ -63,14 +63,16 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     private boolean drainHandlerRegistered;
     private volatile boolean writeQueued = false;
     private IOException readError;
+    private final Object context;
 
 
-    public VertxHttpExchange(HttpServerRequest request, BufferAllocator allocator, Executor worker) {
+    public VertxHttpExchange(HttpServerRequest request, BufferAllocator allocator, Executor worker, Object context) {
         this.request = request;
         this.response = request.response();
         this.connectionBase = (ConnectionBase) request.connection();
         this.allocator = allocator;
         this.worker = worker;
+        this.context = context;
         if (isRequestEntityBodyAllowed() && !request.isEnded()) {
             request.handler(this);
             request.exceptionHandler(new Handler<Throwable>() {
@@ -204,6 +206,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     @Override
     public boolean containsResponseHeader(String name) {
         return response.headers().contains(name);
+    }
+
+    public Object getContext() {
+        return context;
     }
 
     @Override

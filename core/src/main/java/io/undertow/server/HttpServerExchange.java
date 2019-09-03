@@ -533,6 +533,10 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         return host;
     }
 
+    public HttpExchange getDelegate() {
+        return delegate;
+    }
+
     /**
      * Return the port that this request was sent to. In general this will be the value of the Host
      * header, minus the host name.

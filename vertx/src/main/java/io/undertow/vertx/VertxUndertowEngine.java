@@ -129,7 +129,7 @@ public class VertxUndertowEngine implements UndertowEngine {
             server = vertx.createHttpServer(options);
 
             server.requestHandler(request -> {
-                VertxHttpExchange delegate = new VertxHttpExchange(request, allocator, blockingExecutor);
+                VertxHttpExchange delegate = new VertxHttpExchange(request, allocator, blockingExecutor, null);
                 rootHandler.handle(delegate);
             });
 
