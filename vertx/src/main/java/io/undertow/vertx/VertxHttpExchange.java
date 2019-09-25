@@ -13,6 +13,11 @@ import java.util.function.Consumer;
 
 import javax.net.ssl.SSLSession;
 
+import org.jboss.logging.Logger;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.util.concurrent.EventExecutor;
 import io.undertow.httpcore.BufferAllocator;
 import io.undertow.httpcore.ConnectionSSLSessionInfo;
 import io.undertow.httpcore.HttpExchange;
@@ -23,11 +28,6 @@ import io.undertow.httpcore.OutputChannel;
 import io.undertow.httpcore.SSLSessionInfo;
 import io.undertow.httpcore.UndertowOptionMap;
 import io.undertow.httpcore.UndertowOptions;
-import org.jboss.logging.Logger;
-
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.util.concurrent.EventExecutor;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
@@ -64,6 +64,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     private volatile boolean writeQueued = false;
     private IOException readError;
     private final Object context;
+    private boolean first = true;
 
 
     public VertxHttpExchange(HttpServerRequest request, BufferAllocator allocator, Executor worker, Object context) {
@@ -429,6 +430,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
 
     private void awaitWriteable() throws InterruptedIOException {
+        if (first) {
+            first = false;
+            return;
+        }
         assert Thread.holdsLock(request.connection());
         while (request.response().writeQueueFull()) {
             if (!drainHandlerRegistered) {
