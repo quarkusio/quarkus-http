@@ -533,6 +533,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             uploadSize += event.length();
             if (maxEntitySizeReached()) {
                 if (!responseDone) {
+                    eof = true;
                     responseDone = true;
                     terminateRequest();
                     response.setStatusCode(413);
