@@ -212,7 +212,12 @@ public final class UndertowSession implements Session {
             getContainer().invokeEndpointMethod(getExecutor(), new Runnable() {
                 @Override
                 public void run() {
-                    endpoint.getInstance().onClose(UndertowSession.this, closeReason);
+                    try {
+                        endpoint.getInstance().onClose(UndertowSession.this, closeReason);
+                    } finally {
+                        close0();
+                    }
+
                 }
             });
             //TODO: there is a lot of spec required behaviour here
