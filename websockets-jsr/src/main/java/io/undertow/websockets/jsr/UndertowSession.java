@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -344,7 +345,7 @@ public final class UndertowSession implements Session {
 
     void close0() {
         //we use the executor to preserve ordering
-        getExecutor().execute(new Runnable() {
+        Runnable command = new Runnable() {
             @Override
             public void run() {
                 try {
@@ -357,7 +358,12 @@ public final class UndertowSession implements Session {
                     }
                 }
             }
-        });
+        };
+        try {
+            getExecutor().execute(command);
+        } catch (RejectedExecutionException e) {
+            command.run();
+        }
     }
 
     public Encoding getEncoding() {
