@@ -22,12 +22,14 @@ import io.undertow.httpcore.BufferAllocator;
 import io.undertow.httpcore.ConnectionSSLSessionInfo;
 import io.undertow.httpcore.HttpExchange;
 import io.undertow.httpcore.HttpExchangeBase;
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.httpcore.InputChannel;
 import io.undertow.httpcore.IoCallback;
 import io.undertow.httpcore.OutputChannel;
 import io.undertow.httpcore.SSLSessionInfo;
 import io.undertow.httpcore.UndertowOptionMap;
 import io.undertow.httpcore.UndertowOptions;
+import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerRequest;
@@ -65,6 +67,8 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     private IOException readError;
     private final Object context;
     private boolean first = true;
+    private Handler<AsyncResult<Void>> upgradeHandler;
+    private final boolean upgradeRequest;
 
 
     public VertxHttpExchange(HttpServerRequest request, BufferAllocator allocator, Executor worker, Object context) {
@@ -141,6 +145,15 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 terminateResponse();
             }
         });
+        if(request.headers().contains(HttpHeaderNames.UPGRADE)) {
+            //we allways remove the websocket handler
+            Http1xServerConnection connection = (Http1xServerConnection) request.connection();
+            ChannelHandlerContext c = connection.channelHandlerContext();
+            upgradeRequest = true;
+            c.pipeline().remove("websocketExtensionHandler");
+        } else {
+            upgradeRequest = false;
+        }
     }
 
     @Override
@@ -399,6 +412,9 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void writeBlocking0(ByteBuf data, boolean last) throws IOException {
+        if(upgradeRequest && getStatusCode() != 101) {
+            response.headers().add(HttpHeaderNames.CONNECTION, "close");
+        }
         if (responseDone) {
             if (last && data == null) {
                 return;
@@ -407,7 +423,11 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         }
         if (last && data == null) {
             responseDone = true;
-            request.response().end();
+            if(upgradeHandler == null) {
+                request.response().end();
+            } else {
+                request.response().end(upgradeHandler);
+            }
             return;
         }
         try {
@@ -416,7 +436,11 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 awaitWriteable();
                 if (last) {
                     responseDone = true;
-                    request.response().end(createBuffer(data));
+                    if (upgradeHandler == null) {
+                        request.response().end(createBuffer(data));
+                    } else {
+                        request.response().end(createBuffer(data), upgradeHandler);
+                    }
                 } else {
                     request.response().write(createBuffer(data));
                 }
@@ -462,6 +486,9 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public <T> void writeAsync0(ByteBuf data, boolean last, IoCallback<T> callback, T context) {
+        if(upgradeRequest && getStatusCode() != 101) {
+            response.headers().add(HttpHeaderNames.CONNECTION, "close");
+        }
         if (responseDone) {
             if (callback != null) {
                 if (last && data == null) {
@@ -475,7 +502,11 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         writeQueued = true;
         if (last && data == null) {
             responseDone = true;
-            request.response().end();
+            if (upgradeHandler == null) {
+                request.response().end();
+            } else {
+                request.response().end(upgradeHandler);
+            }
             queueWriteListener(callback, context, last);
             return;
         }
@@ -485,7 +516,11 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 public void handle(Void event) {
                     if (last) {
                         responseDone = true;
-                        request.response().end(createBuffer(data));
+                        if(upgradeHandler == null) {
+                            request.response().end(createBuffer(data));
+                        } else {
+                            request.response().end(createBuffer(data), upgradeHandler);
+                        }
                     } else {
                         request.response().write(createBuffer(data));
                     }
@@ -496,7 +531,11 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         } else {
             if (last) {
                 responseDone = true;
-                request.response().end(createBuffer(data));
+                if(upgradeHandler == null) {
+                    request.response().end(createBuffer(data));
+                } else {
+                    request.response().end(createBuffer(data), upgradeHandler);
+                }
             } else {
                 request.response().write(createBuffer(data));
             }
@@ -633,16 +672,16 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     public void setUpgradeListener(Consumer<Object> listener) {
         Http1xServerConnection connection = (Http1xServerConnection) request.connection();
         ChannelHandlerContext context = connection.channelHandlerContext();
-        request.response().endHandler(new Handler<Void>() {
+        upgradeHandler = new Handler<AsyncResult<Void>>() {
             @Override
-            public void handle(Void event) {
+            public void handle(AsyncResult<Void> event) {
+
                 Runnable runnable = new Runnable() {
                     @Override
                     public void run() {
                         terminateResponse();
                         context.pipeline().remove("httpDecoder");
                         context.pipeline().remove("httpEncoder");
-                        context.pipeline().remove("websocketExtensionHandler");
                         context.pipeline().remove("handler");
                         listener.accept(context);
                     }
@@ -652,8 +691,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 } else {
                     getIoThread().execute(runnable);
                 }
-
             }
-        });
+        };
     }
 }

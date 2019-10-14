@@ -30,7 +30,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import javax.websocket.CloseReason;
@@ -42,7 +41,6 @@ import javax.websocket.RemoteEndpoint;
 import javax.websocket.Session;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.concurrent.Future;
@@ -319,6 +317,9 @@ public final class UndertowSession implements Session {
 
     @Override
     public RemoteEndpoint.Basic getBasicRemote() {
+        if (channel.eventLoop().inEventLoop()) {
+            throw new IllegalStateException("Cannot use the basic remote from an IO thread");
+        }
         return remote.getBasic();
     }
 
@@ -366,6 +367,7 @@ public final class UndertowSession implements Session {
     private void setupWebSocketChannel(Channel webSocketChannel) {
         this.frameHandler = new FrameHandler(this, this.endpoint.getInstance());
         webSocketChannel.pipeline().addLast(frameHandler);
+        webSocketChannel.config().setAutoRead(false);
 
     }
 

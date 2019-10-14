@@ -40,6 +40,7 @@ import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -368,8 +369,18 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                             throw new RuntimeException(e);
                         }
                         UndertowSession undertowSession = new UndertowSession(channel, connectionBuilder.getUri(), Collections.<String, String>emptyMap(), Collections.<String, List<String>>emptyMap(), sessionHandler, null, new ImmediateInstanceHandle<>(endpointInstance), cec, connectionBuilder.getUri().getQuery(), encodingFactory.createEncoding(cec), configured, clientNegotiation.getSelectedSubProtocol(), extensions, connectionBuilder, executorSupplier.get());
-                        endpointInstance.onOpen(undertowSession, cec);
-                        sessionCompletableFuture.complete(undertowSession);
+                        invokeEndpointMethod(executorSupplier.get(), new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    endpointInstance.onOpen(undertowSession, cec);
+                                } finally {
+                                    channel.config().setAutoRead(true);
+                                    channel.read();
+                                    sessionCompletableFuture.complete(undertowSession);
+                                }
+                            }
+                        });
                         return undertowSession;
                     }
                 }).exceptionally(new Function<Throwable, UndertowSession>() {
@@ -534,7 +545,17 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         try {
             UndertowSession result = session.get(timeout == null ? DEFAULT_WEB_SOCKET_TIMEOUT_SECONDS : timeout.intValue(), TimeUnit.SECONDS);
 
-            endpointInstance.onOpen(result, cec.getConfig());
+            invokeEndpointMethod(executorSupplier.get(), new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        endpointInstance.onOpen(result, cec.getConfig());
+                    } finally {
+                        result.getChannel().config().setAutoRead(true);
+                        result.getChannel().read();
+                    }
+                }
+            });
             return result;
         } catch (TimeoutException | InterruptedException | ExecutionException e) {
             InterruptedIOException interruptedIOException = new InterruptedIOException();
@@ -590,12 +611,16 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
      */
     public void invokeEndpointMethod(final Executor executor, final Runnable invocation) {
         if (dispatchToWorker) {
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    invokeEndpointMethod(invocation);
-                }
-            });
+            try {
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        invokeEndpointMethod(invocation);
+                    }
+                });
+            } catch (RejectedExecutionException e) {
+                invokeEndpointMethod(invocation);
+            }
         } else {
             invokeEndpointMethod(invocation);
         }

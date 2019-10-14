@@ -76,6 +76,7 @@ public class TestMessagesReceivedInOrder {
                 .setClassIntrospecter(TestClassIntrospector.INSTANCE)
                 .addServletContextAttribute(WebSocketDeploymentInfo.ATTRIBUTE_NAME,
                         new WebSocketDeploymentInfo()
+                                .setDispatchToWorkerThread(true)
                                 .addEndpoint(EchoSocket.class)
                 )
                 .setDeploymentName("servletContext.war");

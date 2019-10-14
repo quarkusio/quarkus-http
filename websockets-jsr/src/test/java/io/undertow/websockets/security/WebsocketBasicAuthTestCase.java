@@ -113,6 +113,7 @@ public class WebsocketBasicAuthTestCase {
                 .addFilterUrlMapping("wrapper", "/wrapper/*", DispatcherType.REQUEST)
                 .addServletContextAttribute(WebSocketDeploymentInfo.ATTRIBUTE_NAME,
                         new WebSocketDeploymentInfo()
+                                .setDispatchToWorkerThread(true)
                                 .addEndpoint(SecuredEndpoint.class)
                                 .addListener(new WebSocketDeploymentInfo.ContainerReadyListener() {
                                     @Override

@@ -131,6 +131,9 @@ public final class EndpointSessionHandler {
             } catch (Exception e) {
                 endpointInstance.getInstance().onError(session, e);
                 session.close();
+            } finally {
+                session.getChannel().config().setAutoRead(true);
+                session.getChannel().read();
             }
             return session;
         } catch (Exception e) {
