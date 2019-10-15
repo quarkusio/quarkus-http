@@ -1,6 +1,7 @@
 package io.undertow.vertx;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -86,7 +87,18 @@ public class VertxUndertowEngine implements UndertowEngine {
 
         @Override
         public void close() {
-            vertx.close();
+            CountDownLatch latch = new CountDownLatch(1);
+            vertx.close(new Handler<AsyncResult<Void>>() {
+                @Override
+                public void handle(AsyncResult<Void> event) {
+                    latch.countDown();
+                }
+            });
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -136,7 +148,7 @@ public class VertxUndertowEngine implements UndertowEngine {
             server.listen(port, host, new Handler<AsyncResult<HttpServer>>() {
                 @Override
                 public void handle(AsyncResult<HttpServer> event) {
-                    if(event.failed()) {
+                    if (event.failed()) {
                         startFuture.fail(event.cause());
                     } else {
                         startFuture.complete();
@@ -150,7 +162,7 @@ public class VertxUndertowEngine implements UndertowEngine {
             server.close(new Handler<AsyncResult<Void>>() {
                 @Override
                 public void handle(AsyncResult<Void> event) {
-                    if(event.failed()) {
+                    if (event.failed()) {
                         stopFuture.fail(event.cause());
                     } else {
                         stopFuture.complete();
