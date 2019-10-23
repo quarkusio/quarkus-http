@@ -84,6 +84,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 @Override
                 public void handle(Throwable event) {
                     synchronized (request.connection()) {
+
+                        if (waitingForRead) {
+                            request.connection().notify();
+                        }
                         if (event instanceof IOException) {
                             readError = (IOException) event;
                         } else {
