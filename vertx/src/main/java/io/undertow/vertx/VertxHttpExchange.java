@@ -374,10 +374,16 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     @Override
     public ByteBuf readBlocking() throws IOException {
         synchronized (request.connection()) {
+            if (readError != null) {
+                throw new IOException(readError);
+            }
             while (input1 == null && !eof) {
                 try {
                     waitingForRead = true;
                     request.connection().wait();
+                    if (readError != null) {
+                        throw new IOException(readError);
+                    }
                 } catch (InterruptedException e) {
                     throw new InterruptedIOException(e.getMessage());
                 } finally {
