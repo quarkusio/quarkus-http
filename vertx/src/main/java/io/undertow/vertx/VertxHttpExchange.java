@@ -65,6 +65,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     private boolean drainHandlerRegistered;
     private volatile boolean writeQueued = false;
     private IOException readError;
+    private Throwable responseError;
     private final Object context;
     private boolean first = true;
     private Handler<AsyncResult<Void>> upgradeHandler;
@@ -84,14 +85,14 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 @Override
                 public void handle(Throwable event) {
                     synchronized (request.connection()) {
-
-                        if (waitingForRead) {
-                            request.connection().notify();
-                        }
                         if (event instanceof IOException) {
                             readError = (IOException) event;
                         } else {
                             readError = new IOException(event);
+                        }
+
+                        if (waitingForRead) {
+                            request.connection().notify();
                         }
                     }
                 }
@@ -132,6 +133,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 log.debugf(event, "IO Exception ");
                 //TODO: do we need this?
                 eof = true;
+                responseError = event;
                 terminateRequest();
                 terminateResponse();
                 VertxHttpExchange.this.close();
@@ -374,10 +376,12 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     @Override
     public ByteBuf readBlocking() throws IOException {
         synchronized (request.connection()) {
+            failOnError();
             while (input1 == null && !eof) {
                 try {
                     waitingForRead = true;
                     request.connection().wait();
+                    failOnError();
                 } catch (InterruptedException e) {
                     throw new InterruptedIOException(e.getMessage());
                 } finally {
@@ -402,10 +406,28 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         }
     }
 
+    private void failOnError() throws IOException {
+        IOException error = readError;
+        if (error == null && responseError != null) {
+            error = new IOException(responseError);
+        }
+        if (error != null) {
+            close();
+            throw new IOException(error);
+        }
+    }
+
     @Override
     public void close() {
         synchronized (request.connection()) {
-            request.connection().close();
+            switch (request.version()) {
+                case HTTP_1_0:
+                case HTTP_1_1:
+                    request.connection().close();
+                    break;
+                case HTTP_2:
+                    request.response().reset();
+            }
         }
     }
 
@@ -456,7 +478,6 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         }
     }
 
-
     private void awaitWriteable() throws InterruptedIOException {
         if (first) {
             first = false;
@@ -470,7 +491,9 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                     @Override
                     public void handle(Void event) {
                         if (waitingForWrite) {
-                            request.connection().notifyAll();
+                            synchronized (request.connection()) {
+                                request.connection().notifyAll();
+                            }
                         }
                     }
                 });
