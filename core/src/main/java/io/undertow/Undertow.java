@@ -142,10 +142,11 @@ public final class Undertow {
             for (ListenerConfig listener : listeners) {
                 UndertowLogger.ROOT_LOGGER.debugf("Configuring listener with getProtocol %s for interface %s and port %s", listener.type, listener.host, listener.port);
                 if (listener.type == ListenerType.HTTP) {
-                    engine.bindHttp(engineInstance, handler, listener.port, listener.host, listener.options);
+                    engine.bindHttp(engineInstance, handler, listener.port, listener.host, listener.options, listener.blockingReadTimeout);
 
                 } else if (listener.type == ListenerType.HTTPS) {
-                    engine.bindHttps(engineInstance, handler, listener.port, listener.host, listener.keyStore, listener.keyStorePassword, listener.trustStore, listener.trustStorePassword, listener.options);
+                    engine.bindHttps(engineInstance, handler, listener.port, listener.host, listener.keyStore, listener.keyStorePassword,
+                          listener.trustStore, listener.trustStorePassword, listener.options, listener.blockingReadTimeout);
                 }
             }
 
@@ -216,6 +217,7 @@ public final class Undertow {
         final String trustStorePassword;
 
         final Object options;
+        final Long blockingReadTimeout;
 
         private ListenerConfig(final ListenerBuilder listenerBuilder) {
             this.type = listenerBuilder.type;
@@ -226,6 +228,7 @@ public final class Undertow {
             this.trustStore = listenerBuilder.trustStore;
             this.keyStore = listenerBuilder.keyStore;
             this.options = listenerBuilder.options;
+            this.blockingReadTimeout = listenerBuilder.blockingReadTimeout;
         }
     }
 
@@ -241,6 +244,7 @@ public final class Undertow {
 
         Object options;
         HttpHandler rootHandler;
+        Long blockingReadTimeout;
 
         public ListenerBuilder setType(ListenerType type) {
             this.type = type;
@@ -317,6 +321,14 @@ public final class Undertow {
         public ListenerBuilder setOptions(Object options) {
             this.options = options;
             return this;
+        }
+
+        public Long getBlockingReadTimeout() {
+            return blockingReadTimeout;
+        }
+
+        public void setBlockingReadTimeout(Long blockingReadTimeout) {
+            this.blockingReadTimeout = blockingReadTimeout;
         }
 
         public HttpHandler getRootHandler() {

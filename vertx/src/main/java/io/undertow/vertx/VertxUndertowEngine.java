@@ -27,7 +27,7 @@ public class VertxUndertowEngine implements UndertowEngine {
     }
 
     @Override
-    public void bindHttp(EngineInstance instance, ExchangeHandler handler, int port, String host, Object options) {
+    public void bindHttp(EngineInstance instance, ExchangeHandler handler, int port, String host, Object options, Long blockingReadTimeout) {
         VertxEngineInstance ei = (VertxEngineInstance) instance;
 
         CompletableFuture<String> deploymentId = new CompletableFuture<>();
@@ -38,7 +38,7 @@ public class VertxUndertowEngine implements UndertowEngine {
                 if (opts == null) {
                     opts = new HttpServerOptions();
                 }
-                return new MyVerticle(ei.allocator, port, host, ei.vertx, ei.executor, handler, opts);
+                return new MyVerticle(ei.allocator, port, host, ei.vertx, ei.executor, handler, opts, blockingReadTimeout);
             }
         }, new DeploymentOptions().setInstances(ei.ioThreads), new Handler<AsyncResult<String>>() {
             @Override
@@ -58,7 +58,8 @@ public class VertxUndertowEngine implements UndertowEngine {
     }
 
     @Override
-    public void bindHttps(EngineInstance instance, ExchangeHandler handler, int port, String host, String keyStore, String keyStorePassword, String trustStore, String trustStorePassword, Object options) {
+    public void bindHttps(EngineInstance instance, ExchangeHandler handler, int port, String host, String keyStore, String keyStorePassword,
+                          String trustStore, String trustStorePassword, Object options, Long blockingReadTimeout) {
         HttpServerOptions opts = (HttpServerOptions) options;
         if (opts == null) {
             opts = new HttpServerOptions();
@@ -68,7 +69,7 @@ public class VertxUndertowEngine implements UndertowEngine {
         if (trustStore != null) {
             opts.setTrustStoreOptions(new JksOptions().setPath(trustStore).setPassword(trustStorePassword));
         }
-        bindHttp(instance, handler, port, host, opts);
+        bindHttp(instance, handler, port, host, opts, blockingReadTimeout);
     }
 
     static class VertxEngineInstance implements EngineInstance {
@@ -114,8 +115,16 @@ public class VertxUndertowEngine implements UndertowEngine {
         private final Executor blockingExecutor;
         private final ExchangeHandler rootHandler;
         private final HttpServerOptions options;
+        private final Long blockingReadTimeout;
 
-        public MyVerticle(BufferAllocator allocator, int port, String host, Vertx vertx, Executor blockingExecutor, ExchangeHandler rootHandler, HttpServerOptions options) {
+        public MyVerticle(BufferAllocator allocator,
+                          int port,
+                          String host,
+                          Vertx vertx,
+                          Executor blockingExecutor,
+                          ExchangeHandler rootHandler,
+                          HttpServerOptions options,
+                          Long blockingReadTimeout) {
             this.allocator = allocator;
             this.port = port;
             this.host = host;
@@ -123,6 +132,7 @@ public class VertxUndertowEngine implements UndertowEngine {
             this.blockingExecutor = blockingExecutor;
             this.rootHandler = rootHandler;
             this.options = options;
+            this.blockingReadTimeout = blockingReadTimeout;
         }
 
         @Override
@@ -141,7 +151,13 @@ public class VertxUndertowEngine implements UndertowEngine {
             server = vertx.createHttpServer(options);
 
             server.requestHandler(request -> {
-                VertxHttpExchange delegate = new VertxHttpExchange(request, allocator, blockingExecutor, null);
+                VertxHttpExchange delegate =
+                      new VertxHttpExchange(request, allocator, blockingExecutor, null);
+                if (blockingReadTimeout != null) {
+                    vertx.setTimer(blockingReadTimeout,
+                          ignored -> delegate.markTimedOut()
+                    );
+                }
                 rootHandler.handle(delegate);
             });
 

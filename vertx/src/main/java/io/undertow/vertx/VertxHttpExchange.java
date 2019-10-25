@@ -54,6 +54,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     private Buffer input1;
     private Deque<Buffer> inputOverflow;
     private boolean waitingForRead = false;
+    private boolean timedOut = false;
     private BiConsumer<InputChannel, Object> readHandler;
     private Object readHandlerContext;
 
@@ -374,10 +375,12 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     @Override
     public ByteBuf readBlocking() throws IOException {
         synchronized (request.connection()) {
+            failOnError();
             while (input1 == null && !eof) {
                 try {
                     waitingForRead = true;
                     request.connection().wait();
+                    failOnError();
                 } catch (InterruptedException e) {
                     throw new InterruptedIOException(e.getMessage());
                 } finally {
@@ -402,10 +405,27 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         }
     }
 
+    private void failOnError() throws IOException {
+        if (timedOut) {
+            close();
+            throw new IOException("The client failed to write request in time");
+        }
+        if (readError != null) {
+            throw new IOException(readError);
+        }
+    }
+
     @Override
     public void close() {
         synchronized (request.connection()) {
-            request.connection().close();
+            switch (request.version()) {
+                case HTTP_1_0:
+                case HTTP_1_1:
+                    request.connection().close();
+                    break;
+                case HTTP_2:
+                    request.response().reset();
+            }
         }
     }
 
@@ -456,7 +476,6 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         }
     }
 
-
     private void awaitWriteable() throws InterruptedIOException {
         if (first) {
             first = false;
@@ -470,7 +489,9 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                     @Override
                     public void handle(Void event) {
                         if (waitingForWrite) {
-                            request.connection().notifyAll();
+                            synchronized (request.connection()) {
+                                request.connection().notifyAll();
+                            }
                         }
                     }
                 });
@@ -697,5 +718,12 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 }
             }
         };
+    }
+
+    public void markTimedOut() {
+        synchronized (request.connection()) {
+            this.timedOut = true;
+            request.connection().notifyAll();
+        }
     }
 }
