@@ -316,6 +316,7 @@ public class DeploymentManagerImpl implements DeploymentManager {
         current = new SSLInformationAssociationHandler(current);
 
         final SecurityPathMatches securityPathMatches = buildSecurityConstraints();
+        deployment.setSecurityPathMatches(securityPathMatches);
         securityPathMatches.logWarningsAboutUncoveredMethods();
         current = new ServletAuthenticationCallHandler(current);
 
@@ -330,7 +331,7 @@ public class DeploymentManagerImpl implements DeploymentManager {
             current = new ServletAuthenticationConstraintHandler(current);
         }
         current = new ServletConfidentialityConstraintHandler(deploymentInfo.getConfidentialPortManager(), current);
-        if (!securityPathMatches.isEmpty()) {
+        if (!securityPathMatches.isEmpty() && !deploymentInfo.isExternalSecurityConstraintChecking()) {
             current = new ServletSecurityConstraintHandler(securityPathMatches, current);
         }
 

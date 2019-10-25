@@ -32,6 +32,7 @@ import io.undertow.servlet.core.ErrorPages;
 import io.undertow.servlet.core.ManagedFilters;
 import io.undertow.servlet.core.ManagedServlets;
 import io.undertow.servlet.handlers.ServletPathMatches;
+import io.undertow.servlet.handlers.security.SecurityPathMatches;
 import io.undertow.servlet.spec.ServletContextImpl;
 
 /**
@@ -64,6 +65,8 @@ public interface Deployment {
     Map<String, String> getMimeExtensionMappings();
 
     ServletDispatcher getServletDispatcher();
+
+    SecurityPathMatches getSecurityPathMatches();
 
     /**
      *

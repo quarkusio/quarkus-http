@@ -43,6 +43,7 @@ import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.api.ThreadSetupHandler;
 import io.undertow.servlet.handlers.ServletInitialHandler;
 import io.undertow.servlet.handlers.ServletPathMatches;
+import io.undertow.servlet.handlers.security.SecurityPathMatches;
 import io.undertow.servlet.spec.ServletContextImpl;
 
 /**
@@ -80,6 +81,7 @@ public class DeploymentImpl implements Deployment {
 
     private volatile List<AuthenticationMechanism> authenticationMechanisms;
     private volatile List<ThreadSetupHandler> threadSetupActions;
+    private volatile SecurityPathMatches securityPathMatches;
 
     /**
      * user for {@link #tryAddServletMappings(ServletInfo, String...)}
@@ -233,6 +235,16 @@ public class DeploymentImpl implements Deployment {
 
     public void setAuthenticationMechanisms(List<AuthenticationMechanism> authenticationMechanisms) {
         this.authenticationMechanisms = authenticationMechanisms;
+    }
+
+    @Override
+    public SecurityPathMatches getSecurityPathMatches() {
+        return securityPathMatches;
+    }
+
+    public DeploymentImpl setSecurityPathMatches(SecurityPathMatches securityPathMatches) {
+        this.securityPathMatches = securityPathMatches;
+        return this;
     }
 
     @Override
