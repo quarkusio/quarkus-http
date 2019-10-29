@@ -23,7 +23,7 @@ import io.undertow.servlet.api.TransportGuaranteeType;
 /**
  * @author Stuart Douglas
  */
-class SecurityPathMatch {
+public class SecurityPathMatch {
 
     private final TransportGuaranteeType transportGuaranteeType;
     private final SingleConstraintMatch mergedConstraint;
@@ -33,11 +33,11 @@ class SecurityPathMatch {
         this.mergedConstraint = mergedConstraint;
     }
 
-    TransportGuaranteeType getTransportGuaranteeType() {
+    public TransportGuaranteeType getTransportGuaranteeType() {
         return transportGuaranteeType;
     }
 
-    SingleConstraintMatch getMergedConstraint() {
+    public SingleConstraintMatch getMergedConstraint() {
         return mergedConstraint;
     }
 }

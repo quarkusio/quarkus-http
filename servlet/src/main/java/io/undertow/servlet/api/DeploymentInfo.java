@@ -202,12 +202,6 @@ public class DeploymentInfo implements Cloneable {
      */
     private final Map<String, String> preCompressedResources = new HashMap<>();
 
-    /**
-     * If this is true then we don't install our own constraint handler, we assume they have
-     * already been checked.
-     */
-    private boolean externalSecurityConstraintChecking = false;
-
     public void validate() {
         if (deploymentName == null) {
             throw UndertowServletMessages.MESSAGES.paramCannotBeNull("deploymentName");
@@ -1398,15 +1392,6 @@ public class DeploymentInfo implements Cloneable {
         return deploymentCompleteListeners;
     }
 
-    public boolean isExternalSecurityConstraintChecking() {
-        return externalSecurityConstraintChecking;
-    }
-
-    public DeploymentInfo setExternalSecurityConstraintChecking(boolean externalSecurityConstraintChecking) {
-        this.externalSecurityConstraintChecking = externalSecurityConstraintChecking;
-        return this;
-    }
-
     @Override
     public DeploymentInfo clone() {
         final DeploymentInfo info = new DeploymentInfo()
@@ -1503,7 +1488,6 @@ public class DeploymentInfo implements Cloneable {
         info.containerMinorVersion = containerMinorVersion;
         info.deploymentCompleteListeners.addAll(deploymentCompleteListeners);
         info.preservePathOnForward = preservePathOnForward;
-        info.externalSecurityConstraintChecking = externalSecurityConstraintChecking;
         return info;
     }
 

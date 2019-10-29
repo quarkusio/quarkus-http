@@ -331,7 +331,7 @@ public class DeploymentManagerImpl implements DeploymentManager {
             current = new ServletAuthenticationConstraintHandler(current);
         }
         current = new ServletConfidentialityConstraintHandler(deploymentInfo.getConfidentialPortManager(), current);
-        if (!securityPathMatches.isEmpty() && !deploymentInfo.isExternalSecurityConstraintChecking()) {
+        if (!securityPathMatches.isEmpty()) {
             current = new ServletSecurityConstraintHandler(securityPathMatches, current);
         }
 
