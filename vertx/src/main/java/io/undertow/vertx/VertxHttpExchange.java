@@ -423,6 +423,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             if (last && data == null) {
                 return;
             }
+            data.release();
             throw new IOException("Response already complete");
         }
         if (last && data == null) {
@@ -438,15 +439,22 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             //do all this in the same lock
             synchronized (request.connection()) {
                 awaitWriteable();
-                if (last) {
-                    responseDone = true;
-                    if (upgradeHandler == null) {
-                        request.response().end(createBuffer(data));
+                try {
+                    if (last) {
+                        responseDone = true;
+                        if (upgradeHandler == null) {
+                            request.response().end(createBuffer(data));
+                        } else {
+                            request.response().end(createBuffer(data), upgradeHandler);
+                        }
                     } else {
-                        request.response().end(createBuffer(data), upgradeHandler);
+                        request.response().write(createBuffer(data));
                     }
-                } else {
-                    request.response().write(createBuffer(data));
+                } catch (Exception e) {
+                    if (data != null) {
+                        data.release();
+                    }
+                    throw new IOException("Failed to write", e);
                 }
             }
         } finally {
@@ -499,6 +507,9 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             response.headers().add(HttpHeaderNames.CONNECTION, "close");
         }
         if (responseDone) {
+            if (data != null) {
+                data.release();
+            }
             if (callback != null) {
                 if (last && data == null) {
                     callback.onComplete(this, context);
@@ -523,32 +534,50 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             request.response().drainHandler(new Handler<Void>() {
                 @Override
                 public void handle(Void event) {
-                    if (last) {
-                        responseDone = true;
-                        if (upgradeHandler == null) {
-                            request.response().end(createBuffer(data));
+                    try {
+                        if (last) {
+                            responseDone = true;
+                            if (upgradeHandler == null) {
+                                request.response().end(createBuffer(data));
+                            } else {
+                                request.response().end(createBuffer(data), upgradeHandler);
+                            }
                         } else {
-                            request.response().end(createBuffer(data), upgradeHandler);
+                            request.response().write(createBuffer(data));
                         }
-                    } else {
-                        request.response().write(createBuffer(data));
+                        queueWriteListener(callback, context, last);
+                        request.response().drainHandler(null);
+                    } catch (Exception e) {
+                        if (data != null) {
+                            data.release();
+                        }
+                        if (callback != null) {
+                            callback.onException(VertxHttpExchange.this, context, new IOException("Write failed", e));
+                        }
                     }
-                    queueWriteListener(callback, context, last);
-                    request.response().drainHandler(null);
                 }
             });
         } else {
-            if (last) {
-                responseDone = true;
-                if (upgradeHandler == null) {
-                    request.response().end(createBuffer(data));
+            try {
+                if (last) {
+                    responseDone = true;
+                    if (upgradeHandler == null) {
+                        request.response().end(createBuffer(data));
+                    } else {
+                        request.response().end(createBuffer(data), upgradeHandler);
+                    }
                 } else {
-                    request.response().end(createBuffer(data), upgradeHandler);
+                    request.response().write(createBuffer(data));
                 }
-            } else {
-                request.response().write(createBuffer(data));
+                queueWriteListener(callback, context, last);
+            } catch (Exception e) {
+                if (data != null) {
+                    data.release();
+                }
+                if (callback != null) {
+                    callback.onException(VertxHttpExchange.this, context, new IOException("Write failed", e));
+                }
             }
-            queueWriteListener(callback, context, last);
         }
     }
 
