@@ -451,7 +451,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                         request.response().write(createBuffer(data));
                     }
                 } catch (Exception e) {
-                    if (data != null) {
+                    if (data != null && data.refCnt() > 0) {
                         data.release();
                     }
                     throw new IOException("Failed to write", e);
@@ -548,7 +548,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                         queueWriteListener(callback, context, last);
                         request.response().drainHandler(null);
                     } catch (Exception e) {
-                        if (data != null) {
+                        if (data != null && data.refCnt() > 0) {
                             data.release();
                         }
                         if (callback != null) {
@@ -571,7 +571,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 }
                 queueWriteListener(callback, context, last);
             } catch (Exception e) {
-                if (data != null) {
+                if (data != null && data.refCnt() > 0) {
                     data.release();
                 }
                 if (callback != null) {

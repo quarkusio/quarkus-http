@@ -150,8 +150,9 @@ public class ServletOutputStreamImpl extends ServletOutputStream {
                     idx += toWrite;
                     if (!buffer.isWritable()) {
                         setFlags(FLAG_WRITE_STARTED);
-                        exchange.writeBlocking(buffer, false);
+                        ByteBuf tmpBuf = buffer;
                         this.pooledBuffer = buffer = exchange.allocateBuffer();
+                        exchange.writeBlocking(tmpBuf, false);
                     }
                 }
             } catch (Exception e) {

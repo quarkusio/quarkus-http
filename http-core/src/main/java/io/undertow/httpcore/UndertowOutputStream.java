@@ -112,8 +112,9 @@ public class UndertowOutputStream extends OutputStream {
                 idx += toWrite;
                 if (!buffer.isWritable()) {
                     writeStarted = true;
-                    exchange.getOutputChannel().writeBlocking(buffer, false);
+                    ByteBuf tempBuffer = buffer;
                     this.pooledBuffer = buffer = exchange.getBufferAllocator().allocateBuffer();
+                    exchange.getOutputChannel().writeBlocking(tempBuffer, false);
                 }
             }
         } catch (Exception e) {
