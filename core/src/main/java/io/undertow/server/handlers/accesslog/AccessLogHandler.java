@@ -20,6 +20,7 @@ package io.undertow.server.handlers.accesslog;
 
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -162,7 +163,10 @@ public class AccessLogHandler implements HttpHandler {
 
         @Override
         public Map<String, Class<?>> parameters() {
-            return Collections.<String, Class<?>>singletonMap("format", String.class);
+            Map<String, Class<?>> params = new HashMap<String, Class<?>>();
+            params.put("format", String.class);
+            params.put("category", String.class);
+            return params;
         }
 
         @Override
@@ -177,7 +181,7 @@ public class AccessLogHandler implements HttpHandler {
 
         @Override
         public HandlerWrapper build(Map<String, Object> config) {
-            return new Wrapper((String) config.get("format"));
+            return new Wrapper((String) config.get("format"), (String) config.get("category"));
         }
 
     }
@@ -185,14 +189,16 @@ public class AccessLogHandler implements HttpHandler {
     private static class Wrapper implements HandlerWrapper {
 
         private final String format;
+        private final String category;
 
-        private Wrapper(String format) {
+        private Wrapper(String format, String category) {
             this.format = format;
+            this.category = category;
         }
 
         @Override
         public HttpHandler wrap(HttpHandler handler) {
-            return new AccessLogHandler(handler, new JBossLoggingAccessLogReceiver(), format, Wrapper.class.getClassLoader());
+            return new AccessLogHandler(handler, new JBossLoggingAccessLogReceiver(category), format, Wrapper.class.getClassLoader());
         }
     }
 }
