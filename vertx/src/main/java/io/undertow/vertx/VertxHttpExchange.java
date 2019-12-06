@@ -70,14 +70,18 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     private Handler<AsyncResult<Void>> upgradeHandler;
     private final boolean upgradeRequest;
 
-
     public VertxHttpExchange(HttpServerRequest request, BufferAllocator allocator, Executor worker, Object context) {
+        this(request, allocator, worker, context, null);
+    }
+
+    public VertxHttpExchange(HttpServerRequest request, BufferAllocator allocator, Executor worker, Object context, Buffer existingBody) {
         this.request = request;
         this.response = request.response();
         this.connectionBase = (ConnectionBase) request.connection();
         this.allocator = allocator;
         this.worker = worker;
         this.context = context;
+        this.input1 = existingBody;
         if (isRequestEntityBodyAllowed() && !request.isEnded()) {
             request.handler(this);
             request.exceptionHandler(new Handler<Throwable>() {
@@ -123,6 +127,8 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 }
             });
             request.fetch(1);
+        } else if(existingBody != null){
+            eof = true;
         } else {
             terminateRequest();
         }
