@@ -394,7 +394,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
 
 
         try {
-            return session.get(timeout == null ? DEFAULT_WEB_SOCKET_TIMEOUT_SECONDS : timeout.intValue(), TimeUnit.SECONDS);
+            return sessionCompletableFuture.get(timeout == null ? DEFAULT_WEB_SOCKET_TIMEOUT_SECONDS : timeout.intValue(), TimeUnit.SECONDS);
         } catch (Exception e) {
             session.cancel(true);
             throw new IOException(e);
