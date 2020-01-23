@@ -198,7 +198,7 @@ public class AccessLogHandler implements HttpHandler {
 
         @Override
         public HttpHandler wrap(HttpHandler handler) {
-            return new AccessLogHandler(handler, new JBossLoggingAccessLogReceiver(category), format, Wrapper.class.getClassLoader());
+            return new AccessLogHandler(handler, category == null ? new JBossLoggingAccessLogReceiver() : new JBossLoggingAccessLogReceiver(category), format, Wrapper.class.getClassLoader());
         }
     }
 }
