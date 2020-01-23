@@ -16,6 +16,8 @@
 package io.undertow.server.handlers.accesslog;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -25,13 +27,13 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import io.undertow.httpcore.HttpHeaderNames;
+import io.undertow.httpcore.StatusCodes;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.StoredResponseHandler;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.TestHttpClient;
-import io.undertow.httpcore.HttpHeaderNames;
-import io.undertow.httpcore.StatusCodes;
 
 /**
  * @author Stuart Douglas
@@ -67,8 +69,7 @@ public class AccessLogTestCase {
         latch = new CountDownLatch(1);
         //DefaultServer.setRootHandler(new StoredResponseHandler(new AccessLogHandler(HELLO_HANDLER, RECEIVER, "Remote address %a Code %s test-header %{i,test-header} %{STORED_RESPONSE}", AccessLogFileTestCase.class.getClassLoader())));
         DefaultServer.setRootHandler(new StoredResponseHandler(new AccessLogHandler(HELLO_HANDLER, RECEIVER, "Remote address %a Code %s test-header %{i,test-header}", AccessLogFileTestCase.class.getClassLoader())));
-        TestHttpClient client = new TestHttpClient();
-        try {
+        try (TestHttpClient client = new TestHttpClient();) {
             HttpGet get = new HttpGet(DefaultServer.getDefaultServerURL() + "/path");
             get.addHeader("test-header", "test-value");
             HttpResponse result = client.execute(get);
@@ -77,8 +78,21 @@ public class AccessLogTestCase {
             //Assert.assertEquals("HelloResponse", HttpClientUtils.readResponse(result));
             latch.await(10, TimeUnit.SECONDS);
             Assert.assertEquals("Remote address " + DefaultServer.getDefaultServerAddress().getAddress().getHostAddress() + " Code 200 test-header test-value", message);
-        } finally {
-            client.getConnectionManager().shutdown();
+        }
+    }
+
+    @Test
+    public void testBuilder() throws IOException, InterruptedException {
+        Map<String, Object> config = new HashMap<String, Object>();
+        config.put("format", "test-header %{i,test-header}");
+
+        DefaultServer.setRootHandler(new StoredResponseHandler(new AccessLogHandler.Builder().build(config).wrap(HELLO_HANDLER)));
+
+        try (TestHttpClient client = new TestHttpClient()) {
+            HttpGet get = new HttpGet(DefaultServer.getDefaultServerURL() + "/path");
+            get.addHeader("test-header", "test-value");
+            HttpResponse result = client.execute(get);
+            Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
         }
     }
 
