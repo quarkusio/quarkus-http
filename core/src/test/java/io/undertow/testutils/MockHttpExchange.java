@@ -238,4 +238,13 @@ public class MockHttpExchange extends HttpExchangeBase {
     public long getMaxEntitySize() {
         return 0;
     }
+
+    @Override
+    public void setReadTimeout(long readTimeoutMs) {
+    }
+
+    @Override
+    public long getReadTimeout() {
+        return 0;
+    }
 }

@@ -69,6 +69,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     private boolean first = true;
     private Handler<AsyncResult<Void>> upgradeHandler;
     private final boolean upgradeRequest;
+    private long readTimeout = UndertowOptions.DEFAULT_READ_TIMEOUT;
 
     public VertxHttpExchange(HttpServerRequest request, BufferAllocator allocator, Executor worker, Object context) {
         this(request, allocator, worker, context, null);
@@ -379,11 +380,17 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public ByteBuf readBlocking() throws IOException {
+        long readStart = System.currentTimeMillis();
         synchronized (request.connection()) {
+
             while (input1 == null && !eof) {
                 try {
                     waitingForRead = true;
-                    request.connection().wait();
+                    long toWait = readTimeout - (System.currentTimeMillis() - readStart);
+                    if (toWait <= 0) {
+                        throw new IOException("Read timeout");
+                    }
+                    request.connection().wait(toWait);
                 } catch (InterruptedException e) {
                     throw new InterruptedIOException(e.getMessage());
                 } finally {
@@ -411,7 +418,13 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     @Override
     public void close() {
         synchronized (request.connection()) {
-            request.connection().close();
+            switch (request.version()) {
+                case HTTP_2:
+                    request.response().reset();
+                    break;
+                default:
+                    request.connection().close();
+            }
         }
     }
 
@@ -711,6 +724,17 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     public long getMaxEntitySize() {
         return this.maxEntitySize;
     }
+
+    @Override
+    public void setReadTimeout(long readTimeoutMs) {
+        readTimeout = readTimeoutMs;
+    }
+
+    @Override
+    public long getReadTimeout() {
+        return readTimeout;
+    }
+
 
     @Override
     public void setUpgradeListener(Consumer<Object> listener) {
