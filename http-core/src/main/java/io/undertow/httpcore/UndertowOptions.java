@@ -164,6 +164,13 @@ public class UndertowOptions {
     public static final UndertowOption<Integer> SHUTDOWN_TIMEOUT = UndertowOption.create("SHUTDOWN_TIMEOUT", Integer.class);
 
     /**
+     * Blocking read timeout in milliseconds. Defaults to 60 000 (60 seconds)
+     */
+    public static final UndertowOption<Long> READ_TIMEOUT = UndertowOption.create("READ_TIMEOUT", Long.class);
+    
+    public static final long DEFAULT_READ_TIMEOUT = 60 * 1000;
+
+    /**
      * Specify the number of accept threads a single socket server should have.  Specifying more than one can result in spurious wakeups
      * for a socket server under low connection volume, but higher throughput at high connection volume.  The minimum value
      * is 1, and the maximum value is equal to the number of available worker threads.

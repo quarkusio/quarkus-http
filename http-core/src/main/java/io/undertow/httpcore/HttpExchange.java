@@ -186,6 +186,10 @@ public interface HttpExchange extends Closeable {
 
     long getMaxEntitySize();
 
+    void setReadTimeout(long readTimeoutMs);
+
+    long getReadTimeout();
+
     void endExchange();
 
     long getResponseBytesSent();
