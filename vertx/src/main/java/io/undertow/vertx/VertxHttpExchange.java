@@ -27,11 +27,13 @@ import io.undertow.httpcore.InputChannel;
 import io.undertow.httpcore.IoCallback;
 import io.undertow.httpcore.OutputChannel;
 import io.undertow.httpcore.SSLSessionInfo;
+import io.undertow.httpcore.StatusCodes;
 import io.undertow.httpcore.UndertowOptionMap;
 import io.undertow.httpcore.UndertowOptions;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.impl.Http1xServerConnection;
@@ -71,6 +73,8 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     private final boolean upgradeRequest;
     private long readTimeout = UndertowOptions.DEFAULT_READ_TIMEOUT;
 
+    private long requestContentLength = -1;
+
     public VertxHttpExchange(HttpServerRequest request, BufferAllocator allocator, Executor worker, Object context) {
         this(request, allocator, worker, context, null);
     }
@@ -92,6 +96,13 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
                         if (waitingForRead) {
                             request.connection().notify();
+                            if (input1 != null) {
+                                input1.getByteBuf().release();
+                                input1 = null;
+                            }
+                            while (!inputOverflow.isEmpty()) {
+                                inputOverflow.poll().getByteBuf().release();
+                            }
                         }
                         if (event instanceof IOException) {
                             readError = (IOException) event;
@@ -108,6 +119,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                     Object readContext = null;
                     synchronized (request.connection()) {
                         eof = true;
+                        if (requestContentLength != -1 && uploadSize != requestContentLength) {
+                            //we did not read the full request
+                            readError = new IOException("Failed to read full request");
+                        }
                         if (waitingForRead) {
                             request.connection().notify();
                         }
@@ -128,6 +143,16 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 }
             });
             request.fetch(1);
+            String cl = request.headers().get(HttpHeaders.CONTENT_LENGTH);
+            if (cl != null) {
+                try {
+                    requestContentLength = Long.parseLong(cl);
+                } catch (Exception e) {
+                    response.setStatusCode(StatusCodes.BAD_REQUEST);
+                    response.end();
+                    throw new RuntimeException("Failed to parse content length", e);
+                }
+            }
         } else if(existingBody != null){
             eof = true;
         } else {
@@ -136,10 +161,20 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         request.response().exceptionHandler(new Handler<Throwable>() {
             @Override
             public void handle(Throwable event) {
-                log.debugf(event, "IO Exception ");
-                //TODO: do we need this?
-                eof = true;
-                terminateRequest();
+                synchronized (request.connection()) {
+                    log.debugf(event, "IO Exception ");
+                    eof = true;
+                    if (waitingForRead) {
+                        request.connection().notify();
+                    }
+                    //we are not getting any more read events either
+                    if (event instanceof IOException) {
+                        readError = (IOException) event;
+                    } else {
+                        readError = new IOException(event);
+                    }
+
+                }
                 terminateResponse();
                 VertxHttpExchange.this.close();
             }
@@ -383,7 +418,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         long readStart = System.currentTimeMillis();
         synchronized (request.connection()) {
 
-            while (input1 == null && !eof) {
+            while (input1 == null && !eof && readError == null) {
                 try {
                     waitingForRead = true;
                     long toWait = readTimeout - (System.currentTimeMillis() - readStart);
@@ -396,6 +431,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 } finally {
                     waitingForRead = false;
                 }
+            }
+            if (readError != null) {
+                terminateRequest();
+                throw new IOException(readError);
             }
             Buffer ret = input1;
             input1 = null;
