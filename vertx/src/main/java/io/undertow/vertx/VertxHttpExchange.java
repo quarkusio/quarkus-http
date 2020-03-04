@@ -410,8 +410,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public int readBytesAvailable() {
-        if (input1 != null) {
-            return input1.getByteBuf().readableBytes();
+        synchronized (request.connection()) {
+            if (input1 != null) {
+                return input1.getByteBuf().readableBytes();
+            }
         }
         return 0;
     }
