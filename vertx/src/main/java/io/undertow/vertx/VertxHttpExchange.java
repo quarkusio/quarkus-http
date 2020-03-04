@@ -115,6 +115,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             request.endHandler(new Handler<Void>() {
                 @Override
                 public void handle(Void event) {
+                    boolean terminate = false;
                     BiConsumer<InputChannel, Object> readCallback = null;
                     Object readContext = null;
                     synchronized (request.connection()) {
@@ -132,14 +133,16 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                             readContext = readHandlerContext;
                             VertxHttpExchange.this.readHandlerContext = null;
                         }
+                        if (input1 == null) {
+                            terminate = true;
+                        }
                     }
                     if (readCallback != null) {
                         readCallback.accept(VertxHttpExchange.this, readContext);
                     }
-                    if (input1 == null) {
+                    if (terminate) {
                         terminateRequest();
                     }
-
                 }
             });
             request.fetch(1);
