@@ -65,7 +65,6 @@ import javax.websocket.server.ServerEndpoint;
 import javax.websocket.server.ServerEndpointConfig;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -97,6 +96,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
 
     public static final String TIMEOUT = "io.undertow.websocket.CONNECT_TIMEOUT";
     public static final int DEFAULT_WEB_SOCKET_TIMEOUT_SECONDS = 10;
+    public static final int DEFAULT_MAX_FRAME_SIZE = 65536;
 
     private final ClassIntrospecter classIntrospecter;
 
@@ -129,6 +129,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
     private final List<PauseListener> pauseListeners = new ArrayList<>();
     private final List<Extension> installedExtensions;
     private final List<WebsocketClientSslProvider> clientSslProviders;
+    private final int maxFrameSize;
 
     private final ThreadSetupHandler.Action<Void, Runnable> invokeEndpointTask;
 
@@ -147,6 +148,10 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
     }
 
     public ServerWebSocketContainer(final ClassIntrospecter classIntrospecter, final ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ThreadSetupHandler> threadSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler, Supplier<Executor> executorSupplier, List<Extension> installedExtensions) {
+        this(classIntrospecter, classLoader, eventLoopSupplier, threadSetupHandlers, dispatchToWorker, clientBindAddress, reconnectHandler, executorSupplier, installedExtensions, DEFAULT_MAX_FRAME_SIZE);
+    }
+
+    public ServerWebSocketContainer(final ClassIntrospecter classIntrospecter, final ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ThreadSetupHandler> threadSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler, Supplier<Executor> executorSupplier, List<Extension> installedExtensions, int maxFrameSize) {
         this.classIntrospecter = classIntrospecter;
         this.eventLoopSupplier = eventLoopSupplier;
         this.dispatchToWorker = dispatchToWorker;
@@ -154,6 +159,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         this.executorSupplier = executorSupplier;
         this.installedExtensions = new ArrayList<>(installedExtensions);
         this.webSocketReconnectHandler = reconnectHandler;
+        this.maxFrameSize = maxFrameSize;
         ThreadSetupHandler.Action<Void, Runnable> task = new ThreadSetupHandler.Action<Void, Runnable>() {
             @Override
             public Void call(HttpServerExchange exchange, Runnable context) throws Exception {
@@ -469,9 +475,9 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
 
             WebSocketDeploymentInfo info = (WebSocketDeploymentInfo) request.getServletContext().getAttribute(WebSocketDeploymentInfo.ATTRIBUTE_NAME);
             if (info == null || info.getServerExtensions() == null) {
-                hand = ServerWebSocketContainer.handshakes(confguredServerEndpoint);
+                hand = handshakes(confguredServerEndpoint);
             } else {
-                hand = ServerWebSocketContainer.handshakes(confguredServerEndpoint, info.getServerExtensions());
+                hand = handshakes(confguredServerEndpoint, info.getServerExtensions());
             }
 
             final ServletWebSocketHttpExchange facade = new ServletWebSocketHttpExchange(request, response);
@@ -992,12 +998,12 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         }
     }
 
-    static WebSocketHandshakeHolder handshakes(ConfiguredServerEndpoint config) {
-        return new WebSocketHandshakeHolder(Collections.singletonList(new Handshake(config, Collections.emptySet())), config);
+    WebSocketHandshakeHolder handshakes(ConfiguredServerEndpoint config) {
+        return new WebSocketHandshakeHolder(Collections.singletonList(new Handshake(config, Collections.emptySet(), maxFrameSize)), config);
     }
 
-    static WebSocketHandshakeHolder handshakes(ConfiguredServerEndpoint config, List<WebSocketServerExtensionHandshaker> extensions) {
-        Handshake hand = new Handshake(config, Collections.emptySet());
+    WebSocketHandshakeHolder handshakes(ConfiguredServerEndpoint config, List<WebSocketServerExtensionHandshaker> extensions) {
+        Handshake hand = new Handshake(config, Collections.emptySet(), maxFrameSize);
         for (WebSocketServerExtensionHandshaker i : extensions) {
             hand.addExtension(i);
         }

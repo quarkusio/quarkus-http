@@ -67,10 +67,12 @@ public class Handshake {
     protected Set<WebSocketServerExtensionHandshaker> availableExtensions = new HashSet<>();
     protected boolean allowExtensions;
     private final ConfiguredServerEndpoint config;
+    private final int maxFrameSize;
 
-    public Handshake(ConfiguredServerEndpoint config, final Set<String> subprotocols) {
+    public Handshake(ConfiguredServerEndpoint config, final Set<String> subprotocols, int maxFrameSize) {
         this.subprotocols = subprotocols;
         this.config = config;
+        this.maxFrameSize = maxFrameSize;
     }
 
     public ConfiguredServerEndpoint getConfig() {
@@ -118,7 +120,7 @@ public class Handshake {
             @Override
             public void accept(Object c) {
                 ChannelHandlerContext context = (ChannelHandlerContext) c;
-                WebSocket13FrameDecoder decoder = new WebSocket13FrameDecoder(true, allowExtensions, 65536, false);
+                WebSocket13FrameDecoder decoder = new WebSocket13FrameDecoder(true, allowExtensions, maxFrameSize, false);
                 WebSocket13FrameEncoder encoder = new WebSocket13FrameEncoder(false);
                 ChannelPipeline p = context.pipeline();
                 if (p.get(HttpObjectAggregator.class) != null) {

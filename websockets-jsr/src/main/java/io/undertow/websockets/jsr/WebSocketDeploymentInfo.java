@@ -47,6 +47,7 @@ public class WebSocketDeploymentInfo implements Cloneable {
     private WebSocketReconnectHandler reconnectHandler;
     private EventLoopGroup eventLoopGroup;
     private Supplier<Executor> executor;
+    private int maxFrameSize = ServerWebSocketContainer.DEFAULT_MAX_FRAME_SIZE;
 
     public WebSocketDeploymentInfo addEndpoint(final Class<?> annotated) {
         this.annotatedEndpoints.add(annotated);
@@ -123,6 +124,15 @@ public class WebSocketDeploymentInfo implements Cloneable {
         return this;
     }
 
+    public int getMaxFrameSize() {
+        return maxFrameSize;
+    }
+
+    public WebSocketDeploymentInfo setMaxFrameSize(int maxFrameSize) {
+        this.maxFrameSize = maxFrameSize;
+        return this;
+    }
+
     public interface ContainerReadyListener {
         void ready(ServerWebSocketContainer container);
     }
@@ -180,7 +190,7 @@ public class WebSocketDeploymentInfo implements Cloneable {
                 .addServerExtensions(this.serverExtensions)
                 .setClientBindAddress(this.clientBindAddress)
                 .setReconnectHandler(this.reconnectHandler)
-                ;
+                .setMaxFrameSize(this.maxFrameSize);
     }
 
 }

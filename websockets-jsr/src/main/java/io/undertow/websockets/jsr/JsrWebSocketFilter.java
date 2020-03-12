@@ -78,9 +78,9 @@ public class JsrWebSocketFilter implements Filter {
         WebSocketDeploymentInfo info = (WebSocketDeploymentInfo) filterConfig.getServletContext().getAttribute(WebSocketDeploymentInfo.ATTRIBUTE_NAME);
         for (ConfiguredServerEndpoint endpoint : container.getConfiguredServerEndpoints()) {
             if (info == null || info.getServerExtensions().isEmpty()) {
-                pathTemplateMatcher.add(endpoint.getPathTemplate(), ServerWebSocketContainer.handshakes(endpoint));
+                pathTemplateMatcher.add(endpoint.getPathTemplate(), container.handshakes(endpoint));
             } else {
-                pathTemplateMatcher.add(endpoint.getPathTemplate(), ServerWebSocketContainer.handshakes(endpoint, info.getServerExtensions()));
+                pathTemplateMatcher.add(endpoint.getPathTemplate(), container.handshakes(endpoint, info.getServerExtensions()));
             }
         }
         this.callback = new EndpointSessionHandler(container);
