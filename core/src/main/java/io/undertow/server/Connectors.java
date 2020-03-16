@@ -351,63 +351,58 @@ public class Connectors {
      * Sets the request path and query parameters, decoding to the requested charset.
      *
      * @param exchange    The exchange
-     * @param encodedPath The encoded path
+     * @param encodedPath        The encoded path
      * @param charset     The charset
      */
     public static void setExchangeRequestPath(final HttpServerExchange exchange, final String encodedPath, final String charset, boolean decode, final boolean allowEncodedSlash, StringBuilder decodeBuffer, int maxParameters) throws ParameterLimitException {
         boolean requiresDecode = false;
+        final StringBuilder pathBuilder = new StringBuilder();
+        int currentPathPartIndex = 0;
         for (int i = 0; i < encodedPath.length(); ++i) {
             char c = encodedPath.charAt(i);
             if (c == '?') {
                 String part;
-                String encodedPart = encodedPath.substring(0, i);
+                String encodedPart = encodedPath.substring(currentPathPartIndex, i);
                 if (requiresDecode) {
-                    part = URLUtils.decode(encodedPart, charset, allowEncodedSlash, false, decodeBuffer);
+                    part = URLUtils.decode(encodedPart, charset, allowEncodedSlash,false, decodeBuffer);
                 } else {
                     part = encodedPart;
                 }
+                pathBuilder.append(part);
+                part = pathBuilder.toString();
                 exchange.setRequestPath(part);
                 exchange.setRelativePath(part);
-                exchange.setRequestURI(encodedPart);
+                exchange.setRequestURI(encodedPath.substring(0, i));
                 final String qs = encodedPath.substring(i + 1);
                 exchange.setQueryString(qs);
                 URLUtils.parseQueryString(qs, exchange, charset, decode, maxParameters);
                 return;
-            } else if (c == ';') {
+            } else if(c == ';') {
                 String part;
-                String encodedPart = encodedPath.substring(0, i);
+                String encodedPart = encodedPath.substring(currentPathPartIndex, i);
                 if (requiresDecode) {
                     part = URLUtils.decode(encodedPart, charset, allowEncodedSlash, false, decodeBuffer);
                 } else {
                     part = encodedPart;
                 }
-                exchange.setRequestPath(part);
-                exchange.setRelativePath(part);
-                for (int j = i; j < encodedPath.length(); ++j) {
-                    if (encodedPath.charAt(j) == '?') {
-                        exchange.setRequestURI(encodedPath.substring(0, j));
-                        String pathParams = encodedPath.substring(i + 1, j);
-                        URLUtils.parsePathParams(pathParams, exchange, charset, decode, maxParameters);
-                        String qs = encodedPath.substring(j + 1);
-                        exchange.setQueryString(qs);
-                        URLUtils.parseQueryString(qs, exchange, charset, decode, maxParameters);
-                        return;
-                    }
-                }
+                pathBuilder.append(part);
                 exchange.setRequestURI(encodedPath);
-                URLUtils.parsePathParams(encodedPath.substring(i + 1), exchange, charset, decode, maxParameters);
-                return;
-            } else if (c == '%' || c == '+') {
+                currentPathPartIndex = i + 1 + URLUtils.parsePathParams(encodedPath.substring(i + 1), exchange, charset, decode, maxParameters);
+                i = currentPathPartIndex -1 ;
+            } else if(c == '%' || c == '+') {
                 requiresDecode = decode;
             }
         }
 
         String part;
+        String encodedPart = encodedPath.substring(currentPathPartIndex);
         if (requiresDecode) {
-            part = URLUtils.decode(encodedPath, charset, allowEncodedSlash, false, decodeBuffer);
+            part = URLUtils.decode(encodedPart, charset, allowEncodedSlash, false, decodeBuffer);
         } else {
-            part = encodedPath;
+            part = encodedPart;
         }
+        pathBuilder.append(part);
+        part = pathBuilder.toString();
         exchange.setRequestPath(part);
         exchange.setRelativePath(part);
         exchange.setRequestURI(encodedPath);
