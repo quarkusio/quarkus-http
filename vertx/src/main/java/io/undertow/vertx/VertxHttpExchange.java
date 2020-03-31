@@ -37,6 +37,7 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.impl.Http1xServerConnection;
+import io.vertx.core.net.SocketAddress;
 import io.vertx.core.net.impl.ConnectionBase;
 
 public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange, InputChannel, OutputChannel, Handler<Buffer> {
@@ -358,12 +359,14 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public InetSocketAddress getDestinationAddress() {
-        return (InetSocketAddress) connectionBase.channel().localAddress();
+        SocketAddress socketAddress = request.localAddress();
+        return new InetSocketAddress(socketAddress.host(), socketAddress.port());
     }
 
     @Override
     public InetSocketAddress getSourceAddress() {
-        return (InetSocketAddress) connectionBase.channel().remoteAddress();
+        SocketAddress socketAddress = request.remoteAddress();
+        return new InetSocketAddress(socketAddress.host(), socketAddress.port());
     }
 
     @Override
