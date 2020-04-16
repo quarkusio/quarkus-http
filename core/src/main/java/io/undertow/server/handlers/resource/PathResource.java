@@ -109,7 +109,7 @@ public class PathResource implements RangeAwareResource {
             while ((r = in.read(buffer.array(), buffer.arrayOffset(), buffer.writableBytes())) > 0) {
                 sender.write(buffer.array(), buffer.arrayOffset(), r);
             }
-            exchange.endExchange();
+            sender.close();
         } finally {
             buffer.release();
         }
