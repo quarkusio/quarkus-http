@@ -197,7 +197,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         });
         if (request.headers().contains(HttpHeaderNames.UPGRADE)) {
             //we allways remove the websocket handler
-            Http1xServerConnection connection = (Http1xServerConnection) request.connection();
+            ConnectionBase connection = (ConnectionBase) request.connection();
             ChannelHandlerContext c = connection.channelHandlerContext();
             upgradeRequest = true;
             c.pipeline().remove("websocketExtensionHandler");
