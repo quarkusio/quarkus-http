@@ -89,7 +89,7 @@ public class Bootstrap implements ServletExtension {
                 }
                 return GlobalEventExecutor.INSTANCE;
             }
-        }, extensions);
+        }, extensions, info.getMaxFrameSize());
         try {
             for (Class<?> annotation : info.getAnnotatedEndpoints()) {
                 container.addEndpoint(annotation);
