@@ -26,6 +26,7 @@ import javax.net.ssl.SSLEngine;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -186,7 +187,7 @@ class WebsocketConnectionBuilder {
                     public void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
                         if (ssl != null) {
-                            SSLEngine sslEngine = ssl.createSSLEngine();
+                            SSLEngine sslEngine = ssl.createSSLEngine(uri.getHost(), uri.getPort());
                             sslEngine.setUseClientMode(true);
                             pipeline.addLast("ssl", new SslHandler(sslEngine));
                         }
@@ -197,12 +198,14 @@ class WebsocketConnectionBuilder {
                 });
 
         //System.out.println("WebSocket Client connecting");
-        ChannelFuture future = null;
-        try {
-            future = b.connect(uri.getHost(), uri.getPort()).sync();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        b.connect(uri.getHost(), uri.getPort()).addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
+                if (future.cause() != null) {
+                    handler.handshakeFuture.completeExceptionally(future.cause());
+                }
+            }
+        });
 
 
         return handler.handshakeFuture;
