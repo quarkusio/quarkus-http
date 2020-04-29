@@ -187,7 +187,7 @@ class WebsocketConnectionBuilder {
                     public void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
                         if (ssl != null) {
-                            SSLEngine sslEngine = ssl.createSSLEngine(uri.getHost(), uri.getPort());
+                            SSLEngine sslEngine = ssl.createSSLEngine(uri.getHost(), uri.getPort() == -1 ? (uri.getScheme().equals("wss") ? 443 : 80) : uri.getPort());
                             sslEngine.setUseClientMode(true);
                             pipeline.addLast("ssl", new SslHandler(sslEngine));
                         }
