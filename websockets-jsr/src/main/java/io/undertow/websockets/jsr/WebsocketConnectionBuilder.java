@@ -145,11 +145,7 @@ class WebsocketConnectionBuilder {
 
     public <R> CompletableFuture<R> connect(Function<Channel, R> connectFunction) {
         io.netty.bootstrap.Bootstrap b = new io.netty.bootstrap.Bootstrap();
-        String protocol = uri.getScheme();
-//        if (!"ws".equals(protocol)) {
-//            throw new IllegalArgumentException("Unsupported protocol: " + protocol);
-//        }
-
+        int actualPort = uri.getPort() == -1 ? (uri.getScheme().equals("wss") ? 443 : 80) : uri.getPort();
 
         final WebSocketClientHandler handler =
                 new WebSocketClientHandler(
@@ -187,7 +183,7 @@ class WebsocketConnectionBuilder {
                     public void initChannel(SocketChannel ch) throws Exception {
                         ChannelPipeline pipeline = ch.pipeline();
                         if (ssl != null) {
-                            SSLEngine sslEngine = ssl.createSSLEngine(uri.getHost(), uri.getPort() == -1 ? (uri.getScheme().equals("wss") ? 443 : 80) : uri.getPort());
+                            SSLEngine sslEngine = ssl.createSSLEngine(uri.getHost(), actualPort);
                             sslEngine.setUseClientMode(true);
                             pipeline.addLast("ssl", new SslHandler(sslEngine));
                         }
@@ -198,7 +194,7 @@ class WebsocketConnectionBuilder {
                 });
 
         //System.out.println("WebSocket Client connecting");
-        b.connect(uri.getHost(), uri.getPort()).addListener(new ChannelFutureListener() {
+        b.connect(uri.getHost(), actualPort).addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
                 if (future.cause() != null) {
