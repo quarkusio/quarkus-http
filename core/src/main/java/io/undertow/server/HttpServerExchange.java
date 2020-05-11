@@ -1373,7 +1373,7 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     public void pushResource(String path, String method, Map<String, List<String>> requestHeaders) {
-
+        delegate.pushResource(path, method, requestHeaders);
     }
 
     public boolean isRequestTrailerFieldsSupported() {

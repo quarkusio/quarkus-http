@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
@@ -193,4 +194,6 @@ public interface HttpExchange extends Closeable {
     void endExchange();
 
     long getResponseBytesSent();
+
+    default void pushResource(String path, String method, Map<String, List<String>> requestHeaders) {};
 }
