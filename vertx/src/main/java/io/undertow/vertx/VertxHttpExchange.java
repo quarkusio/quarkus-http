@@ -7,6 +7,8 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -32,11 +34,15 @@ import io.undertow.httpcore.UndertowOptionMap;
 import io.undertow.httpcore.UndertowOptions;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.http.HttpVersion;
 import io.vertx.core.http.impl.Http1xServerConnection;
+import io.vertx.core.http.impl.headers.VertxHttpHeaders;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.net.impl.ConnectionBase;
 
@@ -755,6 +761,25 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             return new ConnectionSSLSessionInfo(session);
         }
         return null;
+    }
+
+    @Override
+    public boolean isPushSupported() {
+        return request.version() == HttpVersion.HTTP_2;
+    }
+
+    @Override
+    public void pushResource(String path, String method, Map<String, List<String>> requestHeaders) {
+        MultiMap map = new VertxHttpHeaders();
+        for (Map.Entry<String, List<String>> entry : requestHeaders.entrySet()) {
+            map.add(entry.getKey(), entry.getValue());
+        }
+        response.push(HttpMethod.valueOf(method), path, map, new Handler<AsyncResult<HttpServerResponse>>() {
+            @Override
+            public void handle(AsyncResult<HttpServerResponse> event) {
+                //we don't actually care about the result
+            }
+        });
     }
 
     @Override
