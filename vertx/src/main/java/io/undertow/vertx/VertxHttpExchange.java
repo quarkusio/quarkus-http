@@ -19,6 +19,7 @@ import org.jboss.logging.Logger;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelHandler;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.httpcore.BufferAllocator;
 import io.undertow.httpcore.ConnectionSSLSessionInfo;
@@ -204,11 +205,14 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             }
         });
         if (request.headers().contains(HttpHeaderNames.UPGRADE)) {
-            //we allways remove the websocket handler
+            upgradeRequest = true;
+            //we always remove the websocket handler (if it's present)
             ConnectionBase connection = (ConnectionBase) request.connection();
             ChannelHandlerContext c = connection.channelHandlerContext();
-            upgradeRequest = true;
-            c.pipeline().remove("websocketExtensionHandler");
+            final ChannelHandler websocketChannelHandler = c.pipeline().get("websocketExtensionHandler");
+            if (websocketChannelHandler != null) {
+                c.pipeline().remove(websocketChannelHandler);
+            }
         } else {
             upgradeRequest = false;
         }
