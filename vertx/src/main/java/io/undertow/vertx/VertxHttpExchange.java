@@ -107,8 +107,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                                 input1.getByteBuf().release();
                                 input1 = null;
                             }
-                            while (!inputOverflow.isEmpty()) {
-                                inputOverflow.poll().getByteBuf().release();
+                            if (inputOverflow != null) {
+                                while (!inputOverflow.isEmpty()) {
+                                    inputOverflow.poll().getByteBuf().release();
+                                }
                             }
                         }
                         if (event instanceof IOException) {
