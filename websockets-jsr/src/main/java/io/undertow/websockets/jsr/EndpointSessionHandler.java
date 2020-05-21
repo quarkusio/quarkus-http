@@ -128,6 +128,7 @@ public final class EndpointSessionHandler {
             session.getAsyncRemote().setSendTimeout(getContainer().getDefaultAsyncSendTimeout());
             try {
                 endpointInstance.getInstance().onOpen(session, config.getEndpointConfiguration());
+                session.getFrameHandler().start();
             } catch (Exception e) {
                 endpointInstance.getInstance().onError(session, e);
                 session.close();

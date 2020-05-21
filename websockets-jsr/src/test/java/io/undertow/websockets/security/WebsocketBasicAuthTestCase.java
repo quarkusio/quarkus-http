@@ -171,6 +171,11 @@ public class WebsocketBasicAuthTestCase {
         @Override
         public void onOpen(Session session, EndpointConfig config) {
             this.session = session;
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             session.addMessageHandler(new MessageHandler.Whole<String>() {
 
                 @Override

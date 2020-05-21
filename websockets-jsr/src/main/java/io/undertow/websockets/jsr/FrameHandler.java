@@ -34,6 +34,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import javax.websocket.CloseReason;
 import javax.websocket.Endpoint;
@@ -60,6 +61,12 @@ class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
     private final UndertowSession session;
     protected static final byte[] EMPTY = new byte[0];
     private final ConcurrentMap<FrameType, HandlerWrapper> handlers = new ConcurrentHashMap<>();
+    /**
+     * setting autoread to false does not seem to work reliably
+     * so we queue frames till after onOpen is done
+     */
+    private final LinkedBlockingDeque<WebSocketFrame> pending = new LinkedBlockingDeque<>();
+    private volatile boolean started;
     private final Executor executor;
     private StringBuilder stringBuffer;
     private ByteArrayOutputStream binaryBuffer;
@@ -89,8 +96,40 @@ class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
         this.executor = executor;
     }
 
+    synchronized void start() {
+
+        while (!pending.isEmpty()) {
+            WebSocketFrame webSocketFrame = pending.poll();
+            try {
+                processFrame(webSocketFrame);
+            } catch (IOException e) {
+                try {
+                    session.close();
+                } catch (IOException ex) {
+                }
+                throw new RuntimeException(e);
+            } finally {
+                webSocketFrame.release();
+            }
+        }
+        started = true;
+    }
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame msg) throws Exception {
+        if (!started) {
+            synchronized (this) {
+                if (!started) {
+                    pending.add(msg);
+                    msg.retain();
+                    return;
+                }
+            }
+        }
+        processFrame(msg);
+    }
+
+    private void processFrame(WebSocketFrame msg) throws IOException {
         if (msg instanceof CloseWebSocketFrame) {
             onCloseFrame((CloseWebSocketFrame) msg);
         } else if (msg instanceof PongWebSocketFrame) {
@@ -99,11 +138,11 @@ class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
             onText(msg, ((TextWebSocketFrame) msg).text());
         } else if (msg instanceof BinaryWebSocketFrame) {
             onBinary(msg);
-        }else if (msg instanceof ContinuationWebSocketFrame) {
-            if(expectedContinuation == FrameType.BYTE) {
+        } else if (msg instanceof ContinuationWebSocketFrame) {
+            if (expectedContinuation == FrameType.BYTE) {
                 onBinary(msg);
-            } else if(expectedContinuation == FrameType.TEXT) {
-                onText(msg, ((ContinuationWebSocketFrame)msg).text());
+            } else if (expectedContinuation == FrameType.TEXT) {
+                onText(msg, ((ContinuationWebSocketFrame) msg).text());
             }
         }
     }
@@ -170,14 +209,14 @@ class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
             return;
         }
 
-        if(!frame.isFinalFragment()) {
+        if (!frame.isFinalFragment()) {
             expectedContinuation = FrameType.TEXT;
         } else {
             expectedContinuation = null;
         }
         final HandlerWrapper handler = getHandler(FrameType.TEXT);
         if (handler != null &&
-                (handler.isPartialHandler() || (stringBuffer == null && frame.isFinalFragment()))) {
+            (handler.isPartialHandler() || (stringBuffer == null && frame.isFinalFragment()))) {
             invokeTextHandler(text, handler, frame.isFinalFragment());
         } else if (handler != null) {
             if (stringBuffer == null) {
@@ -199,14 +238,14 @@ class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
             session.close();
             return;
         }
-        if(!frame.isFinalFragment()) {
+        if (!frame.isFinalFragment()) {
             expectedContinuation = FrameType.BYTE;
         } else {
             expectedContinuation = null;
         }
         final HandlerWrapper handler = getHandler(FrameType.BYTE);
         if (handler != null &&
-                (handler.isPartialHandler() || (binaryBuffer == null && frame.isFinalFragment()))) {
+            (handler.isPartialHandler() || (binaryBuffer == null && frame.isFinalFragment()))) {
             byte[] data = new byte[frame.content().readableBytes()];
             frame.content().readBytes(data);
             invokeBinaryHandler(data, handler, frame.isFinalFragment());

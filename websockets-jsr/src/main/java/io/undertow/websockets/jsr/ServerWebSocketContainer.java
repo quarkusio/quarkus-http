@@ -357,6 +357,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                 .connect(new Function<Channel, UndertowSession>() {
                     @Override
                     public UndertowSession apply(Channel channel) {
+                        channel.config().setAutoRead(false);
 
                         ConfiguredClientEndpoint configured = clientEndpoints.get(endpointInstance.getClass());
                         if (configured == null) {
@@ -381,6 +382,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                                 try {
                                     endpointInstance.onOpen(undertowSession, cec);
                                 } finally {
+                                    undertowSession.getFrameHandler().start();
                                     channel.config().setAutoRead(true);
                                     channel.read();
                                     sessionCompletableFuture.complete(undertowSession);
@@ -557,6 +559,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                     try {
                         endpointInstance.onOpen(result, cec.getConfig());
                     } finally {
+                        result.getFrameHandler().start();
                         result.getChannel().config().setAutoRead(true);
                         result.getChannel().read();
                     }
