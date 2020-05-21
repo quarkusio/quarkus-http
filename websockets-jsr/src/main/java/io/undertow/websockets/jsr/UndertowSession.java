@@ -89,6 +89,12 @@ public final class UndertowSession implements Session {
                            final Encoding encoding, final SessionContainer openSessions, final String subProtocol,
                            final List<Extension> extensions, WebsocketConnectionBuilder clientConnectionBuilder,
                            Executor executor) {
+        channel.closeFuture().addListener(new GenericFutureListener<Future<? super Void>>() {
+            @Override
+            public void operationComplete(Future<? super Void> future) throws Exception {
+                closeInternal(new CloseReason(CloseReason.CloseCodes.GOING_AWAY, null));
+            }
+        });
         this.clientConnectionBuilder = clientConnectionBuilder;
         assert openSessions != null;
         this.channel = channel;
