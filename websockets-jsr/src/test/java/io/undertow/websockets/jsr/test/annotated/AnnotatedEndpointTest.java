@@ -181,6 +181,18 @@ public class AnnotatedEndpointTest {
         Assert.assertEquals("CLOSED", AnnotatedClientEndpoint.message());
     }
 
+    @Test
+    public void testUncleanClose() throws Exception {
+        AnnotatedClientEndpoint.reset();
+        MessageEndpoint.reset();
+        Session session = deployment.connectToServer(AnnotatedClientEndpoint.class, new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort("default") + "/ws/chat/Bob"));
+
+        Assert.assertEquals("hi Bob (protocol=foo)", AnnotatedClientEndpoint.message());
+        UndertowSession s = (UndertowSession) session;
+        s.forceClose();
+        Assert.assertNotNull(MessageEndpoint.getReason());
+    }
+
 
     @Test
     public void testIdleTimeout() throws Exception {
