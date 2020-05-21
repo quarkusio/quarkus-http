@@ -148,6 +148,10 @@ public final class UndertowSession implements Session {
         frameHandler.removeHandler(messageHandler);
     }
 
+    FrameHandler getFrameHandler() {
+        return frameHandler;
+    }
+
     @Override
     public String getProtocolVersion() {
         return "13";
