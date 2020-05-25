@@ -18,6 +18,7 @@
 
 package io.undertow.websockets.jsr.test.annotated;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +27,7 @@ import javax.websocket.ClientEndpoint;
 import javax.websocket.OnClose;
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
+import javax.websocket.PongMessage;
 import javax.websocket.Session;
 
 /**
@@ -57,6 +59,13 @@ public class AnnotatedClientEndpoint {
     public void onClose() {
         this.open = false;
         MESSAGES.add("CLOSED");
+    }
+
+    @OnMessage
+    public void pong(PongMessage message) {
+        byte [] data = new byte[message.getApplicationData().remaining()];
+        message.getApplicationData().get(data);
+        MESSAGES.add("PONG:" + new String(data, StandardCharsets.UTF_8));
     }
 
     public boolean isOpen() {
