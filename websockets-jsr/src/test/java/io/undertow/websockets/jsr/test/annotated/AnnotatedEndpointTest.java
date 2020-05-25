@@ -19,6 +19,8 @@ package io.undertow.websockets.jsr.test.annotated;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -384,6 +386,20 @@ public class AnnotatedEndpointTest {
         Assert.assertEquals(0, expected.size());
     }
 
+
+    @Test
+    public void testPingPong() throws Exception {
+        AnnotatedClientEndpoint.reset();
+        Session session = deployment.connectToServer(AnnotatedClientEndpoint.class, new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort("default") + "/ws/chat/Bob"));
+
+        Assert.assertEquals("hi Bob (protocol=foo)", AnnotatedClientEndpoint.message());
+        session.getBasicRemote().sendPing(ByteBuffer.wrap("test ping".getBytes(StandardCharsets.UTF_8)));
+
+
+        Assert.assertEquals("PONG:test ping", AnnotatedClientEndpoint.message());
+        session.close();
+        Assert.assertEquals("CLOSED", AnnotatedClientEndpoint.message());
+    }
 
     @ClientEndpoint
     public static class DoNothingEndpoint {

@@ -47,6 +47,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
@@ -134,6 +135,10 @@ class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
             onCloseFrame((CloseWebSocketFrame) msg);
         } else if (msg instanceof PongWebSocketFrame) {
             onPongMessage((PongWebSocketFrame) msg);
+        } else if (msg instanceof PingWebSocketFrame) {
+            byte[] data = new byte[msg.content().readableBytes()];
+            msg.content().readBytes(data);
+            session.getAsyncRemote().sendPong(ByteBuffer.wrap(data));
         } else if (msg instanceof TextWebSocketFrame) {
             onText(msg, ((TextWebSocketFrame) msg).text());
         } else if (msg instanceof BinaryWebSocketFrame) {
