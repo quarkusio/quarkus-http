@@ -19,8 +19,7 @@
 package io.undertow.util;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.regex.Pattern;
 
 import io.undertow.UndertowMessages;
 import io.undertow.server.HttpServerExchange;
@@ -35,18 +34,24 @@ public class URLUtils {
 
     private static final char PATH_SEPARATOR = '/';
 
-    private static final QueryStringParser QUERY_STRING_PARSER = new QueryStringParser() {
+    private static final QueryStringParser QUERY_STRING_PARSER = new QueryStringParser('&', false) {
         @Override
         void handle(HttpServerExchange exchange, String key, String value) {
             exchange.addQueryParam(key, value);
         }
     };
-    private static final QueryStringParser PATH_PARAM_PARSER = new QueryStringParser() {
+    private static final QueryStringParser PATH_PARAM_PARSER = new QueryStringParser(';', true) {
         @Override
         void handle(HttpServerExchange exchange, String key, String value) {
             exchange.addPathParam(key, value);
         }
     };
+
+    // RFC-3986 (URI Generic Syntax) states:
+    // URI         = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
+    // scheme      = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+    // "The scheme and path components are required, though the path may be empty (no characters)."
+    private static final Pattern SCHEME_PATTERN = Pattern.compile("^[a-zA-Z][a-zA-Z0-9+-.]*:.*");
 
     private URLUtils() {
 
@@ -61,8 +66,8 @@ public class URLUtils {
         parsePathParams(string, exchange, charset, doDecode, maxParameters);
     }
 
-    public static void parsePathParams(final String string, final HttpServerExchange exchange, final String charset, final boolean doDecode, int maxParameters) throws ParameterLimitException {
-        PATH_PARAM_PARSER.parse(string, exchange, charset, doDecode, maxParameters);
+    public static int parsePathParams(final String string, final HttpServerExchange exchange, final String charset, final boolean doDecode, int maxParameters) throws ParameterLimitException {
+        return PATH_PARAM_PARSER.parse(string, exchange, charset, doDecode, maxParameters);
     }
 
     /**
@@ -129,6 +134,10 @@ public class URLUtils {
 
                     while ((i < numChars)) {
                         if (c == '%') {
+                            // we need 2 more characters to decode the % construct
+                            if ((i + 2) >= s.length()) {
+                                throw UndertowMessages.MESSAGES.failedToDecodeURL(s, enc, null);
+                            }
                             char p1 = Character.toLowerCase(s.charAt(i + 1));
                             char p2 = Character.toLowerCase(s.charAt(i + 2));
                             if (!decodeSlash && ((p1 == '2' && p2 == 'f') || (p1 == '5' && p2 == 'c'))) {
@@ -229,17 +238,26 @@ public class URLUtils {
 
     private abstract static class QueryStringParser {
 
-        void parse(final String string, final HttpServerExchange exchange, final String charset, final boolean doDecode, int max) throws ParameterLimitException {
+        private final char separator;
+        private final boolean parseUntilSeparator;
+
+        QueryStringParser(final char separator, final boolean parseUntilSeparator) {
+            this.separator = separator;
+            this.parseUntilSeparator = parseUntilSeparator;
+        }
+
+        int parse(final String string, final HttpServerExchange exchange, final String charset, final boolean doDecode, int max) throws ParameterLimitException {
             int count = 0;
+            int i = 0;
             try {
                 int stringStart = 0;
                 String attrName = null;
-                for (int i = 0; i < string.length(); ++i) {
+                for (i = 0; i < string.length(); ++i) {
                     char c = string.charAt(i);
                     if (c == '=' && attrName == null) {
                         attrName = string.substring(stringStart, i);
                         stringStart = i + 1;
-                    } else if (c == '&') {
+                    } else if (c == separator) {
                         if (attrName != null) {
                             handle(exchange, decode(charset, attrName, doDecode), decode(charset, string.substring(stringStart, i), doDecode));
                             if(++count > max) {
@@ -253,15 +271,17 @@ public class URLUtils {
                         }
                         stringStart = i + 1;
                         attrName = null;
+                    } else if (parseUntilSeparator && (c == '?' || c == '/')) {
+                        break;
                     }
                 }
                 if (attrName != null) {
-                    handle(exchange, decode(charset, attrName, doDecode), decode(charset, string.substring(stringStart, string.length()), doDecode));
+                    handle(exchange, decode(charset, attrName, doDecode), decode(charset, string.substring(stringStart, i), doDecode));
                     if(++count > max) {
                         throw UndertowMessages.MESSAGES.tooManyParameters(max);
                     }
                 } else if (string.length() != stringStart) {
-                    handle(exchange, decode(charset, string.substring(stringStart, string.length()), doDecode), "");
+                    handle(exchange, decode(charset, string.substring(stringStart, i), doDecode), "");
                     if(++count > max) {
                         throw UndertowMessages.MESSAGES.tooManyParameters(max);
                     }
@@ -269,6 +289,7 @@ public class URLUtils {
             } catch (UnsupportedEncodingException e) {
                 throw new RuntimeException(e);
             }
+            return i;
         }
 
         private String decode(String charset, String attrName, final boolean doDecode) throws UnsupportedEncodingException {
@@ -323,12 +344,8 @@ public class URLUtils {
      */
     public static boolean isAbsoluteUrl(String location) {
         if (location != null && location.length() > 0 && location.contains(":")) {
-            try {
-                URI uri = new URI(location);
-                return uri.getScheme() != null;
-            } catch (URISyntaxException e) {
-                // ignore invalid locations and consider not absolute
-            }
+            // consider it absolute URL if location contains valid scheme part
+            return SCHEME_PATTERN.matcher(location).matches();
         }
         return false;
     }
