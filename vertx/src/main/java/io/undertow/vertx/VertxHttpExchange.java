@@ -372,12 +372,18 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     @Override
     public InetSocketAddress getDestinationAddress() {
         SocketAddress socketAddress = request.localAddress();
+        if (socketAddress == null) {
+            return null;
+        }
         return new InetSocketAddress(socketAddress.host(), socketAddress.port());
     }
 
     @Override
     public InetSocketAddress getSourceAddress() {
         SocketAddress socketAddress = request.remoteAddress();
+        if (socketAddress == null) {
+            return null;
+        }
         return new InetSocketAddress(socketAddress.host(), socketAddress.port());
     }
 
