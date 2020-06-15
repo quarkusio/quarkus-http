@@ -38,7 +38,7 @@ public class ForwardedHandlerTestCase {
         DefaultServer.setRootHandler(new ForwardedHandler(new HttpHandler() {
             @Override
             public void handleRequest(HttpServerExchange exchange) throws Exception {
-                exchange.writeAsync(exchange.getRequestScheme() + "|" + exchange.getHostAndPort()+ "|" + exchange.getDestinationAddress() + "|" + exchange.getSourceAddress() );
+                exchange.writeAsync(exchange.getRequestScheme() + "|" + exchange.getHostAndPort()+ "|" + exchange.getDestinationAddress().getHostString() + ":" + exchange.getDestinationAddress().getPort() + "|" + exchange.getSourceAddress().getHostString() + ":"+ exchange.getSourceAddress().getPort() );
             }
         }));
     }
@@ -79,7 +79,7 @@ public class ForwardedHandlerTestCase {
         String[] res = run();
         Assert.assertEquals("http", res[0]);
         Assert.assertEquals( DefaultServer.getHostAddress() + ":" + DefaultServer.getHostPort(), res[1]);
-        Assert.assertEquals( "/" + InetAddress.getByName(DefaultServer.getHostAddress()).getHostAddress() + ":" + DefaultServer.getHostPort(), res[2]);
+        Assert.assertEquals( InetAddress.getByName(DefaultServer.getHostAddress()).getHostAddress() + ":" + DefaultServer.getHostPort(), res[2]);
 
         res = run("host=google.com");
         Assert.assertEquals("http", res[0]);
@@ -94,45 +94,45 @@ public class ForwardedHandlerTestCase {
         res = run("for=8.8.8.8:3545");
         Assert.assertEquals("http", res[0]);
         Assert.assertEquals( DefaultServer.getHostAddress() + ":" + DefaultServer.getHostPort(), res[1]);
-        Assert.assertEquals( "/" + InetAddress.getByName(DefaultServer.getHostAddress()).getHostAddress() + ":" + DefaultServer.getHostPort(), res[2]);
-        Assert.assertEquals( "/8.8.8.8:3545", res[3]);
+        Assert.assertEquals(  InetAddress.getByName(DefaultServer.getHostAddress()).getHostAddress() + ":" + DefaultServer.getHostPort(), res[2]);
+        Assert.assertEquals( "8.8.8.8:3545", res[3]);
 
         res = run("for=8.8.8.8:3545, for=9.9.9.9:2343");
         Assert.assertEquals("http", res[0]);
         Assert.assertEquals( DefaultServer.getHostAddress() + ":" + DefaultServer.getHostPort(), res[1]);
-        Assert.assertEquals( "/" + InetAddress.getByName(DefaultServer.getHostAddress()).getHostAddress() + ":" + DefaultServer.getHostPort(), res[2]);
-        Assert.assertEquals( "/8.8.8.8:3545", res[3]);
+        Assert.assertEquals(  InetAddress.getByName(DefaultServer.getHostAddress()).getHostAddress() + ":" + DefaultServer.getHostPort(), res[2]);
+        Assert.assertEquals( "8.8.8.8:3545", res[3]);
 
         res = run("for=[::1]:3545, for=9.9.9.9:2343");
         Assert.assertEquals("http", res[0]);
         Assert.assertEquals( DefaultServer.getHostAddress() + ":" + DefaultServer.getHostPort(), res[1]);
-        Assert.assertEquals( "/" + InetAddress.getByName(DefaultServer.getHostAddress()).getHostAddress() + ":" + DefaultServer.getHostPort(), res[2]);
-        Assert.assertEquals( "/0:0:0:0:0:0:0:1:3545", res[3]);
+        Assert.assertEquals( InetAddress.getByName(DefaultServer.getHostAddress()).getHostAddress() + ":" + DefaultServer.getHostPort(), res[2]);
+        Assert.assertEquals( "0:0:0:0:0:0:0:1:3545", res[3]);
 
         res = run("for=[::1]:_foo, for=9.9.9.9:2343");
         Assert.assertEquals("http", res[0]);
         Assert.assertEquals( DefaultServer.getHostAddress() + ":" + DefaultServer.getHostPort(), res[1]);
-        Assert.assertEquals( "/" + InetAddress.getByName(DefaultServer.getHostAddress()).getHostAddress() + ":" + DefaultServer.getHostPort(), res[2]);
-        Assert.assertEquals( "/0:0:0:0:0:0:0:1:0", res[3]);
+        Assert.assertEquals(  InetAddress.getByName(DefaultServer.getHostAddress()).getHostAddress() + ":" + DefaultServer.getHostPort(), res[2]);
+        Assert.assertEquals( "0:0:0:0:0:0:0:1:0", res[3]);
 
         res = run("for=[::1], for=9.9.9.9:2343");
         Assert.assertEquals("http", res[0]);
         Assert.assertEquals( DefaultServer.getHostAddress() + ":" + DefaultServer.getHostPort(), res[1]);
-        Assert.assertEquals( "/" + InetAddress.getByName(DefaultServer.getHostAddress()).getHostAddress() + ":" + DefaultServer.getHostPort(), res[2]);
-        Assert.assertEquals( "/0:0:0:0:0:0:0:1:0", res[3]);
+        Assert.assertEquals(  InetAddress.getByName(DefaultServer.getHostAddress()).getHostAddress() + ":" + DefaultServer.getHostPort(), res[2]);
+        Assert.assertEquals( "0:0:0:0:0:0:0:1:0", res[3]);
 
 
         res = run("by=[::1]; for=9.9.9.9:2343");
         Assert.assertEquals("http", res[0]);
         Assert.assertEquals( DefaultServer.getHostAddress() + ":" + DefaultServer.getHostPort(), res[1]);
-        Assert.assertEquals( "/0:0:0:0:0:0:0:1:0", res[2]);
-        Assert.assertEquals( "/9.9.9.9:2343", res[3]);
+        Assert.assertEquals( "0:0:0:0:0:0:0:1:0", res[2]);
+        Assert.assertEquals( "9.9.9.9:2343", res[3]);
 
         res = run("by=[::1]; for=9.9.9.9:2343; host=foo.com");
         Assert.assertEquals("http", res[0]);
         Assert.assertEquals( "foo.com", res[1]);
         Assert.assertEquals( "foo.com:80", res[2]);
-        Assert.assertEquals( "/9.9.9.9:2343", res[3]);
+        Assert.assertEquals( "9.9.9.9:2343", res[3]);
     }
 
     private static String[] run(String ... headers) throws IOException {
