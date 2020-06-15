@@ -306,7 +306,71 @@ public class CachedResource implements Resource, RangeAwareResource {
 
     @Override
     public void serveRangeBlocking(OutputStream outputStream, HttpServerExchange exchange, long start, long end) throws IOException {
+        final DirectBufferCache dataCache = cachingResourceManager.getDataCache();
+        if (dataCache == null) {
+            ((RangeAwareResource) underlyingResource).serveRangeBlocking(outputStream, exchange, start, end);
+            return;
+        }
 
+        final DirectBufferCache.CacheEntry existing = dataCache.get(cacheKey);
+        final Long length = getContentLength();
+        //if it is not eligible to be served from the cache
+        if (length == null || length > cachingResourceManager.getMaxFileSize()) {
+            ((RangeAwareResource) underlyingResource).serveRangeBlocking(outputStream, exchange, start, end);
+            return;
+        }
+        //it is not cached yet, just serve it directly
+        if (existing == null || !existing.enabled() || !existing.reference()) {
+            //it is not cached yet, we can't use a range request to establish the cached item
+            //so we just serve it
+            ((RangeAwareResource) underlyingResource).serveRangeBlocking(outputStream, exchange, start, end);
+        } else {
+            //serve straight from the cache
+            ByteBuf[] buffers;
+            boolean ok = false;
+            try {
+                LimitedBufferSlicePool.PooledByteBuffer[] pooled = existing.buffers();
+                buffers = new ByteBuf[pooled.length];
+                for (int i = 0; i < buffers.length; i++) {
+                    // Keep position from mutating
+                    buffers[i] = pooled[i].getBuffer().duplicate();
+                }
+                ok = true;
+            } finally {
+                if (!ok) {
+                    existing.dereference();
+                }
+            }
+            if (start > 0) {
+                long startDec = start;
+                long endCount = 0;
+                //handle the start of the range
+                for (ByteBuf b : buffers) {
+                    if (endCount == end) {
+                        b.clear();
+                        continue;
+                    } else if (endCount + b.readableBytes() < end) {
+                        endCount += b.readableBytes();
+                    } else {
+                        b.writerIndex((int) (b.readerIndex() + (end - endCount)));
+                        endCount = end;
+                    }
+                    if (b.readableBytes() >= startDec) {
+                        startDec = 0;
+                        b.readerIndex((int) (b.readerIndex() + startDec));
+                    } else {
+                        startDec -= b.readableBytes();
+                        b.clear();
+                    }
+                }
+            }
+            for (ByteBuf i : buffers) {
+                while (i.isReadable()) {
+                    outputStream.write(i.readByte());
+                }
+            }
+            outputStream.close();
+        }
     }
 
     @Override

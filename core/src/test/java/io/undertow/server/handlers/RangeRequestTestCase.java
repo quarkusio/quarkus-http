@@ -68,6 +68,10 @@ public class RangeRequestTestCase {
                 .setDirectoryListingEnabled(true));
         path.addPrefixPath("/cachedresource",  new ResourceHandler(new CachingResourceManager(1000, 1000000, new DirectBufferCache(1000, 10, 10000), new PathResourceManager(rootPath, 10485760), -1))
                 .setDirectoryListingEnabled(true));
+        path.addPrefixPath("/resource-blocking",  new BlockingHandler(new ResourceHandler( new PathResourceManager(rootPath, 10485760))
+                .setDirectoryListingEnabled(true)));
+        path.addPrefixPath("/cachedresource-blocking",  new BlockingHandler(new ResourceHandler(new CachingResourceManager(1000, 1000000, new DirectBufferCache(1000, 10, 10000), new PathResourceManager(rootPath, 10485760), -1))
+                .setDirectoryListingEnabled(true)));
         DefaultServer.setRootHandler(path);
     }
 
@@ -84,6 +88,14 @@ public class RangeRequestTestCase {
         runTest("/cachedresource/range.txt", false);
     }
 
+    @Test
+    public void testResourceHandlerBlocking() throws IOException, InterruptedException {
+        runTest("/resource-blocking/range.txt", false);
+    }
+    @Test
+    public void testCachedResourceHandlerBlocking() throws IOException, InterruptedException {
+        runTest("/cachedresource-blocking/range.txt", false);
+    }
     public void runTest(String path, boolean etag) throws IOException, InterruptedException {
         TestHttpClient client = new TestHttpClient();
         try {
