@@ -211,24 +211,29 @@ public final class UndertowSession implements Session {
 
     public void closeInternal(CloseReason closeReason) throws IOException {
         if (closed.compareAndSet(false, true)) {
-            channel.writeAndFlush(new CloseWebSocketFrame(closeReason.getCloseCode().getCode(), closeReason.getReasonPhrase()))
-                    .addListener(new GenericFutureListener<Future<? super Void>>() {
-                        @Override
-                        public void operationComplete(Future<? super Void> future) throws Exception {
-                            channel.close();
-                        }
-                    });
-            getContainer().invokeEndpointMethod(getExecutor(), new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        endpoint.getInstance().onClose(UndertowSession.this, closeReason);
-                    } finally {
-                        close0();
-                    }
-
+            try {
+                if (channel.isOpen()) {
+                    channel.writeAndFlush(new CloseWebSocketFrame(closeReason.getCloseCode().getCode(), closeReason.getReasonPhrase()))
+                            .addListener(new GenericFutureListener<Future<? super Void>>() {
+                                @Override
+                                public void operationComplete(Future<? super Void> future) throws Exception {
+                                    channel.close();
+                                }
+                            });
                 }
-            });
+            } finally {
+                getContainer().invokeEndpointMethod(getExecutor(), new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            endpoint.getInstance().onClose(UndertowSession.this, closeReason);
+                        } finally {
+                            close0();
+                        }
+
+                    }
+                });
+            }
             //TODO: there is a lot of spec required behaviour here
         }
     }
