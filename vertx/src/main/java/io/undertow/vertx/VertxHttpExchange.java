@@ -7,6 +7,7 @@ import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -784,7 +785,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     public void pushResource(String path, String method, Map<String, List<String>> requestHeaders) {
         MultiMap map = new VertxHttpHeaders();
         for (Map.Entry<String, List<String>> entry : requestHeaders.entrySet()) {
-            map.add(entry.getKey(), entry.getValue());
+            map.add(entry.getKey().toLowerCase(Locale.ENGLISH), entry.getValue());
         }
         response.push(HttpMethod.valueOf(method), path, map, new Handler<AsyncResult<HttpServerResponse>>() {
             @Override
