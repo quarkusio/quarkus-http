@@ -32,6 +32,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import io.vertx.core.http.HttpServerOptions;
 import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.runner.Description;
@@ -419,6 +420,7 @@ public class DefaultServer extends BlockJUnit4ClassRunner {
                 .setHandler(rootHandler)
                 .addListener(new Undertow.ListenerBuilder().setType(Undertow.ListenerType.HTTPS)
                         .setPort(getHostSSLPort(DEFAULT))
+                        .setOptions(new HttpServerOptions().setUseAlpn(true))
                         .setHost(getHostAddress())
                         .setKeyStore(SERVER_KEY_STORE)
                         .setKeyStorePassword(STORE_PASSWORD)
