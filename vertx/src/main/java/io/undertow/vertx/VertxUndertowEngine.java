@@ -17,6 +17,7 @@ import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.net.JksOptions;
 
 public class VertxUndertowEngine implements UndertowEngine {
@@ -140,9 +141,13 @@ public class VertxUndertowEngine implements UndertowEngine {
 
             server = vertx.createHttpServer(options);
 
-            server.requestHandler(request -> {
-                VertxHttpExchange delegate = new VertxHttpExchange(request, allocator, blockingExecutor, null, null);
-                rootHandler.handle(delegate);
+            server.requestHandler(new Handler<HttpServerRequest>() {
+                @Override
+                public void handle(HttpServerRequest request) {
+                    VertxHttpExchange delegate = new VertxHttpExchange(request, allocator, blockingExecutor, null, null);
+                    delegate.setPushHandler(this);
+                    rootHandler.handle(delegate);
+                }
             });
 
             server.listen(port, host, new Handler<AsyncResult<HttpServer>>() {

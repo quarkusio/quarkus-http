@@ -1,26 +1,8 @@
 package io.undertow.vertx;
 
-import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.InetSocketAddress;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-
-import javax.net.ssl.SSLSession;
-
-import org.jboss.logging.Logger;
-
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.httpcore.BufferAllocator;
 import io.undertow.httpcore.ConnectionSSLSessionInfo;
@@ -36,7 +18,6 @@ import io.undertow.httpcore.UndertowOptionMap;
 import io.undertow.httpcore.UndertowOptions;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
@@ -47,6 +28,21 @@ import io.vertx.core.http.impl.Http1xServerConnection;
 import io.vertx.core.http.impl.headers.VertxHttpHeaders;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.net.impl.ConnectionBase;
+import org.jboss.logging.Logger;
+
+import javax.net.ssl.SSLSession;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.net.InetSocketAddress;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange, InputChannel, OutputChannel, Handler<Buffer> {
 
@@ -83,6 +79,8 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     private long readTimeout = UndertowOptions.DEFAULT_READ_TIMEOUT;
 
     private long requestContentLength = -1;
+
+    private Handler<HttpServerRequest> pushHandler;
 
     public VertxHttpExchange(HttpServerRequest request, BufferAllocator allocator, Executor worker, Object context) {
         this(request, allocator, worker, context, null);
@@ -167,7 +165,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                     throw new RuntimeException("Failed to parse content length", e);
                 }
             }
-        } else if(existingBody != null){
+        } else if (existingBody != null) {
             eof = true;
         } else {
             terminateRequest();
@@ -217,6 +215,15 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         } else {
             upgradeRequest = false;
         }
+    }
+
+    public Handler<HttpServerRequest> getPushHandler() {
+        return pushHandler;
+    }
+
+    public VertxHttpExchange setPushHandler(Handler<HttpServerRequest> pushHandler) {
+        this.pushHandler = pushHandler;
+        return this;
     }
 
     @Override
@@ -778,19 +785,25 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public boolean isPushSupported() {
-        return request.version() == HttpVersion.HTTP_2;
+        return request.version() == HttpVersion.HTTP_2 && pushHandler != null;
     }
 
     @Override
     public void pushResource(String path, String method, Map<String, List<String>> requestHeaders) {
-        MultiMap map = new VertxHttpHeaders();
+        if (!isPushSupported()) {
+            throw new IllegalStateException("Push not supported");
+        }
+        VertxHttpHeaders map = new VertxHttpHeaders();
         for (Map.Entry<String, List<String>> entry : requestHeaders.entrySet()) {
             map.add(entry.getKey().toLowerCase(Locale.ENGLISH), entry.getValue());
         }
-        response.push(HttpMethod.valueOf(method), path, map, new Handler<AsyncResult<HttpServerResponse>>() {
+        response.push(HttpMethod.valueOf(method), request.host(), path, map, new Handler<AsyncResult<HttpServerResponse>>() {
             @Override
             public void handle(AsyncResult<HttpServerResponse> event) {
-                //we don't actually care about the result
+                if (event.succeeded()) {
+                    PushedHttpServerRequest pushed = new PushedHttpServerRequest(request, HttpMethod.valueOf(method), path, event.result(), map);
+                    pushHandler.handle(pushed);
+                }
             }
         });
     }
