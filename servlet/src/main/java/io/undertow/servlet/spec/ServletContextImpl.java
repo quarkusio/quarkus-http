@@ -112,7 +112,7 @@ public class ServletContextImpl implements ServletContext {
 
     private final ServletContainer servletContainer;
     private final Deployment deployment;
-    private volatile DeploymentInfo deploymentInfo;
+    private final DeploymentInfo deploymentInfo;
     private final ConcurrentMap<String, Object> attributes;
     private final SessionCookieConfigImpl sessionCookieConfig;
     private final AttachmentKey<HttpSessionImpl> sessionAttachmentKey = AttachmentKey.create(HttpSessionImpl.class);
@@ -973,7 +973,6 @@ public class ServletContextImpl implements ServletContext {
 
     public void destroy() {
         attributes.clear();
-        deploymentInfo = null;
     }
 
     private void readServletAnnotations(ServletInfo servlet) {
