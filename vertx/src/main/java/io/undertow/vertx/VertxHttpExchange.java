@@ -19,6 +19,7 @@ import io.undertow.httpcore.UndertowOptions;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
@@ -573,7 +574,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                     @Override
                     public void handle(Void event) {
                         if (waitingForWrite) {
-                            request.connection().notifyAll();
+                            HttpConnection connection = request.connection();
+                            synchronized (connection) {
+                                connection.notifyAll();
+                            }
                         }
                     }
                 };
