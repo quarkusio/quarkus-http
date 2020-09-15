@@ -281,8 +281,10 @@ public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
                     }
                 }
             } else {
-                if (!containsResponseHeader(HttpHeaderNames.CONTENT_LENGTH)) {
+                if (!containsResponseHeader(HttpHeaderNames.CONTENT_LENGTH) && !isHttp2()) {
                     setResponseHeader(HttpHeaderNames.TRANSFER_ENCODING, "chunked");
+                } else if (isHttp2()) {
+                    removeResponseHeader(HttpHeaderNames.TRANSFER_ENCODING);
                 }
             }
             responseStarted = true;

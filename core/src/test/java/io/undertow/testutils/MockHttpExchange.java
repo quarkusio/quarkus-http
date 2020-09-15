@@ -150,6 +150,11 @@ public class MockHttpExchange extends HttpExchangeBase {
     }
 
     @Override
+    public boolean isHttp2() {
+        return false;
+    }
+
+    @Override
     public OutputChannel getOutputChannel() {
         return null;
     }
