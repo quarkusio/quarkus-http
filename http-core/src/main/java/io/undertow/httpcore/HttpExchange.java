@@ -122,6 +122,8 @@ public interface HttpExchange extends Closeable {
 
     boolean isInIoThread();
 
+    boolean isHttp2();
+
     void addWriteFunction(WriteFunction listener);
 
     OutputChannel getOutputChannel();
@@ -138,7 +140,6 @@ public interface HttpExchange extends Closeable {
     InetSocketAddress getDestinationAddress();
 
     InetSocketAddress getSourceAddress();
-
 
     boolean isComplete();
 

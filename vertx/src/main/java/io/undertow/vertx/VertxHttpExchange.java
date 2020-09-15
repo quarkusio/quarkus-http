@@ -372,6 +372,11 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         return connectionBase.channel().eventLoop().inEventLoop();
     }
 
+    @Override
+    public boolean isHttp2() {
+        return request.version() == HttpVersion.HTTP_2;
+    }
+
 
     @Override
     public InputChannel getInputChannel() {
