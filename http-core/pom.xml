@@ -23,12 +23,12 @@
     <parent>
         <groupId>io.quarkus.http</groupId>
         <artifactId>quarkus-http-parent</artifactId>
-        <version>3.0.16.Final</version>
+        <version>3.0.17.Final-SNAPSHOT</version>
     </parent>
 
     <groupId>io.quarkus.http</groupId>
     <artifactId>quarkus-http-http-core</artifactId>
-    <version>3.0.16.Final</version>
+    <version>3.0.17.Final-SNAPSHOT</version>
 
     <name>Undertow HTTP Core</name>
 
