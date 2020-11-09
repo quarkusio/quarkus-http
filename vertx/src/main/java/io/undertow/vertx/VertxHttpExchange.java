@@ -411,11 +411,15 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                 if (inputOverflow != null) {
                     input1 = inputOverflow.poll();
                     if (input1 == null) {
-                        request.fetch(1);
+                        if (!eof) {
+                            request.fetch(1);
+                        }
                     }
                 } else {
                     input1 = null;
-                    request.fetch(1);
+                    if (!eof) {
+                        request.fetch(1);
+                    }
                 }
                 return ret;
             } else if (eof) {
@@ -480,10 +484,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             input1 = null;
             if (inputOverflow != null) {
                 input1 = inputOverflow.poll();
-                if (input1 == null) {
+                if (input1 == null && !request.isEnded()) {
                     request.fetch(1);
                 }
-            } else {
+            } else if (!request.isEnded()) {
                 request.fetch(1);
             }
 
@@ -707,6 +711,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     public void handle(Buffer event) {
         BiConsumer<InputChannel, Object> readCallback = null;
         Object context = null;
+        if (event.length() == 0) {
+            event.getByteBuf().release();
+            return;
+        }
         synchronized (request.connection()) {
             uploadSize += event.length();
             if (maxEntitySizeReached()) {
