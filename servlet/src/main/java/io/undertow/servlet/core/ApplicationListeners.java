@@ -19,6 +19,7 @@
 package io.undertow.servlet.core;
 
 import static io.undertow.servlet.core.ApplicationListeners.ListenerState.DECLARED_LISTENER;
+import static io.undertow.servlet.core.ApplicationListeners.ListenerState.NO_LISTENER;
 import static io.undertow.servlet.core.ApplicationListeners.ListenerState.PROGRAMATIC_LISTENER;
 
 import java.util.ArrayList;
@@ -68,12 +69,7 @@ public class ApplicationListeners implements Lifecycle {
             javax.servlet.http.HttpSessionAttributeListener.class,
             HttpSessionIdListener.class};
 
-    private static final ThreadLocal<ListenerState> IN_PROGRAMATIC_SC_LISTENER_INVOCATION = new ThreadLocal<ListenerState>() {
-        @Override
-        protected ListenerState initialValue() {
-            return ListenerState.NO_LISTENER;
-        }
-    };
+    private static final ThreadLocal<ListenerState> IN_PROGRAMATIC_SC_LISTENER_INVOCATION = new ThreadLocal<ListenerState>();
 
     private ServletContext servletContext;
     private final List<ManagedListener> allListeners = new ArrayList<>();
@@ -365,7 +361,8 @@ public class ApplicationListeners implements Lifecycle {
      * returns true if this is in in a
      */
     public static ListenerState listenerState() {
-        return IN_PROGRAMATIC_SC_LISTENER_INVOCATION.get();
+        ListenerState listenerState = IN_PROGRAMATIC_SC_LISTENER_INVOCATION.get();
+        return listenerState == null ? NO_LISTENER : listenerState;
     }
 
     /**
