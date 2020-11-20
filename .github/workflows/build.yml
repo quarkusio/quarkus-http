@@ -8,9 +8,9 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Install JDK 1.8
-      uses: joschi/setup-jdk@v1.0.0
+      uses: AdoptOpenJDK/install-jdk@v1.1.1
       with:
-        java-version: 'openjdk8'
+        version: '8'
     - name: Build with Maven
       run: mvn -B clean install
 
@@ -19,9 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install JDK 11
-        uses: joschi/setup-jdk@v1.0.0
+        uses: AdoptOpenJDK/install-jdk@v1.1.1
         with:
-          java-version: 'openjdk11'
+          version: '11'
       - name: Build with Maven
         run: mvn -B clean install
 
