@@ -81,7 +81,7 @@
                 <Field name="elected"/>
             </And>
             <And>
-                <Class name="io.undertow.websockets.jsr.SessionContainer"/>
+                <Class name="io.undertow.websockets.SessionContainer"/>
                 <Field name="waiterCount"/>
             </And>
         </Or>
@@ -254,7 +254,7 @@
             <Class name="io.undertow.servlet.api.LoginConfig"/>
             <Class name="io.undertow.servlet.api.FilterInfo"/>
             <Class name="io.undertow.servlet.api.ServletInfo"/>
-            <Class name="io.undertow.websockets.jsr.WebSocketDeploymentInfo"/>
+            <Class name="io.undertow.websockets.WebSocketDeploymentInfo"/>
         </Or>
     </Match>
 
