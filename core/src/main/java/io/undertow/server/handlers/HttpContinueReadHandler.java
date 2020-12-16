@@ -22,11 +22,9 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
 /**
- * Handler for requests that require 100-continue responses. If an attempt is made to read from the source
- * channel then a 100 continue response is sent.
- *
- * @author Stuart Douglas
+ * This class is no longer required
  */
+@Deprecated
 public class HttpContinueReadHandler implements HttpHandler {
 
     private final HttpHandler handler;

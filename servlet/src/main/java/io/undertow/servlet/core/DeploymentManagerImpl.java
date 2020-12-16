@@ -63,7 +63,6 @@ import io.undertow.security.impl.SecurityContextFactoryImpl;
 import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.server.handlers.HttpContinueReadHandler;
 import io.undertow.server.handlers.PredicateHandler;
 import io.undertow.server.handlers.form.FormEncodedDataDefinition;
 import io.undertow.server.handlers.form.FormParserFactory;
@@ -240,7 +239,6 @@ public class DeploymentManagerImpl implements DeploymentManager {
                     final ServletInitialHandler servletInitialHandler = SecurityActions.createServletInitialHandler(deployment.getServletPaths(), wrappedHandlers, deployment, servletContext);
 
                     HttpHandler initialHandler = wrapHandlers(servletInitialHandler, deployment.getDeploymentInfo().getInitialHandlerChainWrappers());
-                    initialHandler = new HttpContinueReadHandler(initialHandler);
                     if(deploymentInfo.getUrlEncoding() != null) {
                         initialHandler = Handlers.urlDecodingHandler(deploymentInfo.getUrlEncoding(), initialHandler);
                     }
