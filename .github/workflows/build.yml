@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install JDK 11
-        uses: joschi/setup-jdk@v1.0.0
+        uses: joschi/setup-jdk@e87a7cec853d2dd7066adf837fe12bf0f3d45e52
         with:
           java-version: 'openjdk11'
       - name: Build with Maven
