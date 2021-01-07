@@ -288,9 +288,12 @@ public class Handlers {
      * A handler that automatically handles HTTP 100-continue responses, by sending a continue
      * response when the first attempt is made to read from the request channel.
      *
+     * This handler is no longer required
+     *
      * @param next The next handler in the chain
      * @return A new continue handler
      */
+    @Deprecated
     public static HttpContinueReadHandler httpContinueRead(final HttpHandler next) {
         return new HttpContinueReadHandler(next);
     }

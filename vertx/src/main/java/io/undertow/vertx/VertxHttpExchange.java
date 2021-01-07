@@ -47,6 +47,11 @@ import java.util.function.Consumer;
 
 public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange, InputChannel, OutputChannel, Handler<Buffer> {
 
+    private static final int CONTINUE_STATE_NONE = 0;
+    private static final int CONTINUE_STATE_REQUIRED = 1;
+    private static final int CONTINUE_STATE_SENT = 2;
+
+
     private static final Logger log = Logger.getLogger(VertxHttpExchange.class);
 
     private final HttpServerRequest request;
@@ -82,6 +87,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     private long requestContentLength = -1;
 
     private Handler<HttpServerRequest> pushHandler;
+    private int continueState;
 
     public VertxHttpExchange(HttpServerRequest request, BufferAllocator allocator, Executor worker, Object context) {
         this(request, allocator, worker, context, null);
@@ -215,6 +221,12 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             }
         } else {
             upgradeRequest = false;
+        }
+        String expect = request.getHeader(io.netty.handler.codec.http.HttpHeaderNames.EXPECT);
+        if (expect != null) {
+            if (expect.equalsIgnoreCase("100-continue")) {
+                continueState = CONTINUE_STATE_REQUIRED;
+            }
         }
     }
 
@@ -403,6 +415,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public ByteBuf readAsync() throws IOException {
+        if (continueState == CONTINUE_STATE_REQUIRED) {
+            continueState = CONTINUE_STATE_SENT;
+            request.response().writeContinue();
+        }
         synchronized (request.connection()) {
             if (readError != null) {
                 throw new IOException(readError);
@@ -459,6 +475,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public ByteBuf readBlocking() throws IOException {
+        if (continueState == CONTINUE_STATE_REQUIRED) {
+            continueState = CONTINUE_STATE_SENT;
+            request.response().writeContinue();
+        }
         long readStart = System.currentTimeMillis();
         synchronized (request.connection()) {
 
@@ -776,7 +796,10 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void sendContinue() {
-        request.response().writeContinue();
+        if (continueState == CONTINUE_STATE_REQUIRED) {
+            continueState = CONTINUE_STATE_SENT;
+            request.response().writeContinue();
+        }
     }
 
     @Override
