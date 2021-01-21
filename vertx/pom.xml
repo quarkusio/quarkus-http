@@ -23,12 +23,12 @@
     <parent>
         <groupId>io.quarkus.http</groupId>
         <artifactId>quarkus-http-parent</artifactId>
-        <version>3.0.19.Final-SNAPSHOT</version>
+        <version>4.0.0-SNAPSHOT</version>
     </parent>
 
     <groupId>io.quarkus.http</groupId>
     <artifactId>quarkus-http-vertx-backend</artifactId>
-    <version>3.0.19.Final-SNAPSHOT</version>
+    <version>4.0.0-SNAPSHOT</version>
 
     <name>Undertow Vertx Backend</name>
 

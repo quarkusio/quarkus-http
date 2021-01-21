@@ -1,10 +1,8 @@
 package io.undertow.servlet.test.streams;
 
-import io.undertow.httpcore.StatusCodes;
 import io.undertow.servlet.api.ServletInfo;
 import io.undertow.servlet.test.util.DeploymentUtils;
 import io.undertow.testutils.DefaultServer;
-import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -12,42 +10,26 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpVersion;
-import org.apache.commons.codec.binary.Hex;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 @RunWith(DefaultServer.class)
-public class Http2InputStreamTestCase  {
-
+public class Http2InputStreamTestCase {
 
     @BeforeClass
     public static void setup() throws IOException {
@@ -182,7 +164,6 @@ public class Http2InputStreamTestCase  {
         }
     }
 
-
     protected String getBaseUrl() {
         return DefaultServer.getDefaultServerURL();
     }
@@ -201,7 +182,6 @@ public class Http2InputStreamTestCase  {
         }
     }
 
-
     public void runTest(final String message, String url, boolean preamble, boolean offIOThread) throws Exception {
         TestHttpClient client = createClient();
         try {
@@ -215,7 +195,9 @@ public class Http2InputStreamTestCase  {
                         setTrustAll(true);
 
                 HttpClientRequest request = vertx.createHttpClient(options)
-                        .post(DefaultServer.getHostSSLPort("default"), DefaultServer.getHostAddress(), "/servletContext/"+url);
+                        .request(HttpMethod.POST, DefaultServer.getHostSSLPort("default"),
+                                DefaultServer.getHostAddress(), "/servletContext/" + url)
+                        .toCompletionStage().toCompletableFuture().join();
 
                 if (preamble && !message.isEmpty()) {
                     request.headers().add("preamble", Integer.toString(message.length() / 2));
@@ -223,25 +205,10 @@ public class Http2InputStreamTestCase  {
                 if (offIOThread) {
                     request.headers().add("offIoThread", "true");
                 }
-                request.handler(new Handler<HttpClientResponse>() {
-                    @Override
-                    public void handle(HttpClientResponse resp) {
-                        resp.bodyHandler(new Handler<Buffer>() {
-                            @Override
-                            public void handle(Buffer event) {
-                                res.complete(event.toString(StandardCharsets.UTF_8));
-                            }
-                        });
-                        resp.exceptionHandler(new Handler<Throwable>() {
-                            @Override
-                            public void handle(Throwable event) {
-                                res.completeExceptionally(event);
-                            }
-                        });
-                    }
+                request.response().onSuccess(resp -> {
+                    resp.body().onSuccess(b -> res.complete(b.toString(StandardCharsets.UTF_8)));
                 });
                 request.end(message);
-
                 Assert.assertEquals(message, res.get(10, TimeUnit.SECONDS));
             } finally {
                 vertx.close();
@@ -251,7 +218,8 @@ public class Http2InputStreamTestCase  {
         }
     }
 
-    public void runTestParallel(int concurrency, final String message, String url, boolean preamble, boolean offIOThread) throws Exception {
+    public void runTestParallel(int concurrency, final String message, String url, boolean preamble,
+            boolean offIOThread) throws Exception {
 
         Vertx vertx = Vertx.vertx();
         try {
@@ -264,35 +232,31 @@ public class Http2InputStreamTestCase  {
                         setTrustAll(true);
 
                 HttpClientRequest request = vertx.createHttpClient(options)
-                        .post(DefaultServer.getHostSSLPort("default"), DefaultServer.getHostAddress(), "/servletContext/"+url);
+                        .request(HttpMethod.POST, DefaultServer.getHostSSLPort("default"),
+                                DefaultServer.getHostAddress(), "/servletContext/" + url)
+                        .toCompletionStage().toCompletableFuture().join();
 
-                CompletableFuture<String> res = new CompletableFuture<>() ;
+                CompletableFuture<String> res = new CompletableFuture<>();
                 if (preamble && !message.isEmpty()) {
                     request.headers().add("preamble", Integer.toString(message.length() / 2));
                 }
                 if (offIOThread) {
                     request.headers().add("offIoThread", "true");
                 }
-                request.handler(new Handler<HttpClientResponse>() {
+                request.response().onSuccess(new Handler<HttpClientResponse>() {
                     @Override
                     public void handle(HttpClientResponse resp) {
-                        resp.bodyHandler(new Handler<Buffer>() {
+                        resp.body().onSuccess(new Handler<Buffer>() {
                             @Override
-                            public void handle(Buffer event) {
-                                res.complete(event.toString(StandardCharsets.UTF_8));
-                            }
-                        });
-                        resp.exceptionHandler(new Handler<Throwable>() {
-                            @Override
-                            public void handle(Throwable event) {
-                                res.completeExceptionally(event);
+                            public void handle(Buffer b) {
+                                res.complete(b.toString(StandardCharsets.UTF_8));
                             }
                         });
                     }
                 });
                 request.end(message);
             }
-            for(Future<?> i : results) {
+            for (Future<?> i : results) {
                 i.get();
             }
         } finally {
