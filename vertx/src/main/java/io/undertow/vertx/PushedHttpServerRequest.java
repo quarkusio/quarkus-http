@@ -1,6 +1,7 @@
 package io.undertow.vertx;
 
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
@@ -84,11 +85,6 @@ public class PushedHttpServerRequest implements HttpServerRequest {
     @Override
     public HttpMethod method() {
         return method;
-    }
-
-    @Override
-    public String rawMethod() {
-        return method.toString();
     }
 
     @Override
@@ -198,8 +194,18 @@ public class PushedHttpServerRequest implements HttpServerRequest {
     }
 
     @Override
-    public NetSocket netSocket() {
-        return original.netSocket();
+    public Future<Buffer> body() {
+        return original.body();
+    }
+
+    @Override
+    public Future<Void> end() {
+        return null;
+    }
+
+    @Override
+    public Future<NetSocket> toNetSocket() {
+        return original.toNetSocket();
     }
 
     @Override
@@ -219,17 +225,17 @@ public class PushedHttpServerRequest implements HttpServerRequest {
 
     @Override
     public MultiMap formAttributes() {
-        return null;
+        return original.formAttributes();
     }
 
     @Override
     public String getFormAttribute(String attributeName) {
-        return null;
+        return original.getFormAttribute(attributeName);
     }
 
     @Override
-    public ServerWebSocket upgrade() {
-        throw new IllegalStateException();
+    public Future<ServerWebSocket> toWebSocket() {
+        throw new UnsupportedOperationException();
     }
 
     @Override

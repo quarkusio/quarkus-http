@@ -11,8 +11,8 @@ import io.undertow.httpcore.UndertowEngine;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
 import io.vertx.core.Handler;
+import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
@@ -137,8 +137,7 @@ public class VertxUndertowEngine implements UndertowEngine {
         }
 
         @Override
-        public void start(Future<Void> startFuture) throws Exception {
-
+        public void start(Promise<Void> startPromise) throws Exception {
             server = vertx.createHttpServer(options);
 
             server.requestHandler(new Handler<HttpServerRequest>() {
@@ -154,23 +153,23 @@ public class VertxUndertowEngine implements UndertowEngine {
                 @Override
                 public void handle(AsyncResult<HttpServer> event) {
                     if (event.failed()) {
-                        startFuture.fail(event.cause());
+                        startPromise.fail(event.cause());
                     } else {
-                        startFuture.complete();
+                        startPromise.complete();
                     }
                 }
             });
         }
 
         @Override
-        public void stop(Future<Void> stopFuture) throws Exception {
+        public void stop(Promise<Void> stopPromise) throws Exception {
             server.close(new Handler<AsyncResult<Void>>() {
                 @Override
                 public void handle(AsyncResult<Void> event) {
                     if (event.failed()) {
-                        stopFuture.fail(event.cause());
+                        stopPromise.fail(event.cause());
                     } else {
-                        stopFuture.complete();
+                        stopPromise.complete();
                     }
                 }
             });

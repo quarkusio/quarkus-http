@@ -18,6 +18,7 @@ import io.undertow.httpcore.UndertowOptionMap;
 import io.undertow.httpcore.UndertowOptions;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpHeaders;
@@ -26,7 +27,6 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.core.http.impl.Http1xServerConnection;
-import io.vertx.core.http.impl.headers.VertxHttpHeaders;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.net.impl.ConnectionBase;
 import org.jboss.logging.Logger;
@@ -839,7 +839,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         if (!isPushSupported()) {
             throw new IllegalStateException("Push not supported");
         }
-        VertxHttpHeaders map = new VertxHttpHeaders();
+        MultiMap map = MultiMap.caseInsensitiveMultiMap();
         for (Map.Entry<String, List<String>> entry : requestHeaders.entrySet()) {
             map.add(entry.getKey().toLowerCase(Locale.ENGLISH), entry.getValue());
         }
