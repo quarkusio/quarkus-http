@@ -1,6 +1,14 @@
 name: Build
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+      - 4.x
+  pull_request:
+    branches:
+      - master
+      - 4.x
 
 jobs:
   build_java8:
