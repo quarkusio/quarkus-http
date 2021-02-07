@@ -163,7 +163,7 @@ public class EncodingFactory {
                     if (list == null) {
                         binaryDecoders.put(type, list = new ArrayList<>());
                     }
-                    list.add(classIntrospecter.createInstanceFactory(decoder));
+                    list.add(createInstanceFactory(classIntrospecter, decoder));
                 } catch (NoSuchMethodException e) {
                     throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
                 }
@@ -175,7 +175,7 @@ public class EncodingFactory {
                     if (list == null) {
                         binaryDecoders.put(type, list = new ArrayList<>());
                     }
-                    list.add(classIntrospecter.createInstanceFactory(decoder));
+                    list.add(createInstanceFactory(classIntrospecter, decoder));
                 } catch (NoSuchMethodException e) {
                     throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
                 }
@@ -187,7 +187,7 @@ public class EncodingFactory {
                     if (list == null) {
                         textDecoders.put(type, list = new ArrayList<>());
                     }
-                    list.add(classIntrospecter.createInstanceFactory(decoder));
+                    list.add(createInstanceFactory(classIntrospecter, decoder));
                 } catch (NoSuchMethodException e) {
                     throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
                 }
