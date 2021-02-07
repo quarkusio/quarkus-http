@@ -156,46 +156,10 @@ public class EncodingFactory {
                 throw JsrWebSocketMessages.MESSAGES.didNotImplementKnownDecoderSubclass(decoder);
             }
 
-            if (Decoder.Binary.class.isAssignableFrom(decoder)) {
-                try {
-                    Method method = decoder.getMethod("decode", ByteBuffer.class);
-                    final Class<?> type = resolveReturnType(method, decoder);
-                    List<InstanceFactory<? extends Decoder>> list = binaryDecoders.computeIfAbsent(type, k -> new ArrayList<>());
-                    list.add(createInstanceFactory(classIntrospecter, decoder));
-                } catch (NoSuchMethodException e) {
-                    throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
-                }
-            }
-            if (Decoder.BinaryStream.class.isAssignableFrom(decoder)) {
-                try {
-                    Method method = decoder.getMethod("decode", InputStream.class);
-                    final Class<?> type = resolveReturnType(method, decoder);
-                    List<InstanceFactory<? extends Decoder>> list = binaryDecoders.computeIfAbsent(type, k -> new ArrayList<>());
-                    list.add(createInstanceFactory(classIntrospecter, decoder));
-                } catch (NoSuchMethodException e) {
-                    throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
-                }
-            }
-            if (Decoder.Text.class.isAssignableFrom(decoder)) {
-                try {
-                    Method method = decoder.getMethod("decode", String.class);
-                    final Class<?> type = resolveReturnType(method, decoder);
-                    List<InstanceFactory<? extends Decoder>> list = textDecoders.computeIfAbsent(type, k -> new ArrayList<>());
-                    list.add(createInstanceFactory(classIntrospecter, decoder));
-                } catch (NoSuchMethodException e) {
-                    throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
-                }
-            }
-            if (Decoder.TextStream.class.isAssignableFrom(decoder)) {
-                try {
-                    Method method = decoder.getMethod("decode", Reader.class);
-                    final Class<?> type = resolveReturnType(method, decoder);
-                    List<InstanceFactory<? extends Decoder>> list = textDecoders.computeIfAbsent(type, k -> new ArrayList<>());
-                    list.add(createInstanceFactory(classIntrospecter, decoder));
-                } catch (NoSuchMethodException e) {
-                    throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
-                }
-            }
+            tryRegisterDecoder(classIntrospecter, binaryDecoders, decoder, Decoder.Binary.class, ByteBuffer.class);
+            tryRegisterDecoder(classIntrospecter, binaryDecoders, decoder, Decoder.BinaryStream.class, InputStream.class);
+            tryRegisterDecoder(classIntrospecter, textDecoders, decoder, Decoder.Text.class, String.class);
+            tryRegisterDecoder(classIntrospecter, textDecoders, decoder, Decoder.TextStream.class, Reader.class);
         }
 
         for (Class<? extends Encoder> encoder : encoders) {
@@ -228,6 +192,24 @@ public class EncodingFactory {
                 && !Decoder.BinaryStream.class.isAssignableFrom(decoder)
                 && !Decoder.Text.class.isAssignableFrom(decoder)
                 && !Decoder.TextStream.class.isAssignableFrom(decoder);
+    }
+
+    private static void tryRegisterDecoder(ClassIntrospecter classIntrospecter, Map<Class<?>, List<InstanceFactory<? extends Decoder>>> binaryDecoders, Class<? extends Decoder> decoder, Class<?> decoderType, Class<?> decodedType) throws DeploymentException {
+        if (!decoderType.isAssignableFrom(decoder)) {
+            return;
+        }
+        Method method = findDecodeMethod(decoder, decodedType);
+        final Class<?> type = resolveReturnType(method, decoder);
+        List<InstanceFactory<? extends Decoder>> list = binaryDecoders.computeIfAbsent(type, k -> new ArrayList<>());
+        list.add(createInstanceFactory(classIntrospecter, decoder));
+    }
+
+    private static Method findDecodeMethod(Class<? extends Decoder> decoder, Class<?> type) throws DeploymentException {
+        try {
+            return decoder.getMethod("decode", type);
+        } catch (NoSuchMethodException e) {
+            throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
+        }
     }
 
     private static Class<?> resolveReturnType(Method method, Class<? extends Decoder> decoder) {
