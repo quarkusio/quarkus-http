@@ -75,7 +75,6 @@ public class AnnotatedEndpointFactory {
 
 
     public static AnnotatedEndpointFactory create(final Class<?> endpointClass, final EncodingFactory encodingFactory, final Set<String> paths) throws DeploymentException {
-        final Set<Class<? extends Annotation>> found = new HashSet<>();
         BoundMethod onOpen = null;
         BoundMethod onClose = null;
         BoundMethod onError = null;
@@ -87,40 +86,37 @@ public class AnnotatedEndpointFactory {
         do {
             for (final Method method : c.getDeclaredMethods()) {
                 if (method.isAnnotationPresent(OnOpen.class)) {
-                    if (found.contains(OnOpen.class)) {
+                    if (onOpen != null) {
                         if(!onOpen.overrides(method)) {
                             throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnOpen.class);
                         } else {
                             continue;
                         }
                     }
-                    found.add(OnOpen.class);
                     onOpen = new BoundMethod(method, null, false, 0, new BoundSingleParameter(method, Session.class, true),
                             new BoundSingleParameter(method, EndpointConfig.class, true),
                             createBoundPathParameters(method, paths, endpointClass));
                 }
                 if (method.isAnnotationPresent(OnClose.class)) {
-                    if (found.contains(OnClose.class)) {
+                    if (onClose != null) {
                         if(!onClose.overrides(method)) {
                             throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnClose.class);
                         } else {
                             continue;
                         }
                     }
-                    found.add(OnClose.class);
                     onClose = new BoundMethod(method, null, false, 0, new BoundSingleParameter(method, Session.class, true),
                             new BoundSingleParameter(method, CloseReason.class, true),
                             createBoundPathParameters(method, paths, endpointClass));
                 }
                 if (method.isAnnotationPresent(OnError.class)) {
-                    if (found.contains(OnError.class)) {
+                    if (onError != null) {
                         if(!onError.overrides(method)) {
                             throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnError.class);
                         } else {
                             continue;
                         }
                     }
-                    found.add(OnError.class);
                     onError = new BoundMethod(method, null, false, 0, new BoundSingleParameter(method, Session.class, true),
                             new BoundSingleParameter(method, Throwable.class, false),
                             createBoundPathParameters(method, paths, endpointClass));
@@ -365,25 +361,21 @@ public class AnnotatedEndpointFactory {
      */
     private static class BoundPathParameters implements BoundParameter {
 
-        private final Class<?> endpointClass;
-        private final Set<String> paths;
         private final String[] positions;
         private final Encoding[] encoders;
         private final Class[] types;
 
         BoundPathParameters(final String[] positions, final Method method, Class<?> endpointClass, Set<String> paths) throws DeploymentException {
             this.positions = positions;
-            this.endpointClass = endpointClass;
-            this.paths = paths;
             this.encoders = new Encoding[positions.length];
             this.types = new Class[positions.length];
             for (int i = 0; i < positions.length; ++i) {
                 Class type = method.getParameterTypes()[i];
                 Annotation[] annotations = method.getParameterAnnotations()[i];
-                for(int j = 0; j < annotations.length; ++j) {
-                    if(annotations[j] instanceof PathParam) {
-                        PathParam param = (PathParam) annotations[j];
-                        if(!paths.contains(param.value())) {
+                for (Annotation annotation : annotations) {
+                    if (annotation instanceof PathParam) {
+                        PathParam param = (PathParam) annotation;
+                        if (!paths.contains(param.value())) {
                             JsrWebSocketLogger.ROOT_LOGGER.pathTemplateNotFound(endpointClass, param, method, paths);
                         }
                     }
