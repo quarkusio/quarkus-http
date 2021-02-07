@@ -56,7 +56,7 @@ public class EncodingFactory {
     /**
      * An encoding factory that can deal with primitive types.
      */
-    public static final EncodingFactory DEFAULT = new EncodingFactory(Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+    public static final EncodingFactory DEFAULT = new EncodingFactory(Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap());
 
     private final Map<Class<?>, List<ObjectFactory<? extends Encoder>>> binaryEncoders;
     private final Map<Class<?>, List<ObjectFactory<? extends Decoder>>> binaryDecoders;
@@ -96,10 +96,11 @@ public class EncodingFactory {
     }
 
     public Encoding createEncoding(final EndpointConfig endpointConfig) {
-            Map<Class<?>, List<ObjectHandle<? extends Encoder>>> binaryEncoders = this.binaryEncoders.isEmpty() ? Collections.<Class<?>, List<ObjectHandle<? extends Encoder>>>emptyMap() : new HashMap<Class<?>, List<ObjectHandle<? extends Encoder>>>();
-            Map<Class<?>, List<ObjectHandle<? extends Decoder>>> binaryDecoders = this.binaryDecoders.isEmpty() ? Collections.<Class<?>, List<ObjectHandle<? extends Decoder>>>emptyMap() : new HashMap<Class<?>, List<ObjectHandle<? extends Decoder>>>();
-            Map<Class<?>, List<ObjectHandle<? extends Encoder>>> textEncoders = this.textEncoders.isEmpty() ? Collections.<Class<?>, List<ObjectHandle<? extends Encoder>>>emptyMap() : new HashMap<Class<?>, List<ObjectHandle<? extends Encoder>>>();
-            Map<Class<?>, List<ObjectHandle<? extends Decoder>>> textDecoders = this.textDecoders.isEmpty() ? Collections.<Class<?>, List<ObjectHandle<? extends Decoder>>>emptyMap() : new HashMap<Class<?>, List<ObjectHandle<? extends Decoder>>>();
+        try {
+            Map<Class<?>, List<ObjectHandle<? extends Encoder>>> binaryEncoders = this.binaryEncoders.isEmpty() ? Collections.emptyMap() : new HashMap<>();
+            Map<Class<?>, List<ObjectHandle<? extends Decoder>>> binaryDecoders = this.binaryDecoders.isEmpty() ? Collections.emptyMap() : new HashMap<>();
+            Map<Class<?>, List<ObjectHandle<? extends Encoder>>> textEncoders = this.textEncoders.isEmpty() ? Collections.emptyMap() : new HashMap<>();
+            Map<Class<?>, List<ObjectHandle<? extends Decoder>>> textDecoders = this.textDecoders.isEmpty() ? Collections.emptyMap() : new HashMap<>();
 
             for (Map.Entry<Class<?>, List<ObjectFactory<? extends Encoder>>> entry : this.binaryEncoders.entrySet()) {
                 final List<ObjectHandle<? extends Encoder>> val = new ArrayList<>(entry.getValue().size());
@@ -155,10 +156,7 @@ public class EncodingFactory {
                 try {
                     Method method = decoder.getMethod("decode", ByteBuffer.class);
                     final Class<?> type = resolveReturnType(method, decoder);
-                    List<ObjectFactory<? extends Decoder>> list = binaryDecoders.get(type);
-                    if (list == null) {
-                        binaryDecoders.put(type, list = new ArrayList<>());
-                    }
+                    List<ObjectFactory<? extends Decoder>> list = binaryDecoders.computeIfAbsent(type, k -> new ArrayList<>());
                     list.add(objectIntrospecter.createInstanceFactory(decoder));
                 } catch (NoSuchMethodException e) {
                     throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
@@ -167,10 +165,7 @@ public class EncodingFactory {
                 try {
                     Method method = decoder.getMethod("decode", InputStream.class);
                     final Class<?> type = resolveReturnType(method, decoder);
-                    List<ObjectFactory<? extends Decoder>> list = binaryDecoders.get(type);
-                    if (list == null) {
-                        binaryDecoders.put(type, list = new ArrayList<>());
-                    }
+                    List<ObjectFactory<? extends Decoder>> list = binaryDecoders.computeIfAbsent(type, k -> new ArrayList<>());
                     list.add(objectIntrospecter.createInstanceFactory(decoder));
                 } catch (NoSuchMethodException e) {
                     throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
@@ -179,10 +174,7 @@ public class EncodingFactory {
                 try {
                     Method method = decoder.getMethod("decode", String.class);
                     final Class<?> type = resolveReturnType(method, decoder);
-                    List<ObjectFactory<? extends Decoder>> list = textDecoders.get(type);
-                    if (list == null) {
-                        textDecoders.put(type, list = new ArrayList<>());
-                    }
+                    List<ObjectFactory<? extends Decoder>> list = textDecoders.computeIfAbsent(type, k -> new ArrayList<>());
                     list.add(objectIntrospecter.createInstanceFactory(decoder));
                 } catch (NoSuchMethodException e) {
                     throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
@@ -191,10 +183,7 @@ public class EncodingFactory {
                 try {
                     Method method = decoder.getMethod("decode", Reader.class);
                     final Class<?> type = resolveReturnType(method, decoder);
-                    List<ObjectFactory<? extends Decoder>> list = textDecoders.get(type);
-                    if (list == null) {
-                        textDecoders.put(type, list = new ArrayList<>());
-                    }
+                    List<ObjectFactory<? extends Decoder>> list = textDecoders.computeIfAbsent(type, k -> new ArrayList<>());
                     list.add(createObjectFactory(objectIntrospecter, decoder));
                 } catch (NoSuchMethodException e) {
                     throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
@@ -207,31 +196,19 @@ public class EncodingFactory {
         for (Class<? extends Encoder> encoder : encoders) {
             if (Encoder.Binary.class.isAssignableFrom(encoder)) {
                 final Class<?> type = findEncodeMethod(encoder, ByteBuffer.class);
-                List<ObjectFactory<? extends Encoder>> list = binaryEncoders.get(type);
-                if (list == null) {
-                    binaryEncoders.put(type, list = new ArrayList<>());
-                }
+                List<ObjectFactory<? extends Encoder>> list = binaryEncoders.computeIfAbsent(type, k -> new ArrayList<>());
                 list.add(createObjectFactory(objectIntrospecter, encoder));
             } else if (Encoder.BinaryStream.class.isAssignableFrom(encoder)) {
                 final Class<?> type = findEncodeMethod(encoder, void.class, OutputStream.class);
-                List<ObjectFactory<? extends Encoder>> list = binaryEncoders.get(type);
-                if (list == null) {
-                    binaryEncoders.put(type, list = new ArrayList<>());
-                }
+                List<ObjectFactory<? extends Encoder>> list = binaryEncoders.computeIfAbsent(type, k -> new ArrayList<>());
                 list.add(createObjectFactory(objectIntrospecter, encoder));
             } else if (Encoder.Text.class.isAssignableFrom(encoder)) {
                 final Class<?> type = findEncodeMethod(encoder, String.class);
-                List<ObjectFactory<? extends Encoder>> list = textEncoders.get(type);
-                if (list == null) {
-                    textEncoders.put(type, list = new ArrayList<>());
-                }
+                List<ObjectFactory<? extends Encoder>> list = textEncoders.computeIfAbsent(type, k -> new ArrayList<>());
                 list.add(createObjectFactory(objectIntrospecter, encoder));
             } else if (Encoder.TextStream.class.isAssignableFrom(encoder)) {
                 final Class<?> type = findEncodeMethod(encoder, void.class, Writer.class);
-                List<ObjectFactory<? extends Encoder>> list = textEncoders.get(type);
-                if (list == null) {
-                    textEncoders.put(type, list = new ArrayList<>());
-                }
+                List<ObjectFactory<? extends Encoder>> list = textEncoders.computeIfAbsent(type, k -> new ArrayList<>());
                 list.add(createObjectFactory(objectIntrospecter, encoder));
             }
         }
