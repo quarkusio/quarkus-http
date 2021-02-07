@@ -463,7 +463,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
 
             AnnotatedEndpointFactory annotatedEndpointFactory = null;
             if (!Endpoint.class.isAssignableFrom(sec.getEndpointClass())) {
-                annotatedEndpointFactory = AnnotatedEndpointFactory.create(sec.getEndpointClass(), encodingFactory, pt.getParameterNames());
+                annotatedEndpointFactory = AnnotatedEndpointFactory.create(sec.getEndpointClass(), encodingFactory, pt.getParameterNames(), config);
             }
 
 
@@ -686,8 +686,27 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
             seenPaths.add(template);
             Class<? extends ServerEndpointConfig.Configurator> configuratorClass = serverEndpoint.configurator();
 
+            ServerEndpointConfig.Configurator configurator;
+            if (configuratorClass != ServerEndpointConfig.Configurator.class) {
+                try {
+                    configurator = classIntrospecter.createInstanceFactory(configuratorClass).createInstance().getInstance();
+                } catch (InstantiationException | NoSuchMethodException e) {
+                    throw JsrWebSocketMessages.MESSAGES.couldNotDeploy(e);
+                }
+            } else {
+                configurator = DefaultContainerConfigurator.INSTANCE;
+            }
+
+            ServerEndpointConfig config = ServerEndpointConfig.Builder.create(endpoint, serverEndpoint.value())
+                    .decoders(Arrays.asList(serverEndpoint.decoders()))
+                    .encoders(Arrays.asList(serverEndpoint.encoders()))
+                    .subprotocols(Arrays.asList(serverEndpoint.subprotocols()))
+                    .extensions(Collections.emptyList())
+                    .configurator(configurator)
+                    .build();
+
             EncodingFactory encodingFactory = EncodingFactory.createFactory(classIntrospecter, serverEndpoint.decoders(), serverEndpoint.encoders());
-            AnnotatedEndpointFactory annotatedEndpointFactory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, template.getParameterNames());
+            AnnotatedEndpointFactory annotatedEndpointFactory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, template.getParameterNames(), config);
             InstanceFactory<?> instanceFactory = null;
             try {
                 instanceFactory = classIntrospecter.createInstanceFactory(endpoint);
@@ -704,25 +723,6 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                     };
                 }
             }
-            ServerEndpointConfig.Configurator configurator;
-            if (configuratorClass != ServerEndpointConfig.Configurator.class) {
-                try {
-                    configurator = classIntrospecter.createInstanceFactory(configuratorClass).createInstance().getInstance();
-                } catch (InstantiationException | NoSuchMethodException e) {
-                    throw JsrWebSocketMessages.MESSAGES.couldNotDeploy(e);
-                }
-            } else {
-                configurator = DefaultContainerConfigurator.INSTANCE;
-            }
-
-            ServerEndpointConfig config = ServerEndpointConfig.Builder.create(endpoint, serverEndpoint.value())
-                    .decoders(Arrays.asList(serverEndpoint.decoders()))
-                    .encoders(Arrays.asList(serverEndpoint.encoders()))
-                    .subprotocols(Arrays.asList(serverEndpoint.subprotocols()))
-                    .extensions(Collections.<Extension>emptyList())
-                    .configurator(configurator)
-                    .build();
-
 
             ConfiguredServerEndpoint confguredServerEndpoint = new ConfiguredServerEndpoint(config, instanceFactory, template, encodingFactory, annotatedEndpointFactory, installedExtensions);
             configuredServerEndpoints.add(confguredServerEndpoint);
@@ -749,7 +749,6 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                     }
                 }
             }
-            AnnotatedEndpointFactory factory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, Collections.<String>emptySet());
 
             ClientEndpointConfig.Configurator configurator = null;
             try {
@@ -763,6 +762,8 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                     .preferredSubprotocols(Arrays.asList(clientEndpoint.subprotocols()))
                     .configurator(configurator)
                     .build();
+
+            AnnotatedEndpointFactory factory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, Collections.emptySet(), config);
 
             ConfiguredClientEndpoint configuredClientEndpoint = new ConfiguredClientEndpoint(config, factory, encodingFactory, instanceFactory);
             clientEndpoints.put(endpoint, configuredClientEndpoint);
@@ -803,7 +804,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         AnnotatedEndpointFactory annotatedEndpointFactory = null;
         if (!Endpoint.class.isAssignableFrom(endpoint.getEndpointClass())) {
             // We may want to check that the path in @ServerEndpoint matches the specified path, and throw if they are not equivalent
-            annotatedEndpointFactory = AnnotatedEndpointFactory.create(endpoint.getEndpointClass(), encodingFactory, template.getParameterNames());
+            annotatedEndpointFactory = AnnotatedEndpointFactory.create(endpoint.getEndpointClass(), encodingFactory, template.getParameterNames(), endpoint);
         }
         ConfiguredServerEndpoint confguredServerEndpoint = new ConfiguredServerEndpoint(endpoint, null, template, encodingFactory, annotatedEndpointFactory, endpoint.getExtensions());
         configuredServerEndpoints.add(confguredServerEndpoint);

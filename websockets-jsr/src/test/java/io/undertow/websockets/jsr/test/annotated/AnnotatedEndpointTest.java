@@ -87,6 +87,7 @@ public class AnnotatedEndpointTest {
                                 .addEndpoint(AnnotatedClientEndpoint.class)
                                 .addEndpoint(AnnotatedClientEndpointWithConfigurator.class)
                                 .addEndpoint(IncrementEndpoint.class)
+                                .addEndpoint(UuidEndpoint.class)
                                 .addEndpoint(EncodingEndpoint.class)
                                 .addEndpoint(EncodingGenericsEndpoint.class)
                                 .addEndpoint(TimeoutEndpoint.class)
