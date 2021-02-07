@@ -163,6 +163,10 @@ public class EncodingFactory {
         }
 
         for (Class<? extends Encoder> encoder : encoders) {
+            if (isUnknownEncoderSubclass(encoder)) {
+                throw JsrWebSocketMessages.MESSAGES.didNotImplementKnownEncoderSubclass(encoder);
+            }
+
             if (Encoder.Binary.class.isAssignableFrom(encoder)) {
                 final Class<?> type = findEncodeMethod(encoder, ByteBuffer.class);
                 List<InstanceFactory<? extends Encoder>> list = binaryEncoders.computeIfAbsent(type, k -> new ArrayList<>());
@@ -185,6 +189,13 @@ public class EncodingFactory {
             }
         }
         return new EncodingFactory(binaryEncoders, binaryDecoders, textEncoders, textDecoders);
+    }
+
+    private static boolean isUnknownEncoderSubclass(Class<? extends Encoder> encoder) {
+        return !Encoder.Binary.class.isAssignableFrom(encoder)
+                && !Encoder.BinaryStream.class.isAssignableFrom(encoder)
+                && !Encoder.Text.class.isAssignableFrom(encoder)
+                && !Encoder.TextStream.class.isAssignableFrom(encoder);
     }
 
     private static boolean isUnknownDecoderSubclass(Class<? extends Decoder> decoder) {

@@ -161,4 +161,7 @@ public interface JsrWebSocketMessages {
 
     @Message(id = 3042, value = "Deployment failed due to invalid programmatically added endpoints")
     RuntimeException deploymentFailedDueToProgramaticErrors();
+
+    @Message(id = 3043, value = "%s did not implement known decoder interface")
+    DeploymentException didNotImplementKnownEncoderSubclass(Class<? extends Encoder> decoder);
 }
