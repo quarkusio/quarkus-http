@@ -152,6 +152,10 @@ public class EncodingFactory {
         final Map<Class<?>, List<InstanceFactory<? extends Decoder>>> textDecoders = new HashMap<>();
 
         for (Class<? extends Decoder> decoder : decoders) {
+            if (isUnknownDecoderSubclass(decoder)) {
+                throw JsrWebSocketMessages.MESSAGES.didNotImplementKnownDecoderSubclass(decoder);
+            }
+
             if (Decoder.Binary.class.isAssignableFrom(decoder)) {
                 try {
                     Method method = decoder.getMethod("decode", ByteBuffer.class);
@@ -161,7 +165,8 @@ public class EncodingFactory {
                 } catch (NoSuchMethodException e) {
                     throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
                 }
-            } else if (Decoder.BinaryStream.class.isAssignableFrom(decoder)) {
+            }
+            if (Decoder.BinaryStream.class.isAssignableFrom(decoder)) {
                 try {
                     Method method = decoder.getMethod("decode", InputStream.class);
                     final Class<?> type = resolveReturnType(method, decoder);
@@ -170,7 +175,8 @@ public class EncodingFactory {
                 } catch (NoSuchMethodException e) {
                     throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
                 }
-            } else if (Decoder.Text.class.isAssignableFrom(decoder)) {
+            }
+            if (Decoder.Text.class.isAssignableFrom(decoder)) {
                 try {
                     Method method = decoder.getMethod("decode", String.class);
                     final Class<?> type = resolveReturnType(method, decoder);
@@ -179,7 +185,8 @@ public class EncodingFactory {
                 } catch (NoSuchMethodException e) {
                     throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
                 }
-            } else if (Decoder.TextStream.class.isAssignableFrom(decoder)) {
+            }
+            if (Decoder.TextStream.class.isAssignableFrom(decoder)) {
                 try {
                     Method method = decoder.getMethod("decode", Reader.class);
                     final Class<?> type = resolveReturnType(method, decoder);
@@ -188,8 +195,6 @@ public class EncodingFactory {
                 } catch (NoSuchMethodException e) {
                     throw JsrWebSocketMessages.MESSAGES.couldNotDetermineTypeOfDecodeMethodForClass(decoder, e);
                 }
-            } else {
-                throw JsrWebSocketMessages.MESSAGES.didNotImplementKnownDecoderSubclass(decoder);
             }
         }
 
@@ -198,21 +203,31 @@ public class EncodingFactory {
                 final Class<?> type = findEncodeMethod(encoder, ByteBuffer.class);
                 List<InstanceFactory<? extends Encoder>> list = binaryEncoders.computeIfAbsent(type, k -> new ArrayList<>());
                 list.add(createInstanceFactory(classIntrospecter, encoder));
-            } else if (Encoder.BinaryStream.class.isAssignableFrom(encoder)) {
+            }
+            if (Encoder.BinaryStream.class.isAssignableFrom(encoder)) {
                 final Class<?> type = findEncodeMethod(encoder, void.class, OutputStream.class);
                 List<InstanceFactory<? extends Encoder>> list = binaryEncoders.computeIfAbsent(type, k -> new ArrayList<>());
                 list.add(createInstanceFactory(classIntrospecter, encoder));
-            } else if (Encoder.Text.class.isAssignableFrom(encoder)) {
+            }
+            if (Encoder.Text.class.isAssignableFrom(encoder)) {
                 final Class<?> type = findEncodeMethod(encoder, String.class);
                 List<InstanceFactory<? extends Encoder>> list = textEncoders.computeIfAbsent(type, k -> new ArrayList<>());
                 list.add(createInstanceFactory(classIntrospecter, encoder));
-            } else if (Encoder.TextStream.class.isAssignableFrom(encoder)) {
+            }
+            if (Encoder.TextStream.class.isAssignableFrom(encoder)) {
                 final Class<?> type = findEncodeMethod(encoder, void.class, Writer.class);
                 List<InstanceFactory<? extends Encoder>> list = textEncoders.computeIfAbsent(type, k -> new ArrayList<>());
                 list.add(createInstanceFactory(classIntrospecter, encoder));
             }
         }
         return new EncodingFactory(binaryEncoders, binaryDecoders, textEncoders, textDecoders);
+    }
+
+    private static boolean isUnknownDecoderSubclass(Class<? extends Decoder> decoder) {
+        return !Decoder.Binary.class.isAssignableFrom(decoder)
+                && !Decoder.BinaryStream.class.isAssignableFrom(decoder)
+                && !Decoder.Text.class.isAssignableFrom(decoder)
+                && !Decoder.TextStream.class.isAssignableFrom(decoder);
     }
 
     private static Class<?> resolveReturnType(Method method, Class<? extends Decoder> decoder) {
