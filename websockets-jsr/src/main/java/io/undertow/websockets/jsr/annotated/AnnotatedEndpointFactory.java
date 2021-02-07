@@ -87,7 +87,7 @@ public class AnnotatedEndpointFactory {
             for (final Method method : c.getDeclaredMethods()) {
                 if (method.isAnnotationPresent(OnOpen.class)) {
                     if (onOpen != null) {
-                        if(!onOpen.overrides(method)) {
+                        if (!onOpen.overrides(method)) {
                             throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnOpen.class);
                         } else {
                             continue;
@@ -99,7 +99,7 @@ public class AnnotatedEndpointFactory {
                 }
                 if (method.isAnnotationPresent(OnClose.class)) {
                     if (onClose != null) {
-                        if(!onClose.overrides(method)) {
+                        if (!onClose.overrides(method)) {
                             throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnClose.class);
                         } else {
                             continue;
@@ -111,7 +111,7 @@ public class AnnotatedEndpointFactory {
                 }
                 if (method.isAnnotationPresent(OnError.class)) {
                     if (onError != null) {
-                        if(!onError.overrides(method)) {
+                        if (!onError.overrides(method)) {
                             throw JsrWebSocketMessages.MESSAGES.moreThanOneAnnotation(OnError.class);
                         } else {
                             continue;
@@ -121,14 +121,14 @@ public class AnnotatedEndpointFactory {
                             new BoundSingleParameter(method, Throwable.class, false),
                             createBoundPathParameters(method, paths, endpointClass));
                 }
-                if (method.isAnnotationPresent(OnMessage.class) && ! method.isBridge()) {
-                    if(binaryMessage != null && binaryMessage.overrides(method)) {
+                if (method.isAnnotationPresent(OnMessage.class) && !method.isBridge()) {
+                    if (binaryMessage != null && binaryMessage.overrides(method)) {
                         continue;
                     }
-                    if(textMessage != null && textMessage.overrides(method)) {
+                    if (textMessage != null && textMessage.overrides(method)) {
                         continue;
                     }
-                    if(pongMessage != null && pongMessage.overrides(method)) {
+                    if (pongMessage != null && pongMessage.overrides(method)) {
                         continue;
                     }
                     long maxMessageSize = method.getAnnotation(OnMessage.class).maxMessageSize();
@@ -142,7 +142,7 @@ public class AnnotatedEndpointFactory {
                         }
 
                         final Class<?> param = parameterTypes[i];
-                        if(param == boolean.class || param == Boolean.class) {
+                        if (param == boolean.class || param == Boolean.class) {
                             booleanLocation = i;
                         } else if (encodingFactory.canDecodeText(param)) {
                             if (textMessage != null) {
@@ -286,7 +286,7 @@ public class AnnotatedEndpointFactory {
     }
 
     public AnnotatedEndpoint createInstance(InstanceHandle<?> endpointInstance) {
-        if(!endpointClass.isInstance(endpointInstance.getInstance())) {
+        if (!endpointClass.isInstance(endpointInstance.getInstance())) {
             throw JsrWebSocketMessages.MESSAGES.endpointNotOfCorrectType(endpointInstance, endpointClass);
         }
         return new AnnotatedEndpoint(endpointInstance, OnOpen, OnClose, OnError, textMessage, binaryMessage, pongMessage);
