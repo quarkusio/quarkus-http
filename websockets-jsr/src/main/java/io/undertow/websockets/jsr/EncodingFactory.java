@@ -96,49 +96,46 @@ public class EncodingFactory {
     }
 
     public Encoding createEncoding(final EndpointConfig endpointConfig) {
-        try {
-            Map<Class<?>, List<InstanceHandle<? extends Encoder>>> binaryEncoders = this.binaryEncoders.isEmpty() ? Collections.emptyMap() : new HashMap<>();
-            Map<Class<?>, List<InstanceHandle<? extends Decoder>>> binaryDecoders = this.binaryDecoders.isEmpty() ? Collections.emptyMap() : new HashMap<>();
-            Map<Class<?>, List<InstanceHandle<? extends Encoder>>> textEncoders = this.textEncoders.isEmpty() ? Collections.emptyMap() : new HashMap<>();
-            Map<Class<?>, List<InstanceHandle<? extends Decoder>>> textDecoders = this.textDecoders.isEmpty() ? Collections.emptyMap() : new HashMap<>();
+        Map<Class<?>, List<InstanceHandle<? extends Encoder>>> binaryEncoders = registerCoders(endpointConfig, this.binaryEncoders);
+        Map<Class<?>, List<InstanceHandle<? extends Decoder>>> binaryDecoders = registerCoders(endpointConfig, this.binaryDecoders);
+        Map<Class<?>, List<InstanceHandle<? extends Encoder>>> textEncoders = registerCoders(endpointConfig, this.textEncoders);
+        Map<Class<?>, List<InstanceHandle<? extends Decoder>>> textDecoders = registerCoders(endpointConfig, this.textDecoders);
+        return new Encoding(binaryEncoders, binaryDecoders, textEncoders, textDecoders);
+    }
 
-            for (Map.Entry<Class<?>, List<InstanceFactory<? extends Encoder>>> entry : this.binaryEncoders.entrySet()) {
-                final List<InstanceHandle<? extends Encoder>> val = new ArrayList<>(entry.getValue().size());
-                binaryEncoders.put(entry.getKey(), val);
-                for (InstanceFactory<? extends Encoder> factory : entry.getValue()) {
-                    InstanceHandle<? extends Encoder> instance = factory.createInstance();
-                    instance.getInstance().init(endpointConfig);
-                    val.add(instance);
-                }
+    // Sacrifice some type checks to avoid generics-hell
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private <T> T registerCoders(EndpointConfig endpointConfig, Map coders) {
+        if (coders.isEmpty()) {
+            return (T) Collections.emptyMap();
+        }
+
+        Map result = new HashMap();
+        for (Map.Entry<Class<?>, List<InstanceFactory<?>>> entry : ((Map<Class<?>, List<InstanceFactory<?>>>) coders).entrySet()) {
+            final List<InstanceHandle<?>> val = new ArrayList<>(entry.getValue().size());
+            result.put(entry.getKey(), val);
+            for (InstanceFactory<?> factory : entry.getValue()) {
+                InstanceHandle<?> instance = createInstance(factory);
+                initializeCoder(endpointConfig, instance);
+                val.add(instance);
             }
-            for (Map.Entry<Class<?>, List<InstanceFactory<? extends Decoder>>> entry : this.binaryDecoders.entrySet()) {
-                final List<InstanceHandle<? extends Decoder>> val = new ArrayList<>(entry.getValue().size());
-                binaryDecoders.put(entry.getKey(), val);
-                for (InstanceFactory<? extends Decoder> factory : entry.getValue()) {
-                    InstanceHandle<? extends Decoder> instance = factory.createInstance();
-                    instance.getInstance().init(endpointConfig);
-                    val.add(instance);
-                }
-            }
-            for (Map.Entry<Class<?>, List<InstanceFactory<? extends Encoder>>> entry : this.textEncoders.entrySet()) {
-                final List<InstanceHandle<? extends Encoder>> val = new ArrayList<>(entry.getValue().size());
-                textEncoders.put(entry.getKey(), val);
-                for (InstanceFactory<? extends Encoder> factory : entry.getValue()) {
-                    InstanceHandle<? extends Encoder> instance = factory.createInstance();
-                    instance.getInstance().init(endpointConfig);
-                    val.add(instance);
-                }
-            }
-            for (Map.Entry<Class<?>, List<InstanceFactory<? extends Decoder>>> entry : this.textDecoders.entrySet()) {
-                final List<InstanceHandle<? extends Decoder>> val = new ArrayList<>(entry.getValue().size());
-                textDecoders.put(entry.getKey(), val);
-                for (InstanceFactory<? extends Decoder> factory : entry.getValue()) {
-                    InstanceHandle<? extends Decoder> instance = factory.createInstance();
-                    instance.getInstance().init(endpointConfig);
-                    val.add(instance);
-                }
-            }
-            return new Encoding(binaryEncoders, binaryDecoders, textEncoders, textDecoders);
+        }
+        return (T) result;
+    }
+
+    private void initializeCoder(EndpointConfig endpointConfig, InstanceHandle<?> instance) {
+        if (instance.getInstance() instanceof Encoder) {
+            ((Encoder) instance.getInstance()).init(endpointConfig);
+        } else if (!(instance.getInstance() instanceof Decoder)) {
+            ((Decoder) instance.getInstance()).init(endpointConfig);
+        } else {
+            throw new IllegalStateException("Illegal type: " + ((Decoder) instance.getInstance()).getClass());
+        }
+    }
+
+    private static <T> InstanceHandle<T> createInstance(InstanceFactory<T> factory) {
+        try {
+            return factory.createInstance();
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
         }
