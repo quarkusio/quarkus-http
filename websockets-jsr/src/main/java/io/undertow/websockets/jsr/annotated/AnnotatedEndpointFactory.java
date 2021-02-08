@@ -383,7 +383,7 @@ public class AnnotatedEndpointFactory {
                 if (positions[i] == null || type == null || type == String.class) {
                     continue;
                 }
-                if (encodingFactory.canEncodeText(type)) {
+                if (encodingFactory.canDecodeText(type)) {
                     encoders[i] = encodingFactory.createEncoding(endpointConfig);
                     types[i] = type;
 

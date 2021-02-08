@@ -26,7 +26,7 @@ import javax.websocket.server.PathParam;
 import javax.websocket.server.ServerEndpoint;
 import java.util.UUID;
 
-@ServerEndpoint("/uuid/{id}")
+@ServerEndpoint(value = "/uuid/{id}", decoders = UuidDecoder.class)
 public class UuidEndpoint {
 
     UUID id;
