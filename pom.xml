@@ -28,7 +28,7 @@
 
     <groupId>io.quarkus.http</groupId>
     <artifactId>quarkus-http-parent</artifactId>
-    <version>3.0.19.Final-SNAPSHOT</version>
+    <version>3.1.0.Beta1</version>
 
     <name>Undertow</name>
     <description>Undertow</description>
