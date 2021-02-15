@@ -112,11 +112,9 @@
         <module>core</module>
         <module>servlet</module>
         <!--<module>examples</module>-->
-        <module>websockets-jsr</module>
         <module>http-core</module>
         <module>vertx</module>
-        <!--<module>tmp-tests</module>-->
-        <!--<module>karaf</module>-->
+        <module>websocket</module>
     </modules>
 
     <build>
@@ -270,6 +268,16 @@
             </dependency>
             <dependency>
                 <groupId>io.quarkus.http</groupId>
+                <artifactId>quarkus-http-websocket-core</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.quarkus.http</groupId>
+                <artifactId>quarkus-http-websocket-servlet</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.quarkus.http</groupId>
                 <artifactId>quarkus-http-http-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -303,12 +311,6 @@
                 <version>${project.version}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>io.quarkus.http</groupId>
-                <artifactId>quarkus-http-websockets-jsr</artifactId>
-                <version>${project.version}</version>
             </dependency>
 
             <!-- External Dependencies -->
@@ -349,6 +351,22 @@
             <dependency>
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-core</artifactId>
+                <version>${version.vertx}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>jackson-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>jackson-databind</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-web</artifactId>
                 <version>${version.vertx}</version>
                 <exclusions>
                     <exclusion>
