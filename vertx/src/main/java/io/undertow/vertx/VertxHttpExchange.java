@@ -659,6 +659,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             request.response().drainHandler(new Handler<Void>() {
                 @Override
                 public void handle(Void event) {
+                    request.response().drainHandler(null);
                     try {
                         if (last) {
                             responseDone = true;
@@ -671,7 +672,6 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                             request.response().write(createBuffer(data));
                         }
                         queueWriteListener(callback, context, last);
-                        request.response().drainHandler(null);
                     } catch (Exception e) {
                         if (data != null && data.refCnt() > 0) {
                             data.release();
