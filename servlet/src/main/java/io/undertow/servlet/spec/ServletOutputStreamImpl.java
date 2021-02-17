@@ -206,8 +206,13 @@ public class ServletOutputStreamImpl extends ServletOutputStream {
         }
         try {
             if (pooledBuffer != null) {
-                exchange.writeBlocking(pooledBuffer, false);
-                pooledBuffer = null;
+                if (listener == null) {
+                    exchange.writeBlocking(pooledBuffer, false);
+                    pooledBuffer = null;
+                } else {
+                    exchange.writeAsync(pooledBuffer, false, listenerCallback, null);
+                    pooledBuffer = null;
+                }
             }
         } catch (Exception e) {
             if (pooledBuffer != null) {
