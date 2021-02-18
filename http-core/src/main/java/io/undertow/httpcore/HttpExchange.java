@@ -166,6 +166,8 @@ public interface HttpExchange extends Closeable {
 
     UndertowOptionMap getUndertowOptions();
 
+    void setUndertowOptions(UndertowOptionMap options);
+
     void sendContinue();
 
     void discardRequest();

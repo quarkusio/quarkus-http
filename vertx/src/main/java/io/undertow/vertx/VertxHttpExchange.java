@@ -88,6 +88,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     private Handler<HttpServerRequest> pushHandler;
     private int continueState;
+    private UndertowOptionMap optionMap = UndertowOptionMap.EMPTY;
 
     public VertxHttpExchange(HttpServerRequest request, BufferAllocator allocator, Executor worker, Object context) {
         this(request, allocator, worker, context, null);
@@ -791,7 +792,12 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public UndertowOptionMap getUndertowOptions() {
-        return UndertowOptionMap.EMPTY;
+        return optionMap;
+    }
+
+    @Override
+    public void setUndertowOptions(UndertowOptionMap options) {
+        this.optionMap =  options;
     }
 
     @Override
