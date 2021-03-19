@@ -25,20 +25,23 @@ import io.netty.handler.codec.http.websocketx.extensions.WebSocketExtensionData;
 import io.netty.handler.codec.http.websocketx.extensions.WebSocketServerExtensionHandshaker;
 import io.undertow.websockets.annotated.AnnotatedEndpointFactory;
 import io.undertow.websockets.handshake.Handshake;
-import io.undertow.websockets.util.ObjectIntrospecter;
 import io.undertow.websockets.util.ConstructorObjectFactory;
+import io.undertow.websockets.util.ContextSetupHandler;
 import io.undertow.websockets.util.ImmediateObjectHandle;
 import io.undertow.websockets.util.ObjectFactory;
 import io.undertow.websockets.util.ObjectHandle;
+import io.undertow.websockets.util.ObjectIntrospecter;
 import io.undertow.websockets.util.PathTemplate;
-import io.undertow.websockets.util.ContextSetupHandler;
 
 import javax.net.ssl.SSLContext;
 import javax.websocket.ClientEndpoint;
 import javax.websocket.ClientEndpointConfig;
 import javax.websocket.CloseReason;
+import javax.websocket.Decoder;
 import javax.websocket.DeploymentException;
+import javax.websocket.Encoder;
 import javax.websocket.Endpoint;
+import javax.websocket.EndpointConfig;
 import javax.websocket.Extension;
 import javax.websocket.HandshakeResponse;
 import javax.websocket.Session;
@@ -74,6 +77,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.lang.System.currentTimeMillis;
+import static java.util.Collections.emptyMap;
 
 
 /**
@@ -178,18 +182,6 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
 
     protected Supplier<Executor> getExecutorSupplier() {
         return executorSupplier;
-    }
-
-    public Session connectToServer(final Object annotatedEndpointInstance, WebsocketConnectionBuilder connectionBuilder) throws DeploymentException, IOException {
-        if (closed) {
-            throw new ClosedChannelException();
-        }
-        ConfiguredClientEndpoint config = getClientEndpoint(annotatedEndpointInstance.getClass(), false);
-        if (config == null) {
-            throw JsrWebSocketMessages.MESSAGES.notAValidClientEndpointType(annotatedEndpointInstance.getClass());
-        }
-        Endpoint instance = config.getFactory().createInstance(new ImmediateObjectHandle<>(annotatedEndpointInstance));
-        return connectToServerInternal(instance, config, connectionBuilder);
     }
 
     @Override
@@ -580,7 +572,8 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
             Class<? extends ServerEndpointConfig.Configurator> configuratorClass = serverEndpoint.configurator();
 
             EncodingFactory encodingFactory = EncodingFactory.createFactory(objectIntrospecter, serverEndpoint.decoders(), serverEndpoint.encoders());
-            AnnotatedEndpointFactory annotatedEndpointFactory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, template.getParameterNames());
+            EndpointConfig endpointConfig = createEndpointConfig(serverEndpoint.encoders(), serverEndpoint.decoders());
+            AnnotatedEndpointFactory annotatedEndpointFactory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, template.getParameterNames(), endpointConfig);
             ObjectFactory<?> ObjectFactory = null;
             try {
                 ObjectFactory = objectIntrospecter.createInstanceFactory(endpoint);
@@ -605,31 +598,13 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
             }
 
             ServerEndpointConfig config = ServerEndpointConfig.Builder.create(endpoint, serverEndpoint.value())
-                    .decoders(Arrays.asList(serverEndpoint.decoders()))
-                    .encoders(Arrays.asList(serverEndpoint.encoders()))
-                    .subprotocols(Arrays.asList(serverEndpoint.subprotocols()))
-                    .extensions(Collections.emptyList())
-                    .configurator(configurator)
-                    .build();
+                .decoders(Arrays.asList(serverEndpoint.decoders()))
+                .encoders(Arrays.asList(serverEndpoint.encoders()))
+                .subprotocols(Arrays.asList(serverEndpoint.subprotocols()))
+                .extensions(Collections.<Extension>emptyList())
+                .configurator(configurator)
+                .build();
 
-            EncodingFactory encodingFactory = EncodingFactory.createFactory(classIntrospecter, serverEndpoint.decoders(), serverEndpoint.encoders());
-            AnnotatedEndpointFactory annotatedEndpointFactory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, template.getParameterNames(), config);
-            InstanceFactory<?> instanceFactory = null;
-            try {
-                instanceFactory = classIntrospecter.createInstanceFactory(endpoint);
-            } catch (Exception e) {
-                //so it is possible that this is still valid if a custom configurator is in use
-                if (configuratorClass == ServerEndpointConfig.Configurator.class) {
-                    throw JsrWebSocketMessages.MESSAGES.couldNotDeploy(e);
-                } else {
-                    instanceFactory = new InstanceFactory<Object>() {
-                        @Override
-                        public InstanceHandle<Object> createInstance() throws InstantiationException {
-                            throw JsrWebSocketMessages.MESSAGES.endpointDoesNotHaveAppropriateConstructor(endpoint);
-                        }
-                    };
-                }
-            }
 
             ConfiguredServerEndpoint confguredServerEndpoint = new ConfiguredServerEndpoint(config, ObjectFactory, template, encodingFactory, annotatedEndpointFactory, installedExtensions);
             configuredServerEndpoints.add(confguredServerEndpoint);
@@ -657,23 +632,43 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                 }
             }
 
+            EndpointConfig endpointConfig = createEndpointConfig(clientEndpoint.encoders(), clientEndpoint.decoders());
+            AnnotatedEndpointFactory factory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, Collections.<String>emptySet(), endpointConfig);
+
             ClientEndpointConfig.Configurator configurator = null;
             configurator = objectIntrospecter.createInstanceFactory(clientEndpoint.configurator()).createInstance().getInstance();
 
             ClientEndpointConfig config = ClientEndpointConfig.Builder.create()
-                    .decoders(Arrays.asList(clientEndpoint.decoders()))
-                    .encoders(Arrays.asList(clientEndpoint.encoders()))
-                    .preferredSubprotocols(Arrays.asList(clientEndpoint.subprotocols()))
-                    .configurator(configurator)
-                    .build();
-
-            AnnotatedEndpointFactory factory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, Collections.emptySet(), config);
+                .decoders(Arrays.asList(clientEndpoint.decoders()))
+                .encoders(Arrays.asList(clientEndpoint.encoders()))
+                .preferredSubprotocols(Arrays.asList(clientEndpoint.subprotocols()))
+                .configurator(configurator)
+                .build();
 
             ConfiguredClientEndpoint configuredClientEndpoint = new ConfiguredClientEndpoint(config, factory, encodingFactory, ObjectFactory);
             clientEndpoints.put(endpoint, configuredClientEndpoint);
         } else {
             throw JsrWebSocketMessages.MESSAGES.classWasNotAnnotated(endpoint);
         }
+    }
+
+    private EndpointConfig createEndpointConfig(Class<? extends Encoder>[] encoders, Class<? extends Decoder>[] decoders) {
+        return new EndpointConfig() {
+            @Override
+            public List<Class<? extends Encoder>> getEncoders() {
+                return Arrays.asList(encoders);
+            }
+
+            @Override
+            public List<Class<? extends Decoder>> getDecoders() {
+                return Arrays.asList(decoders);
+            }
+
+            @Override
+            public Map<String, Object> getUserProperties() {
+                return emptyMap();
+            }
+        };
     }
 
 
