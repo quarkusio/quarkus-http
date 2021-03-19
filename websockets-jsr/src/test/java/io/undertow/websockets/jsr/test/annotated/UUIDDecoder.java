@@ -4,16 +4,14 @@ import javax.websocket.Decoder;
 import javax.websocket.EndpointConfig;
 import java.util.UUID;
 
-public class UuidDecoder implements Decoder.Text<UUID> {
+public class UUIDDecoder implements Decoder.Text<UUID> {
 
     @Override
     public void init(EndpointConfig config) {
-
     }
 
     @Override
     public void destroy() {
-
     }
 
     @Override

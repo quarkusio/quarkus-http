@@ -19,6 +19,7 @@ package io.undertow.websockets.jsr.test.annotated;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
@@ -87,7 +88,7 @@ public class AnnotatedEndpointTest {
                                 .addEndpoint(AnnotatedClientEndpoint.class)
                                 .addEndpoint(AnnotatedClientEndpointWithConfigurator.class)
                                 .addEndpoint(IncrementEndpoint.class)
-                                .addEndpoint(UuidEndpoint.class)
+                                .addEndpoint(UUIDEndpoint.class)
                                 .addEndpoint(EncodingEndpoint.class)
                                 .addEndpoint(EncodingGenericsEndpoint.class)
                                 .addEndpoint(TimeoutEndpoint.class)
@@ -128,11 +129,15 @@ public class AnnotatedEndpointTest {
         final byte[] payload = "hello".getBytes();
         final CompletableFuture latch = new CompletableFuture();
 
-        WebSocketTestClient client = new WebSocketTestClient(new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort("default") + "/ws/chat/Stuart"));
+        WebSocketTestClient client = createTestClient("/ws/chat/Stuart");
         client.connect();
         client.send(new TextWebSocketFrame(Unpooled.wrappedBuffer(payload)), new FrameChecker(TextWebSocketFrame.class, "hello Stuart".getBytes(), latch));
         latch.get();
         client.destroy();
+    }
+
+    private WebSocketTestClient createTestClient(String s) throws URISyntaxException {
+        return new WebSocketTestClient(new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort("default") + s));
     }
 
     @Test
@@ -140,7 +145,7 @@ public class AnnotatedEndpointTest {
         final byte[] payload = "foo".getBytes();
         final CompletableFuture latch = new CompletableFuture();
 
-        WebSocketTestClient client = new WebSocketTestClient(new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort("default") + "/ws/programmatic"));
+        WebSocketTestClient client = createTestClient("/ws/programmatic");
         client.connect();
         client.send(new TextWebSocketFrame(Unpooled.wrappedBuffer(payload)), new FrameChecker(TextWebSocketFrame.class, "oof".getBytes(), latch));
         latch.get();
@@ -165,7 +170,7 @@ public class AnnotatedEndpointTest {
         final byte[] payload = "hello".getBytes();
         final CompletableFuture latch = new CompletableFuture();
 
-        WebSocketTestClient client = new WebSocketTestClient(new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort("default") + "/ws"));
+        WebSocketTestClient client = createTestClient("/ws");
         client.connect();
         client.send(new TextWebSocketFrame(Unpooled.wrappedBuffer(payload)), new FrameChecker(TextWebSocketFrame.class, "hello".getBytes(), latch));
         latch.get();
@@ -307,22 +312,33 @@ public class AnnotatedEndpointTest {
         final byte[] payload = "12".getBytes();
         final CompletableFuture latch = new CompletableFuture();
 
-        WebSocketTestClient client = new WebSocketTestClient(new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort("default") + "/ws/increment/2"));
+        WebSocketTestClient client = createTestClient("/ws/increment/2");
         client.connect();
         client.send(new TextWebSocketFrame(Unpooled.wrappedBuffer(payload)), new FrameChecker(TextWebSocketFrame.class, "14".getBytes(), latch));
         latch.get();
         client.destroy();
     }
 
-
     @Test
     public void testEncodingAndDecodingText() throws Exception {
         final byte[] payload = "hello".getBytes();
         final CompletableFuture latch = new CompletableFuture();
 
-        WebSocketTestClient client = new WebSocketTestClient(new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort("default") + "/ws/encoding/Stuart"));
+        WebSocketTestClient client = createTestClient("/ws/encoding/Stuart");
         client.connect();
         client.send(new TextWebSocketFrame(Unpooled.wrappedBuffer(payload)), new FrameChecker(TextWebSocketFrame.class, "hello Stuart".getBytes(), latch));
+        latch.get();
+        client.destroy();
+    }
+
+    @Test
+    public void testPathParamDecoder() throws Exception {
+        final byte[] payload = "hello".getBytes();
+        final CompletableFuture latch = new CompletableFuture();
+
+        WebSocketTestClient client = createTestClient("/ws/uuid/40164304-B94D-4332-AC31-09D7F9A8B943");
+        client.connect();
+        client.send(new TextWebSocketFrame(Unpooled.wrappedBuffer(payload)), new FrameChecker(TextWebSocketFrame.class, "hello40164304-b94d-4332-ac31-09d7f9a8b943".getBytes(), latch));
         latch.get();
         client.destroy();
     }
@@ -332,7 +348,7 @@ public class AnnotatedEndpointTest {
         final byte[] payload = "hello".getBytes();
         final CompletableFuture latch = new CompletableFuture();
 
-        WebSocketTestClient client = new WebSocketTestClient(new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort("default") + "/ws/encoding/Stuart"));
+        WebSocketTestClient client = createTestClient("/ws/encoding/Stuart");
         client.connect();
         client.send(new BinaryWebSocketFrame(Unpooled.wrappedBuffer(payload)), new FrameChecker(TextWebSocketFrame.class, "hello Stuart".getBytes(), latch));
         latch.get();
@@ -344,7 +360,7 @@ public class AnnotatedEndpointTest {
         final byte[] payload = "hello".getBytes();
         final CompletableFuture latch = new CompletableFuture();
 
-        WebSocketTestClient client = new WebSocketTestClient(new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort("default") + "/ws/encodingGenerics/Stuart"));
+        WebSocketTestClient client = createTestClient("/ws/encodingGenerics/Stuart");
         client.connect();
         client.send(new TextWebSocketFrame(Unpooled.wrappedBuffer(payload)), new FrameChecker(TextWebSocketFrame.class, "hello Stuart".getBytes(), latch));
         latch.get();
@@ -356,7 +372,7 @@ public class AnnotatedEndpointTest {
         final byte[] payload = "hello".getBytes();
         final CompletableFuture latch = new CompletableFuture();
 
-        WebSocketTestClient client = new WebSocketTestClient(new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort("default") + "/ws/request?a=b"));
+        WebSocketTestClient client = createTestClient("/ws/request?a=b");
         client.connect();
         client.send(new TextWebSocketFrame(Unpooled.wrappedBuffer(payload)), new FrameChecker(TextWebSocketFrame.class, "/ws/request?a=b".getBytes(), latch));
         latch.get();
