@@ -88,6 +88,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     private Handler<HttpServerRequest> pushHandler;
     private int continueState;
+    private UndertowOptionMap optionMap = UndertowOptionMap.EMPTY;
 
     public VertxHttpExchange(HttpServerRequest request, BufferAllocator allocator, Executor worker, Object context) {
         this(request, allocator, worker, context, null);
@@ -659,6 +660,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             request.response().drainHandler(new Handler<Void>() {
                 @Override
                 public void handle(Void event) {
+                    request.response().drainHandler(null);
                     try {
                         if (last) {
                             responseDone = true;
@@ -671,7 +673,6 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                             request.response().write(createBuffer(data));
                         }
                         queueWriteListener(callback, context, last);
-                        request.response().drainHandler(null);
                     } catch (Exception e) {
                         if (data != null && data.refCnt() > 0) {
                             data.release();
@@ -791,7 +792,12 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public UndertowOptionMap getUndertowOptions() {
-        return UndertowOptionMap.EMPTY;
+        return optionMap;
+    }
+
+    @Override
+    public void setUndertowOptions(UndertowOptionMap options) {
+        this.optionMap =  options;
     }
 
     @Override

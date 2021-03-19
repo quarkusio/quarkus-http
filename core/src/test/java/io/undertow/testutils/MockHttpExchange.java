@@ -210,6 +210,11 @@ public class MockHttpExchange extends HttpExchangeBase {
     }
 
     @Override
+    public void setUndertowOptions(UndertowOptionMap options) {
+
+    }
+
+    @Override
     public void sendContinue() {
 
     }
