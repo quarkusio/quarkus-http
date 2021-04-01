@@ -15,6 +15,7 @@
 
 package io.undertow.websockets.vertx;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.undertow.websockets.handshake.WebSocketHttpExchange;
@@ -114,6 +115,13 @@ public class VertxWebSocketHttpExchange implements WebSocketHttpExchange {
     @Override
     public void upgradeChannel(Consumer<Object> listener) {
         response.headers().set(HttpHeaderNames.CONNECTION, "upgrade");
+
+        Http1xServerConnection connection = (Http1xServerConnection) request.connection();
+        ChannelHandlerContext context = connection.channelHandlerContext();
+        final ChannelHandler websocketChannelHandler = context.pipeline().get("websocketExtensionHandler");
+        if (websocketChannelHandler != null) {
+            context.pipeline().remove(websocketChannelHandler);
+        }
         response.setStatusCode(101).end(new Handler<AsyncResult<Void>>() {
             @Override
             public void handle(AsyncResult<Void> event) {
