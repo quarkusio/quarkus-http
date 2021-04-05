@@ -23,12 +23,12 @@
     <parent>
         <groupId>io.quarkus.http</groupId>
         <artifactId>quarkus-http-parent</artifactId>
-        <version>3.1.0.CR1-SNAPSHOT</version>
+        <version>3.1.0.Final</version>
     </parent>
 
     <groupId>io.quarkus.http</groupId>
     <artifactId>quarkus-http-websocket-parent</artifactId>
-    <version>3.1.0.CR1-SNAPSHOT</version>
+    <version>3.1.0.Final</version>
 
     <name>WebSocket Parent</name>
     <description>WebSocket Parent</description>
