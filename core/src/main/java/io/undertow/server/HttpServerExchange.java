@@ -1007,10 +1007,10 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     }
 
     private void invokeExchangeCompleteListeners() {
-        while (exchangeCompletionListenersCount > 0) {
-            int i = exchangeCompletionListenersCount - 1;
+        int count = exchangeCompletionListenersCount;
+        exchangeCompletionListenersCount = -1;
+        for (int i = count - 1; i >= 0; i--) {
             ExchangeCompletionListener next = exchangeCompleteListeners[i];
-            exchangeCompletionListenersCount = -1;
             next.exchangeEvent(this);
         }
     }
