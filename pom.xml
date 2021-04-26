@@ -28,7 +28,7 @@
 
     <groupId>io.quarkus.http</groupId>
     <artifactId>quarkus-http-parent</artifactId>
-    <version>3.1.1.Final</version>
+    <version>3.1.2.Final-SNAPSHOT</version>
 
     <name>Undertow</name>
     <description>Undertow</description>
@@ -47,7 +47,7 @@
         <connection>scm:git:git@github.com:quarkusio/quarkus-http.git</connection>
         <developerConnection>scm:git:git@github.com:quarkusio/quarkus-http.git</developerConnection>
         <url>https://github.com/quarkus/quarkus-http</url>
-        <tag>3.1.1.Final</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
