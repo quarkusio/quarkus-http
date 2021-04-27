@@ -21,6 +21,7 @@ import io.undertow.websockets.util.PathTemplate;
 import io.vertx.ext.web.RoutingContext;
 
 import javax.websocket.Endpoint;
+import javax.websocket.EndpointConfig;
 import javax.websocket.Extension;
 import javax.websocket.server.ServerEndpointConfig;
 import java.net.InetSocketAddress;
@@ -92,7 +93,7 @@ public class VertxServerWebSocketContainer extends ServerWebSocketContainer {
 
             AnnotatedEndpointFactory annotatedEndpointFactory = null;
             if (!Endpoint.class.isAssignableFrom(sec.getEndpointClass())) {
-                annotatedEndpointFactory = AnnotatedEndpointFactory.create(sec.getEndpointClass(), encodingFactory, pt.getParameterNames());
+                annotatedEndpointFactory = AnnotatedEndpointFactory.create(sec.getEndpointClass(), encodingFactory, pt.getParameterNames(), config);
             }
 
 

@@ -25,7 +25,10 @@ import javax.servlet.DispatcherType;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.websocket.Decoder;
+import javax.websocket.Encoder;
 import javax.websocket.Endpoint;
+import javax.websocket.EndpointConfig;
 import javax.websocket.Extension;
 import javax.websocket.server.ServerEndpointConfig;
 import java.io.IOException;
@@ -101,7 +104,8 @@ public class ServletServerWebSocketContainer extends ServerWebSocketContainer {
 
             AnnotatedEndpointFactory annotatedEndpointFactory = null;
             if (!Endpoint.class.isAssignableFrom(sec.getEndpointClass())) {
-                annotatedEndpointFactory = AnnotatedEndpointFactory.create(sec.getEndpointClass(), encodingFactory, pt.getParameterNames());
+                annotatedEndpointFactory = AnnotatedEndpointFactory.create(sec.getEndpointClass(), encodingFactory, pt.getParameterNames(),
+                    createEndpointConfigurationFromConfig(sec));
             }
 
 
@@ -146,6 +150,25 @@ public class ServletServerWebSocketContainer extends ServerWebSocketContainer {
         } catch (Exception e) {
             throw new ServletException(e);
         }
+    }
+
+    private EndpointConfig createEndpointConfigurationFromConfig(ServerEndpointConfig sec) {
+        return new EndpointConfig() {
+            @Override
+            public List<Class<? extends Encoder>> getEncoders() {
+                return sec.getEncoders();
+            }
+
+            @Override
+            public List<Class<? extends Decoder>> getDecoders() {
+                return sec.getDecoders();
+            }
+
+            @Override
+            public Map<String, Object> getUserProperties() {
+                return sec.getUserProperties();
+            }
+        };
     }
 
 
