@@ -1,6 +1,8 @@
 package io.undertow.vertx;
 
 import io.netty.handler.codec.http.QueryStringDecoder;
+import io.vertx.core.Context;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
@@ -14,6 +16,7 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.http.StreamPriority;
+import io.vertx.core.http.impl.HttpServerRequestInternal;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.net.SocketAddress;
 
@@ -25,8 +28,8 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 
-public class PushedHttpServerRequest implements HttpServerRequest {
-    private final HttpServerRequest original;
+public class PushedHttpServerRequest implements HttpServerRequest, HttpServerRequestInternal {
+    private final HttpServerRequestInternal original;
     private final HttpMethod method;
     private final String uri;
     private final HttpServerResponse response;
@@ -38,7 +41,7 @@ public class PushedHttpServerRequest implements HttpServerRequest {
     private String absoluteURI;
 
     public PushedHttpServerRequest(HttpServerRequest original, HttpMethod method, String uri, HttpServerResponse response, MultiMap headers) {
-        this.original = original;
+        this.original = (HttpServerRequestInternal) original;
         this.method = method;
         this.uri = uri;
         this.response = response;
@@ -84,11 +87,6 @@ public class PushedHttpServerRequest implements HttpServerRequest {
     @Override
     public HttpMethod method() {
         return method;
-    }
-
-    @Override
-    public String rawMethod() {
-        return method.toString();
     }
 
     @Override
@@ -198,8 +196,18 @@ public class PushedHttpServerRequest implements HttpServerRequest {
     }
 
     @Override
-    public NetSocket netSocket() {
-        return original.netSocket();
+    public Future<Buffer> body() {
+        return original.body();
+    }
+
+    @Override
+    public Future<Void> end() {
+        return null;
+    }
+
+    @Override
+    public Future<NetSocket> toNetSocket() {
+        return original.toNetSocket();
     }
 
     @Override
@@ -219,17 +227,17 @@ public class PushedHttpServerRequest implements HttpServerRequest {
 
     @Override
     public MultiMap formAttributes() {
-        return null;
+        return original.formAttributes();
     }
 
     @Override
     public String getFormAttribute(String attributeName) {
-        return null;
+        return original.getFormAttribute(attributeName);
     }
 
     @Override
-    public ServerWebSocket upgrade() {
-        throw new IllegalStateException();
+    public Future<ServerWebSocket> toWebSocket() {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -335,5 +343,15 @@ public class PushedHttpServerRequest implements HttpServerRequest {
             }
         }
         return params;
+    }
+
+    @Override
+    public Context context() {
+        return original.context();
+    }
+
+    @Override
+    public Object metric() {
+        return original.metric();
     }
 }

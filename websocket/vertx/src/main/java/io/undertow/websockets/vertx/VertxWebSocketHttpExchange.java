@@ -27,14 +27,7 @@ import io.vertx.core.http.impl.Http1xServerConnection;
 import io.vertx.ext.web.RoutingContext;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
@@ -55,7 +48,6 @@ public class VertxWebSocketHttpExchange implements WebSocketHttpExchange {
         this.response = context.response();
         this.exchange = context;
     }
-
 
     @Override
     public <T> void putAttachment(final String key, final T value) {
@@ -122,6 +114,7 @@ public class VertxWebSocketHttpExchange implements WebSocketHttpExchange {
         if (websocketChannelHandler != null) {
             context.pipeline().remove(websocketChannelHandler);
         }
+
         response.setStatusCode(101).end(new Handler<AsyncResult<Void>>() {
             @Override
             public void handle(AsyncResult<Void> event) {
