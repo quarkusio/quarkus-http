@@ -110,7 +110,7 @@ public class VertxWebSocketHttpExchange implements WebSocketHttpExchange {
 
         Http1xServerConnection connection = (Http1xServerConnection) request.connection();
         ChannelHandlerContext context = connection.channelHandlerContext();
-        final ChannelHandler websocketChannelHandler = context.pipeline().get("websocketExtensionHandler");
+        final ChannelHandler websocketChannelHandler = context.pipeline().get("webSocketExtensionHandler");
         if (websocketChannelHandler != null) {
             context.pipeline().remove(websocketChannelHandler);
         }
