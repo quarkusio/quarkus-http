@@ -34,6 +34,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker13;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
+import io.netty.handler.codec.http.websocketx.extensions.WebSocketExtensionData;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.util.CharsetUtil;
@@ -43,6 +44,7 @@ import javax.net.ssl.SSLEngine;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.channels.ClosedChannelException;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
@@ -103,15 +105,6 @@ class WebsocketConnectionBuilder {
         this.clientNegotiation = clientNegotiation;
         return this;
     }
-//
-//    public Set<WebSocketExtensionHandshake> getClientExtensions() {
-//        return clientExtensions;
-//    }
-//
-//    public WebsocketConnectionBuilder setClientExtensions(Set<WebSocketExtensionHandshake> clientExtensions) {
-//        this.clientExtensions = clientExtensions;
-//        return this;
-//    }
 
     public URI getProxyUri() {
         return proxyUri;
@@ -138,7 +131,7 @@ class WebsocketConnectionBuilder {
         final WebSocketClientHandler handler =
                 new WebSocketClientHandler(
                         new WebSocketClientHandshaker13(
-                                uri, WebSocketVersion.V13, null, false, HttpHeaders.EMPTY_HEADERS, 1280000) {
+                                uri, WebSocketVersion.V13, null, !clientNegotiation.getSupportedExtensions().isEmpty(), HttpHeaders.EMPTY_HEADERS, 1280000) {
 
                             @Override
                             protected FullHttpRequest newHandshakeRequest() {
@@ -152,6 +145,25 @@ class WebsocketConnectionBuilder {
                                         sb.append(clientNegotiation.getSupportedSubProtocols().get(i));
                                     }
                                     request.headers().add(HttpHeaderNames.SEC_WEBSOCKET_PROTOCOL, sb.toString());
+                                }
+                                if (clientNegotiation.getSupportedExtensions() != null) {
+                                    StringBuilder sb = new StringBuilder();
+                                    for (int i = 0; i < clientNegotiation.getSupportedExtensions().size(); ++i) {
+                                        if (i > 0) {
+                                            sb.append(", ");
+                                        }
+                                        WebSocketExtensionData data = clientNegotiation.getSupportedExtensions().get(i);
+                                        sb.append(data.name());
+                                        for (Map.Entry<String, String> parameter : data.parameters().entrySet()) {
+                                            sb.append(";");
+                                            sb.append(parameter.getKey());
+                                            if (parameter.getValue() != null) {
+                                                sb.append("=");
+                                                sb.append(parameter.getValue());
+                                            }
+                                        }
+                                    }
+                                    request.headers().add(HttpHeaderNames.SEC_WEBSOCKET_EXTENSIONS, sb.toString());
                                 }
                                 clientNegotiation.beforeRequest(request.headers());
                                 return request;
@@ -176,6 +188,7 @@ class WebsocketConnectionBuilder {
                             pipeline.addLast("ssl", new SslHandler(sslEngine));
                         }
                         pipeline.addLast("http-codec", new HttpClientCodec());
+                        pipeline.addLast("extensions-handler", WebSocketClientCompressionHandler.INSTANCE);
                         pipeline.addLast("aggregator", new HttpObjectAggregator(65536));
                         pipeline.addLast("ws-handler", handler);
                     }

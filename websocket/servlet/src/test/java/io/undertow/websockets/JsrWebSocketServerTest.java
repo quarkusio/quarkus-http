@@ -75,7 +75,7 @@ import io.undertow.websockets.jsr.test.annotated.AnnotatedClientEndpoint;
 @HttpOneOnly
 public class JsrWebSocketServerTest {
 
-    @org.junit.Test
+    @Test
     public void testBinaryWithByteBuffer() throws Exception {
         final byte[] payload = "payload".getBytes();
         final AtomicReference<Throwable> cause = new AtomicReference<>();
@@ -111,7 +111,7 @@ public class JsrWebSocketServerTest {
         client.destroy();
     }
 
-    @org.junit.Test
+    @Test
     public void testBinaryWithByteArray() throws Exception {
         final byte[] payload = "payload".getBytes();
         final AtomicReference<Throwable> cause = new AtomicReference<>();
@@ -142,7 +142,7 @@ public class JsrWebSocketServerTest {
         client.destroy();
     }
 
-    @org.junit.Test
+    @Test
     public void testText() throws Exception {
         final byte[] payload = "payload".getBytes();
         final AtomicReference<Throwable> cause = new AtomicReference<>();
@@ -173,7 +173,7 @@ public class JsrWebSocketServerTest {
         client.destroy();
     }
 
-    @org.junit.Test
+    @Test
     public void testBinaryWithByteBufferByCompletion() throws Exception {
         final byte[] payload = "payload".getBytes();
         final AtomicReference<SendResult> sendResult = new AtomicReference<>();
@@ -224,7 +224,7 @@ public class JsrWebSocketServerTest {
         client.destroy();
     }
 
-    @org.junit.Test
+    @Test
     public void testTextByCompletion() throws Exception {
         final byte[] payload = "payload".getBytes();
         final AtomicReference<SendResult> sendResult = new AtomicReference<>();
@@ -273,7 +273,7 @@ public class JsrWebSocketServerTest {
         client.destroy();
     }
 
-    @org.junit.Test
+    @Test
     public void testBinaryWithByteBufferByFuture() throws Exception {
         final byte[] payload = "payload".getBytes();
         final AtomicReference<Future<Void>> sendResult = new AtomicReference<>();
@@ -311,7 +311,7 @@ public class JsrWebSocketServerTest {
         client.destroy();
     }
 
-    @org.junit.Test
+    @Test
     public void testTextByFuture() throws Exception {
         final byte[] payload = "payload".getBytes();
         final AtomicReference<Future<Void>> sendResult = new AtomicReference<>();
@@ -344,7 +344,7 @@ public class JsrWebSocketServerTest {
         client.destroy();
     }
 
-    @org.junit.Test
+    @Test
     public void testBinaryWithByteArrayUsingStream() throws Exception {
         final byte[] payload = "payload".getBytes();
         final AtomicReference<Throwable> cause = new AtomicReference<>();
@@ -391,7 +391,7 @@ public class JsrWebSocketServerTest {
         client.destroy();
     }
 
-    @org.junit.Test
+    @Test
     public void testTextUsingWriter() throws Exception {
         final byte[] payload = "payload".getBytes();
         final AtomicReference<Throwable> cause = new AtomicReference<>();
@@ -436,7 +436,7 @@ public class JsrWebSocketServerTest {
         client.destroy();
     }
 
-    @org.junit.Test
+    @Test
     @Ignore("UT3 - P4")
     public void testPingPong() throws Exception {
         final byte[] payload = "payload".getBytes();
@@ -463,7 +463,7 @@ public class JsrWebSocketServerTest {
         client.destroy();
     }
 
-    @org.junit.Test
+    @Test
     public void testCloseFrame() throws Exception {
         final int code = 1000;
         final String reasonText = "TEST";
@@ -510,7 +510,7 @@ public class JsrWebSocketServerTest {
     /**
      * Section 5.5.1 of RFC 6455 says the reason body is optional
      */
-    @org.junit.Test
+    @Test
     public void testCloseFrameWithoutReasonBody() throws Exception {
         final int code = 1000;
         final AtomicReference<CloseReason> reason = new AtomicReference<>();
@@ -552,7 +552,7 @@ public class JsrWebSocketServerTest {
         client.destroy();
     }
 
-    @org.junit.Test
+    @Test
     public void testBinaryWithByteBufferAsync() throws Exception {
         final byte[] payload = "payload".getBytes();
         final AtomicReference<Throwable> cause = new AtomicReference<>();
@@ -589,7 +589,7 @@ public class JsrWebSocketServerTest {
         client.destroy();
     }
 
-    @org.junit.Test
+    @Test
     public void testTextAsync() throws Exception {
         final byte[] payload = "payload".getBytes();
         final AtomicReference<Throwable> cause = new AtomicReference<>();

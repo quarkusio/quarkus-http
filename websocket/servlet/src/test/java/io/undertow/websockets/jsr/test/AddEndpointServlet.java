@@ -19,6 +19,7 @@
 package io.undertow.websockets.jsr.test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.servlet.Servlet;
 import javax.servlet.ServletConfig;
@@ -37,8 +38,8 @@ public class AddEndpointServlet implements Servlet {
     @Override
     public void init(ServletConfig c) throws ServletException {
         String websocketPath = "/foo";
-        ServerEndpointConfig config = ServerEndpointConfig.Builder.create(ProgramaticEndpoint.class, websocketPath).build();
         ServerContainer serverContainer = (ServerContainer) c.getServletContext().getAttribute("javax.websocket.server.ServerContainer");
+        ServerEndpointConfig config = ServerEndpointConfig.Builder.create(ProgramaticEndpoint.class, websocketPath).extensions(new ArrayList<>(serverContainer.getInstalledExtensions())).build();
         try {
             serverContainer.addEndpoint(config);
         } catch (DeploymentException ex) {
