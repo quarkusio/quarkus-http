@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.regex.Pattern;
 
 import javax.websocket.Extension;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentCompressor;
@@ -42,6 +44,8 @@ import io.netty.handler.codec.http.websocketx.extensions.WebSocketExtensionEncod
 import io.netty.handler.codec.http.websocketx.extensions.WebSocketExtensionUtil;
 import io.netty.handler.codec.http.websocketx.extensions.WebSocketServerExtension;
 import io.netty.handler.codec.http.websocketx.extensions.WebSocketServerExtensionHandshaker;
+import io.netty.handler.codec.http.websocketx.extensions.compression.DeflateFrameServerExtensionHandshaker;
+import io.netty.handler.codec.http.websocketx.extensions.compression.PerMessageDeflateServerExtensionHandshaker;
 import io.undertow.websockets.ConfiguredServerEndpoint;
 import io.undertow.websockets.ExtensionImpl;
 
@@ -64,7 +68,7 @@ public class Handshake {
     protected final Set<String> subprotocols;
     private static final byte[] EMPTY = new byte[0];
     private static final Pattern PATTERN = Pattern.compile("\\s*,\\s*");
-    protected Set<WebSocketServerExtensionHandshaker> availableExtensions = new HashSet<>();
+    protected Set<WebSocketServerExtensionHandshaker> availableExtensions = new HashSet<>(Arrays.asList(new DeflateFrameServerExtensionHandshaker(), new PerMessageDeflateServerExtensionHandshaker()));
     protected boolean allowExtensions;
     private final ConfiguredServerEndpoint config;
     private final int maxFrameSize;
@@ -115,12 +119,14 @@ public class Handshake {
             exchange.endExchange();
             return;
         }
+
         handshakeInternal(exchange);
         exchange.upgradeChannel(new Consumer<Object>() {
             @Override
             public void accept(Object c) {
                 ChannelHandlerContext context = (ChannelHandlerContext) c;
-                WebSocket13FrameDecoder decoder = new WebSocket13FrameDecoder(true, allowExtensions, maxFrameSize, false);
+
+                WebSocket13FrameDecoder decoder = new WebSocket13FrameDecoder(true, !extensions.isEmpty(), maxFrameSize, false);
                 WebSocket13FrameEncoder encoder = new WebSocket13FrameEncoder(false);
                 ChannelPipeline p = context.pipeline();
                 if (p.get(HttpObjectAggregator.class) != null) {
@@ -247,7 +253,13 @@ public class Handshake {
                 WebSocketServerExtension negotiated = handshaker.handshakeExtension(((ExtensionImpl) i).getData());
                 if (negotiated != null) {
                     ret.add(negotiated);
+                    break;
                 }
+            }
+            if (!ret.isEmpty()) {
+                //we only have two extensions at the moment
+                //and they are both RSV1
+                break;
             }
         }
 

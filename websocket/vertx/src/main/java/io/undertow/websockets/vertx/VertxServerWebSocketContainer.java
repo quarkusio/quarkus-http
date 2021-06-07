@@ -1,6 +1,8 @@
 package io.undertow.websockets.vertx;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.undertow.websockets.ConfiguredServerEndpoint;
@@ -18,6 +20,7 @@ import io.undertow.websockets.util.ObjectFactory;
 import io.undertow.websockets.util.ObjectHandle;
 import io.undertow.websockets.util.ObjectIntrospecter;
 import io.undertow.websockets.util.PathTemplate;
+import io.vertx.core.net.impl.ConnectionBase;
 import io.vertx.ext.web.RoutingContext;
 
 import javax.websocket.Endpoint;
@@ -106,6 +109,11 @@ public class VertxServerWebSocketContainer extends ServerWebSocketContainer {
 
             hand = handshakes(confguredServerEndpoint);
 
+            ChannelPipeline pipeline = ((ConnectionBase) routingContext.request().connection()).channel().pipeline();
+            final ChannelHandler websocketChannelHandler = pipeline.get("webSocketExtensionHandler");
+            if (websocketChannelHandler != null) {
+                pipeline.remove(websocketChannelHandler);
+            }
             final VertxWebSocketHttpExchange facade = new VertxWebSocketHttpExchange(getExecutorSupplier().get(), routingContext);
             Handshake handshaker = null;
             for (Handshake method : hand.handshakes) {

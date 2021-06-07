@@ -3,6 +3,7 @@ package io.undertow.vertx;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
 import io.netty.util.concurrent.EventExecutor;
 import io.undertow.httpcore.BufferAllocator;
 import io.undertow.httpcore.ConnectionSSLSessionInfo;
@@ -102,6 +103,12 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         this.worker = worker;
         this.context = context;
         this.input1 = existingBody;
+
+        ChannelPipeline pipeline = connectionBase.channel().pipeline();
+        final ChannelHandler websocketChannelHandler = pipeline.get("webSocketExtensionHandler");
+        if (websocketChannelHandler != null) {
+            pipeline.remove(websocketChannelHandler);
+        }
         if (isRequestEntityBodyAllowed() && !request.isEnded()) {
             request.handler(this);
             request.exceptionHandler(new Handler<Throwable>() {
@@ -216,10 +223,6 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             //we always remove the websocket handler (if it's present)
             ConnectionBase connection = (ConnectionBase) request.connection();
             ChannelHandlerContext c = connection.channelHandlerContext();
-            final ChannelHandler websocketChannelHandler = c.pipeline().get("websocketExtensionHandler");
-            if (websocketChannelHandler != null) {
-                c.pipeline().remove(websocketChannelHandler);
-            }
         } else {
             upgradeRequest = false;
         }

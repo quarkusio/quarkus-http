@@ -18,7 +18,9 @@
 
 package io.undertow.websockets.vertx;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.undertow.websockets.ConfiguredServerEndpoint;
@@ -32,6 +34,7 @@ import io.undertow.websockets.util.WebsocketPathMatcher;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.net.impl.ConnectionBase;
 import io.vertx.ext.web.RoutingContext;
 
 import java.util.concurrent.Executor;
@@ -78,6 +81,11 @@ public class VertxWebSocketHandler implements Handler<RoutingContext> {
         HttpServerRequest req = event.request();
         HttpServerResponse resp = event.response();
         if (req.getHeader(HttpHeaderNames.UPGRADE) != null) {
+            ChannelPipeline pipeline = ((ConnectionBase) event.request().connection()).channel().pipeline();
+            final ChannelHandler websocketChannelHandler = pipeline.get("webSocketExtensionHandler");
+            if (websocketChannelHandler != null) {
+                pipeline.remove(websocketChannelHandler);
+            }
             final VertxWebSocketHttpExchange facade = new VertxWebSocketHttpExchange(executor, event);
 
             String path = event.normalisedPath();

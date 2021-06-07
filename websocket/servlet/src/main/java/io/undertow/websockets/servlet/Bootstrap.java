@@ -26,6 +26,7 @@ import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.ThreadSetupHandler;
 import io.undertow.servlet.spec.ServletContextImpl;
+import io.undertow.websockets.Extensions;
 import io.undertow.websockets.ServerWebSocketContainer;
 import io.undertow.websockets.UndertowContainerProvider;
 import io.undertow.websockets.WebSocketDeploymentInfo;
@@ -108,11 +109,6 @@ public class Bootstrap implements ServletExtension {
             bind = new InetSocketAddress(info.getClientBindAddress(), 0);
         }
 
-        List<Extension> extensions = new ArrayList<>();
-//        for(WebSocketServerExtensionHandshaker e: info.getServerExtensions()) {
-//
-//            extensions.add(new ExtensionImpl(e.getName(), Collections.emptyList()));
-//        }
         ServerWebSocketContainer container = new ServletServerWebSocketContainer(new ObjectIntrospecter() {
             @Override
             public <T> ObjectFactory<T> createInstanceFactory(Class<T> clazz) {
@@ -159,7 +155,7 @@ public class Bootstrap implements ServletExtension {
                 }
                 return GlobalEventExecutor.INSTANCE;
             }
-        }, extensions, info.getMaxFrameSize());
+        }, Extensions.EXTENSIONS, info.getMaxFrameSize());
         try {
             for (Class<?> annotation : info.getAnnotatedEndpoints()) {
                 container.addEndpoint(annotation);

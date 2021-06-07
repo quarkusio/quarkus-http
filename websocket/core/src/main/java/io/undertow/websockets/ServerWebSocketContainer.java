@@ -72,6 +72,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import static java.lang.System.currentTimeMillis;
 
@@ -115,6 +116,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
 
     private final List<PauseListener> pauseListeners = new ArrayList<>();
     protected final List<Extension> installedExtensions;
+    protected final Set<String> installedExtensionNames;
     private final List<WebsocketClientSslProvider> clientSslProviders;
     private final int maxFrameSize;
 
@@ -127,11 +129,11 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
     }
 
     public ServerWebSocketContainer(final ObjectIntrospecter objectIntrospecter, final ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, Supplier<Executor> executorSupplier) {
-        this(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, null, null, executorSupplier, Collections.emptyList());
+        this(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, null, null, executorSupplier, Extensions.EXTENSIONS);
     }
 
     public ServerWebSocketContainer(final ObjectIntrospecter objectIntrospecter, final ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler) {
-        this(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, clientBindAddress, reconnectHandler, null, Collections.emptyList());
+        this(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, clientBindAddress, reconnectHandler, null, Extensions.EXTENSIONS);
     }
 
     public ServerWebSocketContainer(final ObjectIntrospecter objectIntrospecter, final ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler, Supplier<Executor> executorSupplier, List<Extension> installedExtensions) {
@@ -145,6 +147,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         this.clientBindAddress = clientBindAddress;
         this.executorSupplier = executorSupplier;
         this.installedExtensions = new ArrayList<>(installedExtensions);
+        this.installedExtensionNames = installedExtensions.stream().map(Extension::getName).collect(Collectors.toSet());
         this.webSocketReconnectHandler = reconnectHandler;
         this.maxFrameSize = maxFrameSize;
         ContextSetupHandler.Action<Void, Runnable> task = new ContextSetupHandler.Action<Void, Runnable>() {
@@ -291,7 +294,6 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         //in theory we should not be able to connect until the deployment is complete, but the definition of when a deployment is complete is a bit nebulous.
         ClientNegotiation clientNegotiation = new ClientNegotiation(cec.getPreferredSubprotocols(), toExtensionList(cec.getExtensions()), cec);
 
-
         WebsocketConnectionBuilder connectionBuilder = new WebsocketConnectionBuilder(path, eventLoopSupplier.get())
                 .setSsl(ssl)
                 .setBindAddress(clientBindAddress)
@@ -300,9 +302,12 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         return connectToServer(endpointInstance, config, connectionBuilder);
     }
 
-    private static List<WebSocketExtensionData> toExtensionList(final List<Extension> extensions) {
+    private List<WebSocketExtensionData> toExtensionList(final List<Extension> extensions) {
         List<WebSocketExtensionData> ret = new ArrayList<>();
         for (Extension e : extensions) {
+            if (!installedExtensionNames.contains(e.getName())) {
+                continue;
+            }
             final Map<String, String> parameters = new HashMap<>();
             for (Extension.Parameter p : e.getParameters()) {
                 parameters.put(p.getName(), p.getValue());
@@ -326,15 +331,14 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
 
         final List<Extension> extensions = new ArrayList<>();
         final Map<String, Extension> extMap = new HashMap<>();
-        for (Extension ext : cec.getExtensions()) {
+        for (Extension ext : getInstalledExtensions()) {
             extMap.put(ext.getName(), ext);
         }
-        for (WebSocketExtensionData e : clientNegotiation.getSelectedExtensions()) {
-            Extension ext = extMap.get(e.name());
-            if (ext == null) {
-                throw JsrWebSocketMessages.MESSAGES.extensionWasNotPresentInClientHandshake(e.name(), clientNegotiation.getSupportedExtensions());
+        for (Extension e :  cec.getExtensions()) {
+            Extension ext = extMap.get(e.getName());
+            if (ext != null) {
+                extensions.add(e);
             }
-            extensions.add(new ExtensionImpl(e));
         }
         CompletableFuture<UndertowSession> session = connectionBuilder
                 .connect(new Function<Channel, UndertowSession>() {
@@ -608,7 +612,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                     .decoders(Arrays.asList(serverEndpoint.decoders()))
                     .encoders(Arrays.asList(serverEndpoint.encoders()))
                     .subprotocols(Arrays.asList(serverEndpoint.subprotocols()))
-                    .extensions(Collections.<Extension>emptyList())
+                    .extensions(installedExtensions)
                     .configurator(configurator)
                     .build();
 

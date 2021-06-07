@@ -18,160 +18,123 @@
 
 package io.undertow.websockets.extension;
 
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-
+import io.undertow.servlet.Servlets;
+import io.undertow.servlet.api.DeploymentInfo;
+import io.undertow.servlet.api.DeploymentManager;
+import io.undertow.servlet.api.ServletContainer;
+import io.undertow.servlet.test.util.TestClassIntrospector;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpOneOnly;
+import io.undertow.websockets.ServerWebSocketContainer;
+import io.undertow.websockets.WebSocketDeploymentInfo;
+import io.undertow.websockets.jsr.test.AddEndpointServlet;
+import io.undertow.websockets.jsr.test.ProgramaticLazyEndpointTest;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import javax.websocket.ClientEndpointConfig;
+import javax.websocket.CloseReason;
+import javax.websocket.ContainerProvider;
+import javax.websocket.Endpoint;
+import javax.websocket.EndpointConfig;
+import javax.websocket.MessageHandler;
+import javax.websocket.Session;
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 
 /**
- *
  * A test class for WebSocket client scenarios with extensions.
  *
  * @author Lucas Ponce
  */
 @HttpOneOnly
 @RunWith(DefaultServer.class)
-@Ignore("UT3 - P3")
 public class JsrWebsocketExtensionTestCase {
 
-//    public static final int MSG_COUNT = 1000;
-//    private static volatile DebugExtensionsHeaderHandler debug;
-//    @BeforeClass
-//    public static void setup() throws Exception {
-//
-//        final ServletContainer container = ServletContainer.Factory.newInstance();
-//
-//        DeploymentInfo builder = new DeploymentInfo()
-//                .setClassLoader(BinaryEndpointTest.class.getClassLoader())
-//                .setContextPath("/")
-//                .setClassIntrospecter(TestClassIntrospector.INSTANCE)
-//                .addServletContextAttribute(WebSocketDeploymentInfo.ATTRIBUTE_NAME,
-//                        new WebSocketDeploymentInfo()
-//                                .setDispatchToWorkerThread(true)
-//                        .addEndpoint(AutobahnAnnotatedEndpoint.class)
-//                )
-//                .setDeploymentName("servletContext.war");
-//
-//
-//        DeploymentManager manager = container.addDeployment(builder);
-//        manager.deploy();
-//
-//
-//        debug = new DebugExtensionsHeaderHandler(manager.start());
-//        DefaultServer.setRootHandler(debug);
-//    }
-//
-//    @Test
-//    public void testLongTextMessage() throws Exception {
-//
-//        final String SEC_WEBSOCKET_EXTENSIONS = "permessage-deflate; client_no_context_takeover; client_max_window_bits";
-//        List<WebSocketExtension> extensionsList = WebSocketExtension.parse(SEC_WEBSOCKET_EXTENSIONS);
-//
-//        final WebSocketClientNegotiation negotiation = new WebSocketClientNegotiation(null, extensionsList);
-//
-//        Set<ExtensionHandshake> extensionHandshakes = new HashSet<>();
-//        extensionHandshakes.add(new PerMessageDeflateHandshake(true));
-//
-//        final WebSocketChannel clientChannel = WebSocketClient.connect(DefaultServer.getWorker(), null, DefaultServer.getBufferPool(), OptionMap.EMPTY, new URI(DefaultServer.getDefaultServerURL()), WebSocketVersion.V13, negotiation, extensionHandshakes).get();
-//
-//        final LinkedBlockingDeque<String> resultQueue  = new LinkedBlockingDeque<>();
-//
-//        clientChannel.getReceiveSetter().set(new AbstractReceiveListener() {
-//            @Override
-//            protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) throws IOException {
-//                String data = message.getData();
-//                // WebSocketLogger.ROOT_LOGGER.info("onFullTextMessage() - Client - Received: " + data.getBytes().length + " bytes.");
-//                resultQueue.addLast(data);
-//            }
-//
-//            @Override
-//            protected void onFullCloseMessage(WebSocketChannel channel, BufferedBinaryMessage message) throws IOException {
-//                message.getData().close();
-//                WebSocketLogger.ROOT_LOGGER.info("onFullCloseMessage");
-//            }
-//
-//            @Override
-//            protected void onError(WebSocketChannel channel, Throwable error) {
-//                WebSocketLogger.ROOT_LOGGER.info("onError");
-//                super.onError(channel, error);
-//                error.printStackTrace();
-//                resultQueue.add("FAILED " + error);
-//            }
-//
-//        });
-//        clientChannel.resumeReceives();
-//
-//        int LONG_MSG = 125 * 1024;
-//        StringBuilder longMsg = new StringBuilder(LONG_MSG);
-//
-//        for (int i = 0; i < LONG_MSG; i++) {
-//            longMsg.append(Integer.toString(i).charAt(0));
-//        }
-//
-//        String message = longMsg.toString();
-//        for(int j = 0; j < MSG_COUNT; ++ j) {
-//
-//            WebSockets.sendTextBlocking(message, clientChannel);
-//            String res = resultQueue.poll(10, TimeUnit.SECONDS);
-//            Assert.assertEquals(message, res);
-//        }
-//
-//        clientChannel.sendClose();
-//
-//    }
-//
-//    @Test
-//    public void testExtensionsHeaders() throws Exception {
-//
-//
-//        final String SEC_WEBSOCKET_EXTENSIONS = "permessage-deflate; client_no_context_takeover; client_max_window_bits";
-//        final String SEC_WEBSOCKET_EXTENSIONS_EXPECTED = "[permessage-deflate; client_no_context_takeover]";  // List format
-//        List<WebSocketExtension> extensions = WebSocketExtension.parse(SEC_WEBSOCKET_EXTENSIONS);
-//
-//        final WebSocketClientNegotiation negotiation = new WebSocketClientNegotiation(null, extensions);
-//
-//        Set<ExtensionHandshake> extensionHandshakes = new HashSet<>();
-//        extensionHandshakes.add(new PerMessageDeflateHandshake(true));
-//
-//        final WebSocketChannel clientChannel = WebSocketClient.connect(DefaultServer.getWorker(), null, DefaultServer.getBufferPool(), OptionMap.EMPTY, new URI(DefaultServer.getDefaultServerURL()), WebSocketVersion.V13, negotiation, extensionHandshakes).get();
-//
-//        final CountDownLatch latch = new CountDownLatch(1);
-//        final AtomicReference<String> result = new AtomicReference<>();
-//
-//        clientChannel.getReceiveSetter().set(new AbstractReceiveListener() {
-//            @Override
-//            protected void onFullTextMessage(WebSocketChannel channel, BufferedTextMessage message) throws IOException {
-//                String data = message.getData();
-//                WebSocketLogger.ROOT_LOGGER.info("onFullTextMessage - Client - Received: " + data.getBytes().length + " bytes . Data: " + data);
-//                result.set(data);
-//                latch.countDown();
-//            }
-//
-//            @Override
-//            protected void onFullCloseMessage(WebSocketChannel channel, BufferedBinaryMessage message) throws IOException {
-//                message.getData().close();
-//                WebSocketLogger.ROOT_LOGGER.info("onFullCloseMessage");
-//            }
-//
-//            @Override
-//            protected void onError(WebSocketChannel channel, Throwable error) {
-//                WebSocketLogger.ROOT_LOGGER.info("onError");
-//                super.onError(channel, error);
-//                error.printStackTrace();
-//                latch.countDown();
-//            }
-//
-//        });
-//        clientChannel.resumeReceives();
-//
-//        StreamSinkFrameChannel sendChannel = clientChannel.send(WebSocketFrameType.TEXT);
-//        new StringWriteChannelListener("Hello, World!").setup(sendChannel);
-//
-//        latch.await(10, TimeUnit.SECONDS);
-//        Assert.assertEquals("Hello, World!", result.get());
-//        clientChannel.sendClose();
-//
-//        Assert.assertEquals(SEC_WEBSOCKET_EXTENSIONS_EXPECTED, debug.getResponseExtensions().toString());
-//    }
+    private static ServerWebSocketContainer deployment;
+
+    @BeforeClass
+    public static void setup() throws Exception {
+
+        final ServletContainer container = ServletContainer.Factory.newInstance();
+
+        DeploymentInfo builder = new DeploymentInfo()
+                .setClassLoader(ProgramaticLazyEndpointTest.class.getClassLoader())
+                .setContextPath("/")
+                .setClassIntrospecter(TestClassIntrospector.INSTANCE)
+                .addServlet(Servlets.servlet("add", AddEndpointServlet.class).setLoadOnStartup(100))
+                .addServletContextAttribute(WebSocketDeploymentInfo.ATTRIBUTE_NAME,
+                        new WebSocketDeploymentInfo()
+                                .addListener(new WebSocketDeploymentInfo.ContainerReadyListener() {
+                                    @Override
+                                    public void ready(ServerWebSocketContainer container) {
+                                        deployment = container;
+                                    }
+                                })
+                )
+                .setDeploymentName("servletContext.war");
+
+
+        DeploymentManager manager = container.addDeployment(builder);
+        manager.deploy();
+
+
+        DefaultServer.setRootHandler(manager.start());
+    }
+
+    @AfterClass
+    public static void after() throws IOException {
+        deployment = null;
+    }
+
+    @Test
+    public void testStringOnMessage() throws Exception {
+        ProgramaticClientEndpoint endpoint = new ProgramaticClientEndpoint();
+
+        ClientEndpointConfig clientEndpointConfig = ClientEndpointConfig.Builder.create()
+                .extensions(new ArrayList<>(ContainerProvider.getWebSocketContainer().getInstalledExtensions()))
+                .build();
+        ContainerProvider.getWebSocketContainer().connectToServer(endpoint, clientEndpointConfig, new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort() + "/foo"));
+        Assert.assertEquals("Hello Stuart", endpoint.getResponses().poll(15, TimeUnit.SECONDS));
+        endpoint.session.close();
+        endpoint.closeLatch.await(10, TimeUnit.SECONDS);
+    }
+
+    public static class ProgramaticClientEndpoint extends Endpoint {
+
+        private final LinkedBlockingDeque<String> responses = new LinkedBlockingDeque<>();
+
+        final CountDownLatch closeLatch = new CountDownLatch(1);
+        volatile Session session;
+
+        @Override
+        public void onOpen(Session session, EndpointConfig config) {
+            Assert.assertFalse(session.getNegotiatedExtensions().isEmpty());
+            this.session = session;
+            session.getAsyncRemote().sendText("Stuart");
+            session.addMessageHandler(new MessageHandler.Whole<String>() {
+
+                @Override
+                public void onMessage(String message) {
+                    responses.add(message);
+                }
+            });
+        }
+
+        @Override
+        public void onClose(Session session, CloseReason closeReason) {
+            closeLatch.countDown();
+        }
+
+        public LinkedBlockingDeque<String> getResponses() {
+            return responses;
+        }
+    }
 }
