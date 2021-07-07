@@ -994,6 +994,9 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         if (data == null && !last) {
             throw new IllegalArgumentException("cannot call write with a null buffer and last being false");
         }
+        if (getIoThread().inEventLoop()) {
+            throw UndertowMessages.MESSAGES.blockingIoFromIOThread();
+        }
         if (isResponseComplete() || anyAreSet(state, FLAG_LAST_DATA_QUEUED)) {
             if (last && data == null) {
                 return;
