@@ -579,12 +579,6 @@
 
         <profile>
             <id>release</id>
-            <modules>
-                <!--
-                For now, we don't build the dist module as it is not ready yet.
-                <module>dist</module>
-                -->
-            </modules>
             <build>
                 <plugins>
                     <plugin>
