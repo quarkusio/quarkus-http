@@ -51,7 +51,7 @@ import io.undertow.util.FlexBase64;
  * and even track the next nonce once invalid.
  * <p>
  * Maybe group one should be a timestamp and private key hashed together, if used with a nonce count they move to be tracked to
- * ensure the same count is not used again - if successfully used without a nonce count add to a blacklist until expiration? A
+ * ensure the same count is not used again - if successfully used without a nonce count add to a blockedlist until expiration? A
  * nonce used without a nonce count will essentially be single use with each request getting a new nonce.
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>

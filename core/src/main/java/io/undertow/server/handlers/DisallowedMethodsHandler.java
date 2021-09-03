@@ -31,7 +31,7 @@ import io.undertow.server.handlers.builder.HandlerBuilder;
 import io.undertow.httpcore.StatusCodes;
 
 /**
- * Handler that blacklists certain HTTP methods.
+ * Handler that disallow-lists certain HTTP methods.
  *
  * @author Stuart Douglas
  */
