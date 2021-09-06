@@ -31,7 +31,7 @@ import io.undertow.server.handlers.builder.HandlerBuilder;
 import io.undertow.httpcore.StatusCodes;
 
 /**
- * Handler that whitelists certain HTTP methods. Only requests with a method in
+ * Handler that allows certain HTTP methods. Only requests with a method in
  * the allowed methods set will be allowed to continue.
  *
  * @author Stuart Douglas
