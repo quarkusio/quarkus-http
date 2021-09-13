@@ -114,7 +114,7 @@ public class VertxServerWebSocketContainer extends ServerWebSocketContainer {
             if (websocketChannelHandler != null) {
                 pipeline.remove(websocketChannelHandler);
             }
-            final VertxWebSocketHttpExchange facade = new VertxWebSocketHttpExchange(getExecutorSupplier().get(), routingContext);
+            final VertxWebSocketHttpExchange facade = createHttpExchange(routingContext);
             Handshake handshaker = null;
             for (Handshake method : hand.handshakes) {
                 if (method.matches(facade)) {
@@ -140,5 +140,9 @@ public class VertxServerWebSocketContainer extends ServerWebSocketContainer {
         } catch (Exception e) {
             routingContext.fail(e);
         }
+    }
+
+    protected VertxWebSocketHttpExchange createHttpExchange(RoutingContext routingContext) {
+        return new VertxWebSocketHttpExchange(getExecutorSupplier().get(), routingContext);
     }
 }
