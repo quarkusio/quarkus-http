@@ -26,6 +26,7 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.impl.Http1xServerConnection;
 import io.vertx.core.net.impl.ConnectionBase;
+import io.vertx.ext.auth.User;
 import io.vertx.ext.web.RoutingContext;
 
 import java.security.Principal;
@@ -171,7 +172,16 @@ public class VertxWebSocketHttpExchange implements WebSocketHttpExchange {
 
     @Override
     public Principal getUserPrincipal() {
-        return null; //todo
+        User user = exchange.user();
+        if (user != null) {
+            return new Principal() {
+                @Override
+                public String getName() {
+                    return user.principal().getString("username");
+                }
+            };
+        }
+        return null;
     }
 
     @Override
