@@ -209,7 +209,7 @@ public class ServletSessionTestCase {
             }
         });
         try {
-            HttpResponse result = client.execute(new HttpGet(DefaultServer.getDefaultServerURL() + ";foo=bar/servletContext/aa/b"));
+            HttpResponse result = client.execute(new HttpGet(DefaultServer.getDefaultServerURL() + "/servletContext;foo=bar/aa/b"));
             Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
             String response = HttpClientUtils.readResponse(result);
             Assert.assertEquals("1", response);
