@@ -169,7 +169,7 @@ class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
                     invokeOnError(e);
                 }
             }
-        });
+        }, session);
     }
 
     private void invokeOnError(final Throwable e) {
@@ -178,7 +178,7 @@ class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
             public void run() {
                 getEndpoint().onError(session, e);
             }
-        });
+        }, session);
     }
 
     private void onPongMessage(final PongWebSocketFrame frame) {
@@ -201,7 +201,7 @@ class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
                         invokeOnError(e);
                     }
                 }
-            });
+            }, session);
         }
     }
 
@@ -303,7 +303,7 @@ class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
                     invokeOnError(e);
                 }
             }
-        });
+        }, session);
     }
 
     private void invokeTextHandler(final String message, final HandlerWrapper handler, final boolean finalFragment) {
@@ -336,7 +336,7 @@ class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
                     invokeOnError(e);
                 }
             }
-        });
+        }, session);
     }
 
     public final void addHandler(Class<?> messageType, MessageHandler handler) {

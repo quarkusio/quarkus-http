@@ -53,12 +53,12 @@ import static io.undertow.websockets.ServerWebSocketContainer.WebSocketHandshake
  */
 public class VertxWebSocketHandler implements Handler<RoutingContext> {
 
-    private final EndpointSessionHandler callback;
-    private final WebsocketPathMatcher<WebSocketHandshakeHolder> pathTemplateMatcher;
-    private final ServerWebSocketContainer container;
-    private final Executor executor;
+    protected final EndpointSessionHandler callback;
+    protected final WebsocketPathMatcher<WebSocketHandshakeHolder> pathTemplateMatcher;
+    protected final ServerWebSocketContainer container;
+    protected final Executor executor;
 
-    private static final String SESSION_ATTRIBUTE = "io.undertow.websocket.current-connections";
+    protected static final String SESSION_ATTRIBUTE = "io.undertow.websocket.current-connections";
 
 
     public VertxWebSocketHandler(ServerWebSocketContainer container, WebSocketDeploymentInfo info) {
@@ -86,7 +86,7 @@ public class VertxWebSocketHandler implements Handler<RoutingContext> {
             if (websocketChannelHandler != null) {
                 pipeline.remove(websocketChannelHandler);
             }
-            final VertxWebSocketHttpExchange facade = new VertxWebSocketHttpExchange(executor, event);
+            final VertxWebSocketHttpExchange facade = createHttpExchange(event);
 
             String path = event.normalisedPath();
             if (!path.startsWith("/")) {
@@ -122,5 +122,9 @@ public class VertxWebSocketHandler implements Handler<RoutingContext> {
             }
         }
         event.next();
+    }
+
+    protected VertxWebSocketHttpExchange createHttpExchange(RoutingContext event) {
+        return new VertxWebSocketHttpExchange(executor, event);
     }
 }

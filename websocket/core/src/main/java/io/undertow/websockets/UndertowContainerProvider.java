@@ -92,12 +92,12 @@ public class UndertowContainerProvider extends ContainerProvider {
                         return getDefaultEventLoopGroup();
                     }
                 };
-                defaultContainer = new ServerWebSocketContainer(defaultIntrospector, UndertowContainerProvider.class.getClassLoader(), supplier, Collections.EMPTY_LIST, !invokeInIoThread, new Supplier<Executor>() {
+                defaultContainer = new ServerWebSocketContainer(defaultIntrospector, UndertowContainerProvider.class.getClassLoader(), supplier, Collections.EMPTY_LIST, !invokeInIoThread, null, null, new Supplier<Executor>() {
                     @Override
                     public Executor get() {
                         return GlobalEventExecutor.INSTANCE;
                     }
-                });
+                }, Collections.emptyList(), Integer.MAX_VALUE, null);
             }
             return defaultContainer;
         }

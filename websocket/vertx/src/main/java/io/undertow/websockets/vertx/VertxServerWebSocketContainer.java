@@ -27,6 +27,7 @@ import javax.websocket.Endpoint;
 import javax.websocket.Extension;
 import javax.websocket.server.ServerEndpointConfig;
 import java.net.InetSocketAddress;
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -35,27 +36,9 @@ import java.util.function.Supplier;
 
 public class VertxServerWebSocketContainer extends ServerWebSocketContainer {
 
-
-    public VertxServerWebSocketContainer(ObjectIntrospecter objectIntrospecter, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, boolean clientMode) {
-        super(objectIntrospecter, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, clientMode);
+    public VertxServerWebSocketContainer(ObjectIntrospecter objectIntrospecter, ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler, Supplier<Executor> executorSupplier, List<Extension> installedExtensions, int maxFrameSize, Supplier<Principal> currentUserSupplier) {
+        super(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, clientBindAddress, reconnectHandler, executorSupplier, installedExtensions, maxFrameSize, currentUserSupplier);
     }
-
-    public VertxServerWebSocketContainer(ObjectIntrospecter objectIntrospecter, ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, Supplier<Executor> executorSupplier) {
-        super(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, executorSupplier);
-    }
-
-    public VertxServerWebSocketContainer(ObjectIntrospecter objectIntrospecter, ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler) {
-        super(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, clientBindAddress, reconnectHandler);
-    }
-
-    public VertxServerWebSocketContainer(ObjectIntrospecter objectIntrospecter, ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler, Supplier<Executor> executorSupplier, List<Extension> installedExtensions) {
-        super(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, clientBindAddress, reconnectHandler, executorSupplier, installedExtensions);
-    }
-
-    public VertxServerWebSocketContainer(ObjectIntrospecter objectIntrospecter, ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler, Supplier<Executor> executorSupplier, List<Extension> installedExtensions, int maxFrameSize) {
-        super(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, clientBindAddress, reconnectHandler, executorSupplier, installedExtensions, maxFrameSize);
-    }
-
 
     public void doUpgrade(RoutingContext routingContext, final ServerEndpointConfig sec,
                           Map<String, String> pathParams) {

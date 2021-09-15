@@ -159,7 +159,7 @@ public class AnnotatedEndpoint extends Endpoint {
                     }
                 }
             }
-        });
+        }, session);
     }
 
 
@@ -205,9 +205,7 @@ public class AnnotatedEndpoint extends Endpoint {
                                 }
                             }
                         }
-                    }
-
-            );
+                    }, (UndertowSession) session );
         }
     }
 
@@ -233,7 +231,7 @@ public class AnnotatedEndpoint extends Endpoint {
                         }
                     }
                 }
-            });
+            }, (UndertowSession) session);
         } else if (thr instanceof IOException) {
             JsrWebSocketLogger.REQUEST_IO_LOGGER.ioException((IOException) thr);
         } else {

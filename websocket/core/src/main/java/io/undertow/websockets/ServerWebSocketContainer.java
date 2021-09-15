@@ -52,6 +52,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.channels.ClosedChannelException;
 import java.security.NoSuchAlgorithmException;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -119,28 +120,13 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
     protected final Set<String> installedExtensionNames;
     private final List<WebsocketClientSslProvider> clientSslProviders;
     private final int maxFrameSize;
+    private final Supplier<Principal> currentUserSupplier;
 
     private final ContextSetupHandler.Action<Void, Runnable> invokeEndpointTask;
 
     private volatile boolean closed = false;
 
-    public ServerWebSocketContainer(final ObjectIntrospecter objectIntrospecter, final Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, boolean clientMode) {
-        this(objectIntrospecter, ServerWebSocketContainer.class.getClassLoader(), eventLoopSupplier, contextSetupHandlers, dispatchToWorker, null, null);
-    }
-
-    public ServerWebSocketContainer(final ObjectIntrospecter objectIntrospecter, final ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, Supplier<Executor> executorSupplier) {
-        this(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, null, null, executorSupplier, Extensions.EXTENSIONS);
-    }
-
-    public ServerWebSocketContainer(final ObjectIntrospecter objectIntrospecter, final ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler) {
-        this(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, clientBindAddress, reconnectHandler, null, Extensions.EXTENSIONS);
-    }
-
-    public ServerWebSocketContainer(final ObjectIntrospecter objectIntrospecter, final ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler, Supplier<Executor> executorSupplier, List<Extension> installedExtensions) {
-        this(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, clientBindAddress, reconnectHandler, executorSupplier, installedExtensions, DEFAULT_MAX_FRAME_SIZE);
-    }
-
-    public ServerWebSocketContainer(final ObjectIntrospecter objectIntrospecter, final ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler, Supplier<Executor> executorSupplier, List<Extension> installedExtensions, int maxFrameSize) {
+    public ServerWebSocketContainer(final ObjectIntrospecter objectIntrospecter, final ClassLoader classLoader, Supplier<EventLoopGroup> eventLoopSupplier, List<ContextSetupHandler> contextSetupHandlers, boolean dispatchToWorker, InetSocketAddress clientBindAddress, WebSocketReconnectHandler reconnectHandler, Supplier<Executor> executorSupplier, List<Extension> installedExtensions, int maxFrameSize, Supplier<Principal> currentUserSupplier) {
         this.objectIntrospecter = objectIntrospecter;
         this.eventLoopSupplier = eventLoopSupplier;
         this.dispatchToWorker = dispatchToWorker;
@@ -150,9 +136,10 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         this.installedExtensionNames = installedExtensions.stream().map(Extension::getName).collect(Collectors.toSet());
         this.webSocketReconnectHandler = reconnectHandler;
         this.maxFrameSize = maxFrameSize;
+        this.currentUserSupplier = currentUserSupplier;
         ContextSetupHandler.Action<Void, Runnable> task = new ContextSetupHandler.Action<Void, Runnable>() {
             @Override
-            public Void call(Runnable context) throws Exception {
+            public Void call(Runnable context, UndertowSession session) throws Exception {
                 context.run();
                 return null;
             }
@@ -340,6 +327,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                 extensions.add(e);
             }
         }
+        Principal principal = currentUserSupplier == null ? null : currentUserSupplier.get();
         CompletableFuture<UndertowSession> session = connectionBuilder
                 .connect(new Function<Channel, UndertowSession>() {
                     @Override
@@ -362,7 +350,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                         } catch (DeploymentException e) {
                             throw new RuntimeException(e);
                         }
-                        UndertowSession undertowSession = new UndertowSession(channel, connectionBuilder.getUri(), Collections.<String, String>emptyMap(), Collections.<String, List<String>>emptyMap(), sessionHandler, null, new ImmediateObjectHandle<>(endpointInstance), cec, connectionBuilder.getUri().getQuery(), encodingFactory.createEncoding(cec), configured, clientNegotiation.getSelectedSubProtocol(), extensions, connectionBuilder, executorSupplier.get());
+                        UndertowSession undertowSession = new UndertowSession(channel, connectionBuilder.getUri(), Collections.<String, String>emptyMap(), Collections.<String, List<String>>emptyMap(), sessionHandler, principal, new ImmediateObjectHandle<>(endpointInstance), cec, connectionBuilder.getUri().getQuery(), encodingFactory.createEncoding(cec), configured, clientNegotiation.getSelectedSubProtocol(), extensions, connectionBuilder, executorSupplier.get());
                         invokeEndpointMethod(executorSupplier.get(), new Runnable() {
                             @Override
                             public void run() {
@@ -375,7 +363,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                                     sessionCompletableFuture.complete(undertowSession);
                                 }
                             }
-                        });
+                        }, undertowSession);
                         return undertowSession;
                     }
                 }).exceptionally(new Function<Throwable, UndertowSession>() {
@@ -439,10 +427,12 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         }
         String finalSubProtocol = subProtocol;
         EndpointSessionHandler sessionHandler = new EndpointSessionHandler(this);
+
+        Principal principal = currentUserSupplier == null ? null : currentUserSupplier.get();
         CompletableFuture<UndertowSession> session = connectionBuilder.connect(new Function<Channel, UndertowSession>() {
             @Override
             public UndertowSession apply(Channel channel) {
-                return new UndertowSession(channel, connectionBuilder.getUri(), Collections.<String, String>emptyMap(), Collections.<String, List<String>>emptyMap(), sessionHandler, null, new ImmediateObjectHandle<>(endpointInstance), cec.getConfig(), connectionBuilder.getUri().getQuery(), cec.getEncodingFactory().createEncoding(cec.getConfig()), cec, finalSubProtocol, extensions, connectionBuilder, executorSupplier.get());
+                return new UndertowSession(channel, connectionBuilder.getUri(), Collections.<String, String>emptyMap(), Collections.<String, List<String>>emptyMap(), sessionHandler, principal, new ImmediateObjectHandle<>(endpointInstance), cec.getConfig(), connectionBuilder.getUri().getQuery(), cec.getEncodingFactory().createEncoding(cec.getConfig()), cec, finalSubProtocol, extensions, connectionBuilder, executorSupplier.get());
 
             }
         });
@@ -461,7 +451,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                         result.getChannel().read();
                     }
                 }
-            });
+            }, result);
             return result;
         } catch (TimeoutException | InterruptedException | ExecutionException e) {
             InterruptedIOException interruptedIOException = new InterruptedIOException();
@@ -515,20 +505,20 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
      *
      * @param invocation The task to run
      */
-    public void invokeEndpointMethod(final Executor executor, final Runnable invocation) {
+    public void invokeEndpointMethod(final Executor executor, final Runnable invocation, UndertowSession session) {
         if (dispatchToWorker) {
             try {
                 executor.execute(new Runnable() {
                     @Override
                     public void run() {
-                        invokeEndpointMethod(invocation);
+                        invokeEndpointMethod(invocation, session);
                     }
                 });
             } catch (RejectedExecutionException e) {
-                invokeEndpointMethod(invocation);
+                invokeEndpointMethod(invocation, session);
             }
         } else {
-            invokeEndpointMethod(invocation);
+            invokeEndpointMethod(invocation, session);
         }
     }
 
@@ -537,9 +527,9 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
      *
      * @param invocation The invocation
      */
-    public void invokeEndpointMethod(final Runnable invocation) {
+    public void invokeEndpointMethod(final Runnable invocation, UndertowSession session) {
         try {
-            invokeEndpointTask.call(invocation);
+            invokeEndpointTask.call(invocation, session);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

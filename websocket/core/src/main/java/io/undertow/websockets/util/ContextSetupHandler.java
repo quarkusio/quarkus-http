@@ -18,6 +18,8 @@
 
 package io.undertow.websockets.util;
 
+import io.undertow.websockets.UndertowSession;
+
 /**
  * @author Stuart Douglas
  */
@@ -26,7 +28,7 @@ public interface ContextSetupHandler {
     <T, C> Action<T, C> create(Action<T, C> action);
 
     interface Action<T, C> {
-        T call(C context) throws Exception;
+        T call(C context, UndertowSession session) throws Exception;
     }
 
 }

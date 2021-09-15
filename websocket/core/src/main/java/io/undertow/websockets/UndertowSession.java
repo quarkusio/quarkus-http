@@ -231,7 +231,7 @@ public final class UndertowSession implements Session {
                         }
 
                     }
-                });
+                }, this);
             }
             //TODO: there is a lot of spec required behaviour here
         }

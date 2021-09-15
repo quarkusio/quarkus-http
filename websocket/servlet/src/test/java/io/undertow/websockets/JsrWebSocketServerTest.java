@@ -14,19 +14,31 @@
  */
 package io.undertow.websockets;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Writer;
-import java.net.URI;
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.util.concurrent.GlobalEventExecutor;
+import io.undertow.server.handlers.PathHandler;
+import io.undertow.servlet.api.DeploymentInfo;
+import io.undertow.servlet.api.DeploymentManager;
+import io.undertow.servlet.api.FilterInfo;
+import io.undertow.servlet.api.ServletContainer;
+import io.undertow.testutils.AjpIgnore;
+import io.undertow.testutils.DefaultServer;
+import io.undertow.testutils.HttpOneOnly;
+import io.undertow.util.NetworkUtils;
+import io.undertow.websockets.jsr.test.FrameChecker;
+import io.undertow.websockets.jsr.test.ProgramaticErrorEndpoint;
+import io.undertow.websockets.jsr.test.WebSocketTestClient;
+import io.undertow.websockets.jsr.test.annotated.AnnotatedClientEndpoint;
+import io.undertow.websockets.servlet.JsrWebSocketFilter;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.ServletContext;
@@ -40,32 +52,19 @@ import javax.websocket.SendHandler;
 import javax.websocket.SendResult;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpointConfig;
-
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.undertow.server.handlers.PathHandler;
-import io.undertow.servlet.api.DeploymentInfo;
-import io.undertow.servlet.api.DeploymentManager;
-import io.undertow.servlet.api.FilterInfo;
-import io.undertow.servlet.api.ServletContainer;
-import io.undertow.testutils.AjpIgnore;
-import io.undertow.testutils.DefaultServer;
-import io.undertow.testutils.HttpOneOnly;
-import io.undertow.util.NetworkUtils;
-import io.undertow.websockets.servlet.JsrWebSocketFilter;
-import io.undertow.websockets.jsr.test.FrameChecker;
-import io.undertow.websockets.jsr.test.ProgramaticErrorEndpoint;
-import io.undertow.websockets.jsr.test.WebSocketTestClient;
-import io.undertow.websockets.jsr.test.annotated.AnnotatedClientEndpoint;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Writer;
+import java.net.URI;
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author <a href="mailto:nmaurer@redhat.com">Norman Maurer</a>
@@ -98,7 +97,7 @@ public class JsrWebSocketServerTest {
             }
         }
 
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -109,6 +108,10 @@ public class JsrWebSocketServerTest {
         latch.get();
         Assert.assertNull(cause.get());
         client.destroy();
+    }
+
+    private ServerWebSocketContainer createContainer() {
+        return new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, getClass().getClassLoader(), DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, null, null, () -> GlobalEventExecutor.INSTANCE, Collections.emptyList(), Integer.MAX_VALUE, null);
     }
 
     @Test
@@ -129,7 +132,7 @@ public class JsrWebSocketServerTest {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
 
         deployServlet(builder);
@@ -161,7 +164,7 @@ public class JsrWebSocketServerTest {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
 
@@ -206,7 +209,7 @@ public class JsrWebSocketServerTest {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -254,7 +257,7 @@ public class JsrWebSocketServerTest {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
 
@@ -296,7 +299,7 @@ public class JsrWebSocketServerTest {
             }
 
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -330,7 +333,7 @@ public class JsrWebSocketServerTest {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
 
@@ -377,7 +380,7 @@ public class JsrWebSocketServerTest {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
 
@@ -423,7 +426,7 @@ public class JsrWebSocketServerTest {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -450,7 +453,7 @@ public class JsrWebSocketServerTest {
                 connected.set(true);
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -491,7 +494,7 @@ public class JsrWebSocketServerTest {
                 clientLatch.countDown();
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -536,7 +539,7 @@ public class JsrWebSocketServerTest {
                 clientLatch.countDown();
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -576,7 +579,7 @@ public class JsrWebSocketServerTest {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -614,7 +617,7 @@ public class JsrWebSocketServerTest {
                 });
             }
         }
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(TestEndPoint.class, "/").configurator(new InstanceConfigurator(new TestEndPoint())).build());
         deployServlet(builder);
@@ -633,7 +636,7 @@ public class JsrWebSocketServerTest {
     public void testErrorHandling() throws Exception {
 
 
-        ServerWebSocketContainer builder = new ServerWebSocketContainer(TestClassIntrospector.INSTANCE, DefaultServer.getEventLoopSupplier(), Collections.EMPTY_LIST, false, false);
+        ServerWebSocketContainer builder = createContainer();
 
         builder.addEndpoint(ServerEndpointConfig.Builder.create(ProgramaticErrorEndpoint.class, "/").configurator(new InstanceConfigurator(new ProgramaticErrorEndpoint())).build());
         deployServlet(builder);

@@ -20,15 +20,14 @@ package io.undertow.websockets.servlet;
 
 import io.netty.channel.EventLoopGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
-import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.ServletExtension;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
-import io.undertow.servlet.api.ThreadSetupHandler;
 import io.undertow.servlet.spec.ServletContextImpl;
 import io.undertow.websockets.Extensions;
 import io.undertow.websockets.ServerWebSocketContainer;
 import io.undertow.websockets.UndertowContainerProvider;
+import io.undertow.websockets.UndertowSession;
 import io.undertow.websockets.WebSocketDeploymentInfo;
 import io.undertow.websockets.util.ContextSetupHandler;
 import io.undertow.websockets.util.ObjectFactory;
@@ -41,7 +40,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.websocket.DeploymentException;
-import javax.websocket.Extension;
 import javax.websocket.server.ServerContainer;
 import javax.websocket.server.ServerEndpointConfig;
 import java.net.InetSocketAddress;
@@ -72,11 +70,11 @@ public class Bootstrap implements ServletExtension {
             public <T, C> Action<T, C> create(Action<T, C> action) {
                 return new Action<T, C>() {
                     @Override
-                    public T call(C context) throws Exception {
+                    public T call(C context, UndertowSession session) throws Exception {
                         ClassLoader old = Thread.currentThread().getContextClassLoader();
                         Thread.currentThread().setContextClassLoader(deploymentInfo.getClassLoader());
                         try {
-                            return action.call(context);
+                            return action.call(context, session);
                         } finally {
                             Thread.currentThread().setContextClassLoader(old);
                         }
@@ -84,25 +82,6 @@ public class Bootstrap implements ServletExtension {
                 };
             }
         });
-        for (ThreadSetupHandler i : deploymentInfo.getThreadSetupActions()) {
-            setup.add(new ContextSetupHandler() {
-                @Override
-                public <T, C> Action<T, C> create(Action<T, C> action) {
-                    ThreadSetupHandler.Action<T, C> res = i.create(new ThreadSetupHandler.Action<T, C>() {
-                        @Override
-                        public T call(HttpServerExchange exchange, C context) throws Exception {
-                            return action.call(context);
-                        }
-                    });
-                    return new Action<T, C>() {
-                        @Override
-                        public T call(C context) throws Exception {
-                            return res.call(null, context);
-                        }
-                    };
-                }
-            });
-        }
 
         InetSocketAddress bind = null;
         if (info.getClientBindAddress() != null) {
@@ -155,7 +134,7 @@ public class Bootstrap implements ServletExtension {
                 }
                 return GlobalEventExecutor.INSTANCE;
             }
-        }, Extensions.EXTENSIONS, info.getMaxFrameSize());
+        }, Extensions.EXTENSIONS, info.getMaxFrameSize(), info.getCurrentUserSupplier());
         try {
             for (Class<?> annotation : info.getAnnotatedEndpoints()) {
                 container.addEndpoint(annotation);
