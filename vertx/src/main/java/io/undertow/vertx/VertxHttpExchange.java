@@ -463,8 +463,19 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public <T> void setReadHandler(BiConsumer<InputChannel, T> handler, T context) {
-        this.readHandler = (BiConsumer<InputChannel, Object>) handler;
-        this.readHandlerContext = context;
+        synchronized (request.connection()) {
+            if (isReadable()) {
+                getIoThread().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        handler.accept(VertxHttpExchange.this, context);
+                    }
+                });
+            } else {
+                this.readHandler = (BiConsumer<InputChannel, Object>) handler;
+                this.readHandlerContext = context;
+            }
+        }
     }
 
     @Override
@@ -718,11 +729,11 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                     terminateResponse();
                 }
 
+                writeQueued = false;
                 if (callback != null) {
                     callback.onComplete(VertxHttpExchange.this, context);
                 }
 
-                writeQueued = false;
             }
         });
     }
