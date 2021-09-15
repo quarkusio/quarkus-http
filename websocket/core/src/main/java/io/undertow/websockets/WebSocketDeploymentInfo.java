@@ -18,6 +18,7 @@
 
 package io.undertow.websockets;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -47,6 +48,7 @@ public class WebSocketDeploymentInfo implements Cloneable {
     private WebSocketReconnectHandler reconnectHandler;
     private EventLoopGroup eventLoopGroup;
     private Supplier<Executor> executor;
+    private Supplier<Principal> currentUserSupplier;
     private int maxFrameSize = ServerWebSocketContainer.DEFAULT_MAX_FRAME_SIZE;
 
     public WebSocketDeploymentInfo addEndpoint(final Class<?> annotated) {
@@ -174,6 +176,15 @@ public class WebSocketDeploymentInfo implements Cloneable {
         return this;
     }
 
+    public Supplier<Principal> getCurrentUserSupplier() {
+        return currentUserSupplier;
+    }
+
+    public WebSocketDeploymentInfo setCurrentUserSupplier(Supplier<Principal> currentUserSupplier) {
+        this.currentUserSupplier = currentUserSupplier;
+        return this;
+    }
+
     @Override
     public WebSocketDeploymentInfo clone() {
         return new WebSocketDeploymentInfo()
@@ -184,6 +195,7 @@ public class WebSocketDeploymentInfo implements Cloneable {
                 .addServerExtensions(this.serverExtensions)
                 .setClientBindAddress(this.clientBindAddress)
                 .setReconnectHandler(this.reconnectHandler)
+                .setCurrentUserSupplier(this.currentUserSupplier)
                 .setMaxFrameSize(this.maxFrameSize);
     }
 
