@@ -281,7 +281,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         //in theory we should not be able to connect until the deployment is complete, but the definition of when a deployment is complete is a bit nebulous.
         ClientNegotiation clientNegotiation = new ClientNegotiation(cec.getPreferredSubprotocols(), toExtensionList(cec.getExtensions()), cec);
 
-        WebsocketConnectionBuilder connectionBuilder = new WebsocketConnectionBuilder(path, eventLoopSupplier.get())
+        WebsocketConnectionBuilder connectionBuilder = new WebsocketConnectionBuilder(path, eventLoopSupplier.get(), maxFrameSize)
                 .setSsl(ssl)
                 .setBindAddress(clientBindAddress)
                 .setClientNegotiation(clientNegotiation);
@@ -400,7 +400,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         ClientNegotiation clientNegotiation = new ClientNegotiation(cec.getConfig().getPreferredSubprotocols(), toExtensionList(cec.getConfig().getExtensions()), cec.getConfig());
 
 
-        WebsocketConnectionBuilder connectionBuilder = new WebsocketConnectionBuilder(path, eventLoopSupplier.get())
+        WebsocketConnectionBuilder connectionBuilder = new WebsocketConnectionBuilder(path, eventLoopSupplier.get(), maxFrameSize)
                 .setSsl(ssl)
                 .setBindAddress(clientBindAddress)
                 .setClientNegotiation(clientNegotiation);

@@ -59,10 +59,12 @@ class WebsocketConnectionBuilder {
     //    private Set<WebSocketExtensionHandshake> clientExtensions;
     private URI proxyUri;
     private SslContext proxySsl;
+    private final int maxFrameSize;
 
-    public WebsocketConnectionBuilder(URI uri, EventLoopGroup eventLoopGroup) {
+    public WebsocketConnectionBuilder(URI uri, EventLoopGroup eventLoopGroup, int maxFrameSize) {
         this.uri = uri;
         this.eventLoopGroup = eventLoopGroup;
+        this.maxFrameSize = maxFrameSize;
     }
 
 
@@ -131,7 +133,7 @@ class WebsocketConnectionBuilder {
         final WebSocketClientHandler handler =
                 new WebSocketClientHandler(
                         new WebSocketClientHandshaker13(
-                                uri, WebSocketVersion.V13, null, !clientNegotiation.getSupportedExtensions().isEmpty(), HttpHeaders.EMPTY_HEADERS, 1280000) {
+                                uri, WebSocketVersion.V13, null, !clientNegotiation.getSupportedExtensions().isEmpty(), HttpHeaders.EMPTY_HEADERS, maxFrameSize) {
 
                             @Override
                             protected FullHttpRequest newHandshakeRequest() {
