@@ -8,9 +8,8 @@ A Vert.x based Servlet implementation.
 ```bash
 # Bump version and create the tag
 mvn release:prepare -Prelease
-# Checkout the created tag and deploy the artifacts to Nexus
-git checkout $TAG
-mvn deploy -Prelease
+# Build the tag and push to OSSRH
+mvn release:perform -Prelease
 ```
 
-The staging repository is automatically closed. The sync with Maven Central should take a few hours.
+The staging repository is automatically closed. The sync with Maven Central should take ~30 minutes.
