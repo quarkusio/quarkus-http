@@ -1,10 +1,8 @@
 package io.undertow.vertx;
 
+import io.netty.handler.codec.DecoderResult;
 import io.netty.handler.codec.http.QueryStringDecoder;
-import io.vertx.core.Context;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.MultiMap;
+import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.Cookie;
 import io.vertx.core.http.HttpConnection;
@@ -27,6 +25,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class PushedHttpServerRequest implements HttpServerRequest, HttpServerRequestInternal {
     private final HttpServerRequestInternal original;
@@ -275,6 +274,20 @@ public class PushedHttpServerRequest implements HttpServerRequest, HttpServerReq
         return original.cookieMap();
     }
 
+    @Override
+    public Cookie getCookie(String name, String domain, String path) {
+        return original.getCookie(name, domain, path);
+    }
+
+    @Override
+    public Set<Cookie> cookies(String name) {
+        return original.cookies(name);
+    }
+
+    @Override
+    public Set<Cookie> cookies() {
+        return original.cookies();
+    }
 
     /**
      * Extract the path out of the uri.
@@ -343,6 +356,56 @@ public class PushedHttpServerRequest implements HttpServerRequest, HttpServerReq
             }
         }
         return params;
+    }
+
+    @Override
+    public String getParam(String paramName, String defaultValue) {
+        return original.getParam(paramName, defaultValue);
+    }
+
+    @Override
+    public HttpServerRequest bodyHandler(Handler<Buffer> bodyHandler) {
+        return original.bodyHandler(bodyHandler);
+    }
+
+    @Override
+    public HttpServerRequest body(Handler<AsyncResult<Buffer>> handler) {
+        return original.body(handler);
+    }
+
+    @Override
+    public void end(Handler<AsyncResult<Void>> handler) {
+        original.end(handler);
+    }
+
+    @Override
+    public void toNetSocket(Handler<AsyncResult<NetSocket>> handler) {
+        original.toNetSocket(handler);
+    }
+
+    @Override
+    public int streamId() {
+        return original.streamId();
+    }
+
+    @Override
+    public void toWebSocket(Handler<AsyncResult<ServerWebSocket>> handler) {
+        original.toWebSocket(handler);
+    }
+
+    @Override
+    public StreamPriority streamPriority() {
+        return original.streamPriority();
+    }
+
+    @Override
+    public DecoderResult decoderResult() {
+        return original.decoderResult();
+    }
+
+    @Override
+    public HttpServerRequest routed(String route) {
+        return original.routed(route);
     }
 
     @Override
