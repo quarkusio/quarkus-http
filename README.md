@@ -1,6 +1,9 @@
 Quarkus HTTP
 ============
 
+![Maven Central](https://img.shields.io/maven-central/v/io.quarkus.http/quarkus-http-core?logo=apache&style=for-the-badge)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/quarkusio/quarkus-http/Build?logo=github&style=for-the-badge)
+
 A Vert.x based Servlet implementation.
 
 ## Release
