@@ -169,6 +169,9 @@ public class Handshake {
         if (requestedSubprotocols == null) {
             return;
         }
+        if (requestedSubprotocols.trim().isEmpty()) {
+            throw new RuntimeException(HttpHeaderNames.SEC_WEBSOCKET_PROTOCOL + " header was provided but was empty");
+        }
 
         String[] requestedSubprotocolArray = PATTERN.split(requestedSubprotocols);
         String subProtocol = supportedSubprotols(requestedSubprotocolArray);
@@ -183,6 +186,9 @@ public class Handshake {
         String extensionHeader = exchange.getRequestHeader(HttpHeaderNames.SEC_WEBSOCKET_EXTENSIONS);
         if(extensionHeader == null) {
             return Collections.emptyList();
+        }
+        if (extensionHeader.trim().isEmpty()) {
+            throw new RuntimeException(HttpHeaderNames.SEC_WEBSOCKET_EXTENSIONS + " header was provided but was empty");
         }
         List<WebSocketExtensionData> requestedExtensions = WebSocketExtensionUtil.extractExtensions(extensionHeader);
         List<WebSocketServerExtension> extensions = selectedExtension(requestedExtensions);
