@@ -146,7 +146,9 @@ class WebsocketConnectionBuilder {
                                         }
                                         sb.append(clientNegotiation.getSupportedSubProtocols().get(i));
                                     }
-                                    request.headers().add(HttpHeaderNames.SEC_WEBSOCKET_PROTOCOL, sb.toString());
+                                    if (sb.length() > 0) {
+                                        request.headers().add(HttpHeaderNames.SEC_WEBSOCKET_PROTOCOL, sb.toString());
+                                    }
                                 }
                                 if (clientNegotiation.getSupportedExtensions() != null) {
                                     StringBuilder sb = new StringBuilder();
@@ -165,7 +167,9 @@ class WebsocketConnectionBuilder {
                                             }
                                         }
                                     }
-                                    request.headers().add(HttpHeaderNames.SEC_WEBSOCKET_EXTENSIONS, sb.toString());
+                                    if (sb.length() > 0) {
+                                        request.headers().add(HttpHeaderNames.SEC_WEBSOCKET_EXTENSIONS, sb.toString());
+                                    }
                                 }
                                 clientNegotiation.beforeRequest(request.headers());
                                 return request;
