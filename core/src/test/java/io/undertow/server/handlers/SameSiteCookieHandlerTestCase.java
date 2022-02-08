@@ -21,6 +21,7 @@ package io.undertow.server.handlers;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
+import io.undertow.httpcore.StatusCodes;
 import io.undertow.util.Headers;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -37,7 +38,6 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.TestHttpClient;
 import io.undertow.util.FileUtils;
-import io.undertow.util.StatusCodes;
 
 @RunWith(DefaultServer.class)
 public class SameSiteCookieHandlerTestCase {

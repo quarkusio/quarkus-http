@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import io.undertow.httpcore.HttpHeaderNames;
 import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -75,7 +76,7 @@ public class SameSiteCookieHandler implements HttpHandler {
                 @Override
                 public void beforeCommit(HttpServerExchange exchange) {
                     // If user-agent is available check it and skip sending "SameSite=None" for incompatible user-agents
-                    String userAgent = exchange.getRequestHeaders().getFirst(Headers.USER_AGENT);
+                    String userAgent = exchange.getRequestHeader(HttpHeaderNames.USER_AGENT);
                     if (enableClientChecker && userAgent != null && !SameSiteNoneIncompatibleClientChecker.shouldSendSameSiteNone(userAgent)) {
                         return;
                     }
