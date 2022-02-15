@@ -51,6 +51,7 @@ import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.util.ReferenceCountUtil;
 import io.undertow.websockets.util.ClassUtils;
 
 /**
@@ -130,15 +131,27 @@ class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
         processFrame(msg);
     }
 
+    /**
+     * Catch unhandled channel pipeline exceptions and avoid default handler with stack trace print.
+     * Pass to OnError to enable implementation to handle that exception.
+     * This might occur for example on unexpected client connection close.
+     */
+    @Override
+    public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) {
+        try {
+            invokeOnError(cause);
+        } finally {
+            ReferenceCountUtil.release(cause);
+        }
+    }
+
     private void processFrame(WebSocketFrame msg) throws IOException {
         if (msg instanceof CloseWebSocketFrame) {
             onCloseFrame((CloseWebSocketFrame) msg);
         } else if (msg instanceof PongWebSocketFrame) {
             onPongMessage((PongWebSocketFrame) msg);
         } else if (msg instanceof PingWebSocketFrame) {
-            byte[] data = new byte[msg.content().readableBytes()];
-            msg.content().readBytes(data);
-            session.getAsyncRemote().sendPong(ByteBuffer.wrap(data));
+            onPingFrame(msg);
         } else if (msg instanceof TextWebSocketFrame) {
             onText(msg, ((TextWebSocketFrame) msg).text());
         } else if (msg instanceof BinaryWebSocketFrame) {
@@ -150,6 +163,18 @@ class FrameHandler extends SimpleChannelInboundHandler<WebSocketFrame> {
                 onText(msg, ((ContinuationWebSocketFrame) msg).text());
             }
         }
+    }
+
+    void onPingFrame(final WebSocketFrame message) throws IOException {
+        if (session.isSessionClosed()) {
+            //to bad, the channel has already been closed
+            //we just ignore messages that are received after we have closed, as the endpoint is no longer in a valid state to deal with them
+            //this this should only happen if a message was on the wire when we called close()
+            return;
+        }
+        byte[] data = new byte[message.content().readableBytes()];
+        message.content().readBytes(data);
+        session.getAsyncRemote().sendPong(ByteBuffer.wrap(data));
     }
 
     void onCloseFrame(final CloseWebSocketFrame message) {
