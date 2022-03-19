@@ -74,7 +74,7 @@
         <version.org.jboss.logmanager>2.1.10.Final</version.org.jboss.logmanager>
         <version.jakarta.annotations.api>1.3.5</version.jakarta.annotations.api>
         <version.jakarta.servlet>4.0.4</version.jakarta.servlet>
-        <version.org.jboss.spec.javax.websockets>1.1.4.Final</version.org.jboss.spec.javax.websockets>
+        <version.jakarta.websocket>1.1.2</version.jakarta.websocket>
         <version.vertx>4.2.1</version.vertx>
         <version.xnio>3.3.8.Final</version.xnio>
 
@@ -390,7 +390,7 @@
                 <version>${version.netty}</version>
             </dependency>
 
-            
+
             <dependency>
                 <groupId>com.twitter</groupId>
                 <artifactId>hpack</artifactId>
@@ -403,7 +403,7 @@
                 <artifactId>apacheds-all</artifactId>
                 <version>${version.org.apache.directory.server}</version>
                 <scope>test</scope>
-            </dependency>            
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
@@ -451,9 +451,9 @@
             </dependency>
 
             <dependency>
-                <groupId>org.jboss.spec.javax.websocket</groupId>
-                <artifactId>jboss-websocket-api_1.1_spec</artifactId>
-                <version>${version.org.jboss.spec.javax.websockets}</version>
+                <groupId>jakarta.websocket</groupId>
+                <artifactId>jakarta.websocket-api</artifactId>
+                <version>${version.jakarta.websocket}</version>
             </dependency>
 
             <dependency>
