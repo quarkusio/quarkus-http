@@ -48,3 +48,5 @@ transform_module websocket
 
 convert_service_file ./websocket/core/src/main/resources/META-INF/services/javax.websocket.ContainerProvider
 convert_service_file './websocket/core/src/main/resources/META-INF/services/javax.websocket.server.ServerEndpointConfig$Configurator'
+
+mvn versions:set -DnewVersion=5.0.0-SNAPSHOT -DprocessAllModules
