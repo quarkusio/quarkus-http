@@ -25,6 +25,7 @@ import jakarta.servlet.DispatcherType;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.websocket.DeploymentException;
 import jakarta.websocket.Endpoint;
 import jakarta.websocket.Extension;
 import jakarta.websocket.server.ServerEndpointConfig;
@@ -46,6 +47,14 @@ public class ServletServerWebSocketContainer extends ServerWebSocketContainer {
         super(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, clientBindAddress, reconnectHandler, executorSupplier, installedExtensions, maxFrameSize, currentUserSupplier);
     }
 
+    @Override
+    public void upgradeHttpToWebSocket(Object req, Object res, ServerEndpointConfig sec, Map<String, String> pathParameters) throws IOException, DeploymentException {
+        try {
+            doUpgrade((HttpServletRequest) req, (HttpServletResponse) res, sec, pathParameters);
+        } catch (final ServletException e) {
+            throw new DeploymentException(e.getRootCause().getMessage(), e.getRootCause());
+        }
+    }
 
     public void doUpgrade(HttpServletRequest request,
                           HttpServletResponse response, final ServerEndpointConfig sec,
