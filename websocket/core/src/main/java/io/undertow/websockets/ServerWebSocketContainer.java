@@ -394,6 +394,10 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         return connectToServer(endpoint, cec, path);
     }
 
+    @Override
+    public void upgradeHttpToWebSocket(Object req, Object res, ServerEndpointConfig sec, Map<String, String> pathParameters) throws IOException, DeploymentException {
+        throw new UnsupportedOperationException("upgradeHttpToWebSocket is only supported with servlets");
+    }
 
     private Session connectToServerInternal(final Endpoint endpointInstance, SSLContext ssl, final ConfiguredClientEndpoint cec, final URI path) throws DeploymentException, IOException {
         //in theory we should not be able to connect until the deployment is complete, but the definition of when a deployment is complete is a bit nebulous.
