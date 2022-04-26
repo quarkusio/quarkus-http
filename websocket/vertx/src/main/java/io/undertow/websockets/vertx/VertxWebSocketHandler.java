@@ -88,7 +88,11 @@ public class VertxWebSocketHandler implements Handler<RoutingContext> {
             }
             final VertxWebSocketHttpExchange facade = createHttpExchange(event);
 
-            String path = event.normalizedPath();
+
+            String path = event.mountPoint() == null ? event.normalizedPath()
+                    : event.normalizedPath().substring(
+                    // let's be extra careful here in case Vert.x normalizes the mount points at some point
+                    event.mountPoint().endsWith("/") ? event.mountPoint().length() - 1 : event.mountPoint().length());
             if (!path.startsWith("/")) {
                 path = "/" + path;
             }
