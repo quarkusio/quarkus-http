@@ -33,6 +33,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -240,6 +241,8 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     private SSLSessionInfo sslSessionInfo;
     final HttpExchange delegate;
     private boolean executingHandlerChain;
+    private static final AtomicLong REQUEST_ID_GENERATOR = new AtomicLong(0);
+    private final String requestId = Long.toString(REQUEST_ID_GENERATOR.incrementAndGet());
 
     public HttpServerExchange(final HttpExchange delegate, long maxEntitySize) {
         this.maxEntitySize = maxEntitySize;
@@ -325,6 +328,10 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
     public HttpServerExchange setRequestScheme(final String requestScheme) {
         this.requestScheme = requestScheme;
         return this;
+    }
+
+    public String getRequestId() {
+        return requestId;
     }
 
     /**

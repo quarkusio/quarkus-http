@@ -46,6 +46,7 @@ import jakarta.servlet.AsyncContext;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.MultipartConfigElement;
 import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletConnection;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.ServletRequest;
@@ -354,6 +355,27 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
         String newId = underlyingSession.changeSessionId(exchange, originalServletContext.getSessionConfig());
         servletContext.getDeployment().getApplicationListeners().httpSessionIdChanged(session, oldId);
         return newId;
+    }
+
+    @Override
+    public String getRequestId() {
+        return exchange.getRequestId();
+    }
+
+    /**
+     * We don't have anything equivalent in the Vert.x connection.
+     */
+    @Override
+    public String getProtocolRequestId() {
+        return "";
+    }
+
+    @Override
+    public ServletConnection getServletConnection() {
+        // We don't have anything equivalent in the Vert.x connection.
+        String connectionId = "";
+        
+        return new ServletConnectionImpl(connectionId, exchange.getProtocol().toString(), isSecure());
     }
 
     @Override
