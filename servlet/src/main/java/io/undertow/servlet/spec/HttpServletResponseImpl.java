@@ -113,16 +113,6 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
     }
 
     @Override
-    public String encodeUrl(final String url) {
-        return encodeURL(url);
-    }
-
-    @Override
-    public String encodeRedirectUrl(final String url) {
-        return encodeRedirectURL(url);
-    }
-
-    @Override
     public void sendError(final int sc, final String msg) throws IOException {
         if(insideInclude) {
             //not 100% sure this is the correct action
@@ -264,11 +254,6 @@ public final class HttpServletResponseImpl implements HttpServletResponse {
             return;
         }
         exchange.setStatusCode(sc);
-    }
-
-    @Override
-    public void setStatus(final int sc, final String sm) {
-        setStatus(sc);
     }
 
     @Override
