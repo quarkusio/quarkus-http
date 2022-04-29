@@ -25,14 +25,14 @@ import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import jakarta.servlet.SingleThreadModel;
 
 import org.junit.Assert;
+import java.io.IOException;
 
 /**
  * @author Stuart Douglas
  */
-public class ThirdServlet implements Servlet, SingleThreadModel {
+public class ThirdServlet implements Servlet {
 
     public static volatile boolean init;
 
