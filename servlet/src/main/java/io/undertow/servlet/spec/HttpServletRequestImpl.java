@@ -269,7 +269,7 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
 
     @Override
     public String getPathTranslated() {
-        return getRealPath(getPathInfo());
+        return servletContext.getRealPath(getPathInfo());
     }
 
     @Override
@@ -421,11 +421,6 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
     @Override
     public boolean isRequestedSessionIdFromURL() {
         return sessionCookieSource() == SessionConfig.SessionCookieSource.URL;
-    }
-
-    @Override
-    public boolean isRequestedSessionIdFromUrl() {
-        return isRequestedSessionIdFromURL();
     }
 
     @Override
@@ -957,11 +952,6 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
             realPath = CanonicalPathUtils.canonicalize(current + path);
         }
         return new RequestDispatcherImpl(realPath, servletContext);
-    }
-
-    @Override
-    public String getRealPath(final String path) {
-        return servletContext.getRealPath(path);
     }
 
     @Override
