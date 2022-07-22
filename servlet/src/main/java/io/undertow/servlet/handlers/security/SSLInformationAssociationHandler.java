@@ -21,7 +21,7 @@ package io.undertow.servlet.handlers.security;
 import java.io.ByteArrayInputStream;
 import java.security.cert.X509Certificate;
 
-import javax.servlet.ServletRequest;
+import jakarta.servlet.ServletRequest;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;

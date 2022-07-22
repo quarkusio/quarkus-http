@@ -21,11 +21,11 @@ package io.undertow.servlet.test.streams;
 import java.io.IOException;
 import java.lang.reflect.Method;
 
-import javax.servlet.ServletException;
-import javax.servlet.WriteListener;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.WriteListener;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.handlers.ServletRequestContext;

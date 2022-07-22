@@ -28,7 +28,7 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.util.Locale;
 
-import javax.servlet.DispatcherType;
+import jakarta.servlet.DispatcherType;
 
 import io.netty.buffer.ByteBuf;
 

@@ -20,8 +20,8 @@ package io.undertow.servlet.compat.rewrite;
 
 import java.nio.charset.StandardCharsets;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;

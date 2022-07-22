@@ -21,8 +21,8 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.undertow.websockets.ConfiguredServerEndpoint;
 import io.undertow.websockets.UndertowSession;
 
-import javax.websocket.Extension;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.websocket.Extension;
+import jakarta.websocket.server.ServerEndpointConfig;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

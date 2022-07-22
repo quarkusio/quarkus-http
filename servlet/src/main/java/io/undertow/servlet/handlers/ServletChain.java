@@ -22,9 +22,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.ServletException;
-import javax.servlet.http.MappingMatch;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.MappingMatch;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;

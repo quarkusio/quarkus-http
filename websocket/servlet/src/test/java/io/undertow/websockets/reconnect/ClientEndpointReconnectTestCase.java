@@ -21,8 +21,8 @@ package io.undertow.websockets.reconnect;
 import java.io.IOException;
 import java.net.URI;
 
-import javax.websocket.CloseReason;
-import javax.websocket.Session;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.Session;
 
 import org.junit.AfterClass;
 import org.junit.Assert;

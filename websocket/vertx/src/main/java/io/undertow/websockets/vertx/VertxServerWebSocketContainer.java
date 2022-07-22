@@ -23,9 +23,9 @@ import io.undertow.websockets.util.PathTemplate;
 import io.vertx.core.net.impl.ConnectionBase;
 import io.vertx.ext.web.RoutingContext;
 
-import javax.websocket.Endpoint;
-import javax.websocket.Extension;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.Extension;
+import jakarta.websocket.server.ServerEndpointConfig;
 import java.net.InetSocketAddress;
 import java.security.Principal;
 import java.util.List;
