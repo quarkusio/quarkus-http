@@ -14,7 +14,7 @@ recipeList:
   # Annotation
   - org.openrewrite.maven.ChangePropertyValue:
       key: version.jakarta.annotations.api
-      newValue: 2.0.0
+      newValue: 2.1.1
   # Servlet
   - org.openrewrite.maven.ChangePropertyValue:
       key: version.jakarta.servlet
