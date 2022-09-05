@@ -54,6 +54,6 @@ git commit -m 'Transform sources to Jakarta EE 9'
 
 # Upgrade to EE 10
 git fetch origin jakarta-10-servlet-websocket
-git rev-list 3c3bba6432603bdb5f8a6348b322758755a2d585..jakarta-10-servlet-websocket | tac | xargs git cherry-pick -x
+git rev-list 3c3bba6432603bdb5f8a6348b322758755a2d585..origin/jakarta-10-servlet-websocket | tac | xargs git cherry-pick -x
 git add .
 git commit -m 'Transform sources to Jakarta EE 10'
