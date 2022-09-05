@@ -21,7 +21,7 @@ package io.undertow.servlet.handlers.security;
 import java.io.ByteArrayInputStream;
 import java.security.cert.X509Certificate;
 
-import javax.servlet.ServletRequest;
+import jakarta.servlet.ServletRequest;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
@@ -31,9 +31,9 @@ import io.undertow.servlet.handlers.ServletRequestContext;
 /**
  * Handler that associates SSL metadata with request
  * <p>
- * cipher suite - javax.servlet.request.cipher_suite String
- * bit size of the algorithm - javax.servlet.request.key_size Integer
- * SSL session id - javax.servlet.request.ssl_session_id String
+ * cipher suite - jakarta.servlet.request.cipher_suite String
+ * bit size of the algorithm - jakarta.servlet.request.key_size Integer
+ * SSL session id - jakarta.servlet.request.ssl_session_id String
  *
  * @author <a href="mailto:tomaz.cerar@redhat.com">Tomaz Cerar</a> (c) 2013 Red Hat Inc.
  */
@@ -121,12 +121,12 @@ public class SSLInformationAssociationHandler implements HttpHandler {
         SSLSessionInfo ssl = exchange.getSslSessionInfo();
         if (ssl != null) {
             String cipherSuite = ssl.getCipherSuite();
-            request.setAttribute("javax.servlet.request.cipher_suite", cipherSuite);
-            request.setAttribute("javax.servlet.request.key_size", getKeyLength(cipherSuite));
-            request.setAttribute("javax.servlet.request.ssl_session_id", ssl.getSessionId());
+            request.setAttribute("jakarta.servlet.request.cipher_suite", cipherSuite);
+            request.setAttribute("jakarta.servlet.request.key_size", getKeyLength(cipherSuite));
+            request.setAttribute("jakarta.servlet.request.ssl_session_id", ssl.getSessionId());
             X509Certificate[] certs = getCerts(ssl);
             if (certs != null) {
-                request.setAttribute("javax.servlet.request.X509Certificate", certs);
+                request.setAttribute("jakarta.servlet.request.X509Certificate", certs);
             }
 
         }

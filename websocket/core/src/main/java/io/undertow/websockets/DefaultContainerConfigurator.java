@@ -21,10 +21,10 @@ package io.undertow.websockets;
 import io.undertow.websockets.util.ObjectFactory;
 import io.undertow.websockets.util.ObjectHandle;
 
-import javax.websocket.Extension;
-import javax.websocket.HandshakeResponse;
-import javax.websocket.server.HandshakeRequest;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.websocket.Extension;
+import jakarta.websocket.HandshakeResponse;
+import jakarta.websocket.server.HandshakeRequest;
+import jakarta.websocket.server.ServerEndpointConfig;
 import java.util.ArrayList;
 import java.util.List;
 

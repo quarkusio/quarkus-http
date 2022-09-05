@@ -23,8 +23,8 @@ import static io.undertow.servlet.Servlets.servlet;
 import java.io.IOException;
 import java.util.Collections;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.entity.UrlEncodedFormEntity;

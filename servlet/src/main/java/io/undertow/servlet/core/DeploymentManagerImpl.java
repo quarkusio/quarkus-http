@@ -18,10 +18,10 @@
 
 package io.undertow.servlet.core;
 
-import static javax.servlet.http.HttpServletRequest.BASIC_AUTH;
-import static javax.servlet.http.HttpServletRequest.CLIENT_CERT_AUTH;
-import static javax.servlet.http.HttpServletRequest.DIGEST_AUTH;
-import static javax.servlet.http.HttpServletRequest.FORM_AUTH;
+import static jakarta.servlet.http.HttpServletRequest.BASIC_AUTH;
+import static jakarta.servlet.http.HttpServletRequest.CLIENT_CERT_AUTH;
+import static jakarta.servlet.http.HttpServletRequest.DIGEST_AUTH;
+import static jakarta.servlet.http.HttpServletRequest.FORM_AUTH;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -37,11 +37,11 @@ import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.TreeMap;
 
-import javax.servlet.ServletContainerInitializer;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletContainerInitializer;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
+import jakarta.servlet.ServletException;
 
 import io.undertow.Handlers;
 import io.undertow.predicate.Predicates;

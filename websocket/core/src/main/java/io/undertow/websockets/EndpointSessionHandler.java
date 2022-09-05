@@ -26,9 +26,9 @@ import io.undertow.websockets.util.ImmediateObjectHandle;
 import io.undertow.websockets.util.ObjectFactory;
 import io.undertow.websockets.util.ObjectHandle;
 
-import javax.websocket.Endpoint;
-import javax.websocket.Extension;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.Extension;
+import jakarta.websocket.server.ServerEndpointConfig;
 import java.net.URI;
 import java.security.Principal;
 import java.util.Collections;

@@ -36,10 +36,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingDeque;
 
-import javax.websocket.CloseReason;
-import javax.websocket.Endpoint;
-import javax.websocket.MessageHandler;
-import javax.websocket.PongMessage;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.MessageHandler;
+import jakarta.websocket.PongMessage;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;

@@ -21,14 +21,14 @@ package io.undertow.websockets.jsr.test;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.websocket.DeploymentException;
-import javax.websocket.server.ServerContainer;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.server.ServerContainer;
+import jakarta.websocket.server.ServerEndpointConfig;
 
 /**
  * @author Stuart Douglas
@@ -38,7 +38,7 @@ public class AddEndpointServlet implements Servlet {
     @Override
     public void init(ServletConfig c) throws ServletException {
         String websocketPath = "/foo";
-        ServerContainer serverContainer = (ServerContainer) c.getServletContext().getAttribute("javax.websocket.server.ServerContainer");
+        ServerContainer serverContainer = (ServerContainer) c.getServletContext().getAttribute("jakarta.websocket.server.ServerContainer");
         ServerEndpointConfig config = ServerEndpointConfig.Builder.create(ProgramaticEndpoint.class, websocketPath).extensions(new ArrayList<>(serverContainer.getInstalledExtensions())).build();
         try {
             serverContainer.addEndpoint(config);

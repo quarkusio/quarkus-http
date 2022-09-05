@@ -21,7 +21,7 @@ package io.undertow.servlet.compat.rewrite;
 import java.io.IOException;
 import java.util.Calendar;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import io.undertow.server.handlers.resource.Resource;
 import io.undertow.servlet.handlers.ServletRequestContext;

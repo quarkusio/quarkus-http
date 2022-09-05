@@ -26,8 +26,8 @@ import io.undertow.websockets.util.ImmediateObjectHandle;
 import io.undertow.websockets.util.ObjectFactory;
 import io.undertow.websockets.util.ObjectHandle;
 
-import javax.websocket.ContainerProvider;
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.WebSocketContainer;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Collections;

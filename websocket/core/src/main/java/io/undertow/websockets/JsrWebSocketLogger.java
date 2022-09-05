@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Set;
 
-import javax.websocket.server.PathParam;
+import jakarta.websocket.server.PathParam;
 
 import org.jboss.logging.BasicLogger;
 import org.jboss.logging.Logger;

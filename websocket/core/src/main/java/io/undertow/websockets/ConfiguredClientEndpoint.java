@@ -21,7 +21,7 @@ package io.undertow.websockets;
 import io.undertow.websockets.annotated.AnnotatedEndpointFactory;
 import io.undertow.websockets.util.ObjectFactory;
 
-import javax.websocket.ClientEndpointConfig;
+import jakarta.websocket.ClientEndpointConfig;
 
 /**
  * @author Stuart Douglas

@@ -17,7 +17,7 @@
  */
 package io.undertow.websockets.autobahn;
 
-import javax.servlet.DispatcherType;
+import jakarta.servlet.DispatcherType;
 
 import org.jboss.logging.Logger;
 

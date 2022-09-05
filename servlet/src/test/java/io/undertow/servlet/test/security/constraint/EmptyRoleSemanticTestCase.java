@@ -22,7 +22,7 @@ import static io.undertow.httpcore.HttpHeaderNames.BASIC;
 import static io.undertow.httpcore.HttpHeaderNames.WWW_AUTHENTICATE;
 import static org.junit.Assert.assertEquals;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
