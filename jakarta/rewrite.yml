@@ -18,8 +18,8 @@ recipeList:
   # Servlet
   - org.openrewrite.maven.ChangePropertyValue:
       key: version.jakarta.servlet
-      newValue: 5.0.0
+      newValue: 6.0.0
   # Websockets
   - org.openrewrite.maven.ChangePropertyValue:
       key: version.jakarta.websocket
-      newValue: 2.0.0
+      newValue: 2.1.0
