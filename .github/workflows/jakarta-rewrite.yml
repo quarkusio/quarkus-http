@@ -30,8 +30,6 @@ jobs:
           export PATH="$HOME/.jbang/bin:$PATH"
           git checkout -b temp-jakarta-rewrite
           ./jakarta/transform.sh
-          git add .
-          git commit -m 'Transform sources to Jakarta'
         shell: bash
       - name: Push changes to jakarta-rewrite
         uses: ad-m/github-push-action@v0.6.0

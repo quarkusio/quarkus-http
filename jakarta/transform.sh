@@ -9,7 +9,7 @@ if [ ! -f LICENSE.txt ]; then
 fi
 
 # Set up jbang alias, we are using latest released transformer version
-jbang alias add --name transform org.eclipse.transformer:org.eclipse.transformer.cli:0.2.0
+jbang alias add --name transform org.eclipse.transformer:org.eclipse.transformer.cli:0.5.0
 
 # Function to help transform a particular Maven module using Eclipse Transformer
 transform_module () {
@@ -37,6 +37,8 @@ convert_service_file () {
   mv "$1" "$newName"
 }
 
+mvn versions:set -DnewVersion=5.0.0-SNAPSHOT -DprocessAllModules -DgenerateBackupPoms=false
+
 rewrite_module .
 transform_module core
 transform_module coverage-report
@@ -46,7 +48,12 @@ transform_module servlet
 transform_module vertx
 transform_module websocket
 
-convert_service_file ./websocket/core/src/main/resources/META-INF/services/javax.websocket.ContainerProvider
-convert_service_file './websocket/core/src/main/resources/META-INF/services/javax.websocket.server.ServerEndpointConfig$Configurator'
+# Commit what we have before cherry-picking stuff
+git add .
+git commit -m 'Transform sources to Jakarta EE 9'
 
-mvn versions:set -DnewVersion=5.0.0-SNAPSHOT -DprocessAllModules
+# Upgrade to EE 10
+git fetch origin jakarta-10-servlet-websocket
+git rev-list 3c3bba6432603bdb5f8a6348b322758755a2d585..jakarta-10-servlet-websocket | tac | xargs git cherry-pick -x
+git add .
+git commit -m 'Transform sources to Jakarta EE 10'
