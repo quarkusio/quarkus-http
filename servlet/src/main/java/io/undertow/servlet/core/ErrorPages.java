@@ -20,7 +20,7 @@ package io.undertow.servlet.core;
 
 import java.util.Map;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import io.undertow.httpcore.StatusCodes;
 

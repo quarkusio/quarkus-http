@@ -2,7 +2,7 @@ package io.undertow.websockets;
 
 import io.netty.handler.codec.http.websocketx.extensions.WebSocketExtensionData;
 
-import javax.websocket.Extension;
+import jakarta.websocket.Extension;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

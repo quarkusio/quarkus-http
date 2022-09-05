@@ -19,7 +19,7 @@ package io.undertow.websockets.servlet;
 
 import io.undertow.websockets.UndertowContainerProvider;
 
-import javax.websocket.WebSocketContainer;
+import jakarta.websocket.WebSocketContainer;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
