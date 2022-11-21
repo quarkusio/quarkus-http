@@ -10,9 +10,9 @@ A Vert.x based Servlet implementation.
 
 ```bash
 # Bump version and create the tag
-mvn release:prepare -Prelease
+mvn release:prepare -Prelease -DskipTests -Darguments=-DskipTests
 # Build the tag and push to OSSRH
-mvn release:perform -Prelease
+mvn release:perform -Prelease -DskipTests -Darguments=-DskipTests
 ```
 
 The staging repository is automatically closed. The sync with Maven Central should take ~30 minutes.
