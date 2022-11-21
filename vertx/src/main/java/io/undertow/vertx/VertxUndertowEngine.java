@@ -35,6 +35,7 @@ public class VertxUndertowEngine implements UndertowEngine {
         ei.vertx.deployVerticle(new Supplier<Verticle>() {
             @Override
             public Verticle get() {
+                System.out.println("getting verticle");
                 HttpServerOptions opts = (HttpServerOptions) options;
                 if (opts == null) {
                     opts = new HttpServerOptions();

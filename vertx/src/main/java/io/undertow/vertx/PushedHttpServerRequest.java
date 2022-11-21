@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class PushedHttpServerRequest implements HttpServerRequest, HttpServerRequestInternal {
+public class PushedHttpServerRequest extends HttpServerRequestInternal implements HttpServerRequest {
     private final HttpServerRequestInternal original;
     private final HttpMethod method;
     private final String uri;
@@ -147,6 +147,16 @@ public class PushedHttpServerRequest implements HttpServerRequest, HttpServerReq
     @Override
     public String getHeader(CharSequence headerName) {
         return headers.get(headerName);
+    }
+
+    @Override
+    public HttpServerRequest setParamsCharset(String charset) {
+        return original.setParamsCharset(charset);
+    }
+
+    @Override
+    public String getParamsCharset() {
+        return original.getParamsCharset();
     }
 
     @Override
