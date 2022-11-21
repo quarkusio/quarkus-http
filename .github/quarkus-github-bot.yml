@@ -3,4 +3,4 @@
 # https://github.com/quarkusio/quarkus-bot#triage-issues
 features: [ANALYZE_WORKFLOW_RUN_RESULTS]
 workflowRunAnalysis:
-  workflows: ["CI Build"]
+  workflows: ["Build"]
