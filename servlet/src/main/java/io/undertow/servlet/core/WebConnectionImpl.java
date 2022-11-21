@@ -18,11 +18,11 @@ package io.undertow.servlet.core;
 import java.io.IOException;
 import java.util.concurrent.LinkedBlockingDeque;
 
-import javax.servlet.ReadListener;
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.WriteListener;
-import javax.servlet.http.WebConnection;
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.WriteListener;
+import jakarta.servlet.http.WebConnection;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

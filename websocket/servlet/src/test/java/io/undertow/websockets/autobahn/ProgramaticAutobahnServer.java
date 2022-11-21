@@ -17,7 +17,7 @@
  */
 package io.undertow.websockets.autobahn;
 
-import javax.servlet.DispatcherType;
+import jakarta.servlet.DispatcherType;
 
 import io.undertow.Undertow;
 import io.undertow.servlet.api.DeploymentInfo;

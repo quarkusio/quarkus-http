@@ -21,7 +21,7 @@ package io.undertow.websockets.annotated;
 import java.util.Map;
 import java.util.Set;
 
-import javax.websocket.DecodeException;
+import jakarta.websocket.DecodeException;
 
 /**
  * @author Stuart Douglas

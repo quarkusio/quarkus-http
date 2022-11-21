@@ -20,8 +20,8 @@ package io.undertow.websockets;
 
 import java.util.List;
 
-import javax.websocket.Extension;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.websocket.Extension;
+import jakarta.websocket.server.ServerEndpointConfig;
 
 import io.undertow.websockets.annotated.AnnotatedEndpointFactory;
 import io.undertow.websockets.util.ObjectFactory;

@@ -18,8 +18,8 @@
 
 package io.undertow.servlet.attribute;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.attribute.ExchangeAttributeBuilder;

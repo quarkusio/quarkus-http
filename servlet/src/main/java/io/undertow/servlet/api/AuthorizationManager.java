@@ -20,7 +20,7 @@ package io.undertow.servlet.api;
 
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import io.undertow.security.idm.Account;
 

@@ -18,8 +18,8 @@ package io.undertow.websockets.jsr.test;
 import java.net.URI;
 
 import javax.net.ssl.SSLContext;
-import javax.websocket.ClientEndpointConfig;
-import javax.websocket.Endpoint;
+import jakarta.websocket.ClientEndpointConfig;
+import jakarta.websocket.Endpoint;
 
 import io.netty.channel.EventLoopGroup;
 import io.undertow.testutils.DefaultServer;
