@@ -40,18 +40,18 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.websocket.CloseReason;
-import javax.websocket.ContainerProvider;
-import javax.websocket.Endpoint;
-import javax.websocket.EndpointConfig;
-import javax.websocket.MessageHandler;
-import javax.websocket.SendHandler;
-import javax.websocket.SendResult;
-import javax.websocket.Session;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.ContainerProvider;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.EndpointConfig;
+import jakarta.websocket.MessageHandler;
+import jakarta.websocket.SendHandler;
+import jakarta.websocket.SendResult;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.ServerEndpointConfig;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
@@ -670,7 +670,7 @@ public class JsrWebSocketServerTest {
                 .setDeploymentName("websocket.war")
                 .addFilter(new FilterInfo("filter", JsrWebSocketFilter.class))
                 .addFilterUrlMapping("filter", "/*", DispatcherType.REQUEST)
-                .addServletContextAttribute(javax.websocket.server.ServerContainer.class.getName(), deployment);
+                .addServletContextAttribute(jakarta.websocket.server.ServerContainer.class.getName(), deployment);
 
         final PathHandler root = new PathHandler();
         final ServletContainer container = ServletContainer.Factory.newInstance();

@@ -19,9 +19,9 @@ package io.undertow.servlet.handlers.security;
 
 import java.util.List;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import io.undertow.security.api.SecurityContext;
 import io.undertow.server.HttpHandler;

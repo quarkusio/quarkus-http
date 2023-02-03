@@ -21,8 +21,8 @@ package io.undertow.servlet.test.compat.rewrite;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;

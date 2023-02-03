@@ -22,11 +22,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import javax.websocket.SendHandler;
-import javax.websocket.SendResult;
+import jakarta.websocket.SendHandler;
+import jakarta.websocket.SendResult;
 
 /**
- * Default implementation of a {@link Future} that is used in the {@link javax.websocket.RemoteEndpoint.Async}
+ * Default implementation of a {@link Future} that is used in the {@link jakarta.websocket.RemoteEndpoint.Async}
  * implementation
  *
  * @author <a href="mailto:nmaurer@redhat.com">Norman Maurer</a>

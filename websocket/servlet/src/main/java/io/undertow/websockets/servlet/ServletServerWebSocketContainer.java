@@ -21,13 +21,14 @@ import io.undertow.websockets.util.ObjectHandle;
 import io.undertow.websockets.util.PathTemplate;
 import io.undertow.websockets.util.ContextSetupHandler;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.websocket.Endpoint;
-import javax.websocket.Extension;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.Extension;
+import jakarta.websocket.server.ServerEndpointConfig;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.Principal;
@@ -46,6 +47,14 @@ public class ServletServerWebSocketContainer extends ServerWebSocketContainer {
         super(objectIntrospecter, classLoader, eventLoopSupplier, contextSetupHandlers, dispatchToWorker, clientBindAddress, reconnectHandler, executorSupplier, installedExtensions, maxFrameSize, currentUserSupplier);
     }
 
+    @Override
+    public void upgradeHttpToWebSocket(Object req, Object res, ServerEndpointConfig sec, Map<String, String> pathParameters) throws IOException, DeploymentException {
+        try {
+            doUpgrade((HttpServletRequest) req, (HttpServletResponse) res, sec, pathParameters);
+        } catch (final ServletException e) {
+            throw new DeploymentException(e.getRootCause().getMessage(), e.getRootCause());
+        }
+    }
 
     public void doUpgrade(HttpServletRequest request,
                           HttpServletResponse response, final ServerEndpointConfig sec,

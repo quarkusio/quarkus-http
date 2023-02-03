@@ -27,12 +27,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
 
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.security.api.AuthenticationMechanismFactory;
@@ -220,11 +220,6 @@ public class ServletFormAuthenticationMechanism extends FormAuthenticationMechan
 
         private FormResponseWrapper(final HttpServletResponse wrapped) {
             super(wrapped);
-        }
-
-        @Override
-        public void setStatus(int sc, String sm) {
-            status = sc;
         }
 
         @Override

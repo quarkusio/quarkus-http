@@ -42,24 +42,25 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.DispatcherType;
-import javax.servlet.MultipartConfigElement;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletRequestWrapper;
-import javax.servlet.ServletResponse;
-import javax.servlet.ServletResponseWrapper;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletMapping;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpUpgradeHandler;
-import javax.servlet.http.Part;
-import javax.servlet.http.PushBuilder;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.MultipartConfigElement;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletConnection;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletRequestWrapper;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.ServletResponseWrapper;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletMapping;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpUpgradeHandler;
+import jakarta.servlet.http.Part;
+import jakarta.servlet.http.PushBuilder;
 
 import io.netty.handler.codec.http.HttpHeaders;
 import io.undertow.security.api.SecurityContext;
@@ -269,7 +270,7 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
 
     @Override
     public String getPathTranslated() {
-        return getRealPath(getPathInfo());
+        return servletContext.getRealPath(getPathInfo());
     }
 
     @Override
@@ -357,6 +358,27 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
     }
 
     @Override
+    public String getRequestId() {
+        return exchange.getRequestId();
+    }
+
+    /**
+     * We don't have anything equivalent in the Vert.x connection.
+     */
+    @Override
+    public String getProtocolRequestId() {
+        return "";
+    }
+
+    @Override
+    public ServletConnection getServletConnection() {
+        // We don't have anything equivalent in the Vert.x connection.
+        String connectionId = "";
+        
+        return new ServletConnectionImpl(connectionId, exchange.getProtocol().toString(), isSecure());
+    }
+
+    @Override
     public String getRequestURI() {
         //we need the non-decoded string, which means we need to use exchange.getRequestURI()
         if (exchange.isHostIncludedInRequestURI()) {
@@ -421,11 +443,6 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
     @Override
     public boolean isRequestedSessionIdFromURL() {
         return sessionCookieSource() == SessionConfig.SessionCookieSource.URL;
-    }
-
-    @Override
-    public boolean isRequestedSessionIdFromUrl() {
-        return isRequestedSessionIdFromURL();
     }
 
     @Override
@@ -957,11 +974,6 @@ public final class HttpServletRequestImpl implements HttpServletRequest {
             realPath = CanonicalPathUtils.canonicalize(current + path);
         }
         return new RequestDispatcherImpl(realPath, servletContext);
-    }
-
-    @Override
-    public String getRealPath(final String path) {
-        return servletContext.getRealPath(path);
     }
 
     @Override

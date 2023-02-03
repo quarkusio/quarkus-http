@@ -20,19 +20,19 @@ package io.undertow.servlet.test.lifecycle;
 
 import java.io.IOException;
 
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.SingleThreadModel;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 
 import org.junit.Assert;
+import java.io.IOException;
 
 /**
  * @author Stuart Douglas
  */
-public class ThirdServlet implements Servlet, SingleThreadModel {
+public class ThirdServlet implements Servlet {
 
     public static volatile boolean init;
 

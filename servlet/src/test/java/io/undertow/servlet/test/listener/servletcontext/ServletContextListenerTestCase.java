@@ -21,7 +21,7 @@ package io.undertow.servlet.test.listener.servletcontext;
 import java.io.IOException;
 import java.util.Collections;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;

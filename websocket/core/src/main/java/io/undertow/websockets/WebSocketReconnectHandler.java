@@ -21,8 +21,8 @@ package io.undertow.websockets;
 import java.io.IOException;
 import java.net.URI;
 
-import javax.websocket.CloseReason;
-import javax.websocket.Session;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.Session;
 
 /**
  * A reconnect handler for web socket connections. If a websocket is reconnected it will re-use the same web socket

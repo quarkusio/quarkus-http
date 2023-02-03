@@ -34,17 +34,17 @@ import io.undertow.websockets.util.PathTemplate;
 import io.undertow.websockets.util.ContextSetupHandler;
 
 import javax.net.ssl.SSLContext;
-import javax.websocket.ClientEndpoint;
-import javax.websocket.ClientEndpointConfig;
-import javax.websocket.CloseReason;
-import javax.websocket.DeploymentException;
-import javax.websocket.Endpoint;
-import javax.websocket.Extension;
-import javax.websocket.HandshakeResponse;
-import javax.websocket.Session;
-import javax.websocket.server.ServerContainer;
-import javax.websocket.server.ServerEndpoint;
-import javax.websocket.server.ServerEndpointConfig;
+import jakarta.websocket.ClientEndpoint;
+import jakarta.websocket.ClientEndpointConfig;
+import jakarta.websocket.CloseReason;
+import jakarta.websocket.DeploymentException;
+import jakarta.websocket.Endpoint;
+import jakarta.websocket.Extension;
+import jakarta.websocket.HandshakeResponse;
+import jakarta.websocket.Session;
+import jakarta.websocket.server.ServerContainer;
+import jakarta.websocket.server.ServerEndpoint;
+import jakarta.websocket.server.ServerEndpointConfig;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -394,6 +394,10 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         return connectToServer(endpoint, cec, path);
     }
 
+    @Override
+    public void upgradeHttpToWebSocket(Object req, Object res, ServerEndpointConfig sec, Map<String, String> pathParameters) throws IOException, DeploymentException {
+        throw new UnsupportedOperationException("upgradeHttpToWebSocket is only supported with servlets");
+    }
 
     private Session connectToServerInternal(final Endpoint endpointInstance, SSLContext ssl, final ConfiguredClientEndpoint cec, final URI path) throws DeploymentException, IOException {
         //in theory we should not be able to connect until the deployment is complete, but the definition of when a deployment is complete is a bit nebulous.

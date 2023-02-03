@@ -22,9 +22,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 
 import io.undertow.UndertowMessages;
 import io.undertow.server.HttpServerExchange;

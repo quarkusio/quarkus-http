@@ -26,21 +26,22 @@ import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Map;
 
-import javax.servlet.AsyncContext;
-import javax.servlet.DispatcherType;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletRequestWrapper;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpUpgradeHandler;
-import javax.servlet.http.Part;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.RequestDispatcher;
+import jakarta.servlet.ServletConnection;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletRequestWrapper;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpUpgradeHandler;
+import jakarta.servlet.http.Part;
 
 /**
  * @author Stuart Douglas
@@ -304,18 +305,6 @@ public class NonStandardRequestWrapper implements HttpServletRequest {
      */
     public RequestDispatcher getRequestDispatcher(String path) {
         return this.request.getRequestDispatcher(path);
-    }
-
-
-    /**
-     * The default behavior of this method is to return
-     * getRealPath(String path) on the wrapped request object.
-     *
-     * @deprecated As of Version 2.1 of the Java Servlet API,
-     * use {@link ServletContext#getRealPath} instead
-     */
-    public String getRealPath(String path) {
-        return this.request.getRealPath(path);
     }
 
 
@@ -784,15 +773,6 @@ public class NonStandardRequestWrapper implements HttpServletRequest {
     }
 
     /**
-     * The default behavior of this method is to return isRequestedSessionIdFromUrl()
-     * on the wrapped request object.
-     */
-    @Override
-    public boolean isRequestedSessionIdFromUrl() {
-        return this._getHttpServletRequest().isRequestedSessionIdFromUrl();
-    }
-
-    /**
      * The default behavior of this method is to call authenticate on the
      * wrapped request object.
      *
@@ -862,5 +842,20 @@ public class NonStandardRequestWrapper implements HttpServletRequest {
     @Override
     public <T extends HttpUpgradeHandler> T upgrade(Class<T> handlerClass) throws IOException, ServletException {
         return this._getHttpServletRequest().upgrade(handlerClass);
+    }
+
+    @Override
+    public String getRequestId() {
+        return this._getHttpServletRequest().getRequestId();
+    }
+
+    @Override
+    public String getProtocolRequestId() {
+        return this._getHttpServletRequest().getProtocolRequestId();
+    }
+
+    @Override
+    public ServletConnection getServletConnection() {
+        return this._getHttpServletRequest().getServletConnection();
     }
 }

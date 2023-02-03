@@ -22,8 +22,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.ServletException;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.ServletException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
