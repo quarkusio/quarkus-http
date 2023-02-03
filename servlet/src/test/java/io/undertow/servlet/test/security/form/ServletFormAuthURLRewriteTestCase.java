@@ -26,8 +26,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import javax.servlet.ServletException;
-import javax.servlet.SessionTrackingMode;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.SessionTrackingMode;
 
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;

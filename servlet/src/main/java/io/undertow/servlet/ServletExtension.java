@@ -18,7 +18,7 @@
 
 package io.undertow.servlet;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 import io.undertow.servlet.api.DeploymentInfo;
 

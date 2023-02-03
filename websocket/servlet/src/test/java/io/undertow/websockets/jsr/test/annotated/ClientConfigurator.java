@@ -27,8 +27,8 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.websocket.ClientEndpointConfig;
-import javax.websocket.HandshakeResponse;
+import jakarta.websocket.ClientEndpointConfig;
+import jakarta.websocket.HandshakeResponse;
 
 /**
  * @author Stuart Douglas

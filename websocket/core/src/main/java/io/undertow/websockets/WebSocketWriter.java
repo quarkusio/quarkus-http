@@ -18,7 +18,7 @@ package io.undertow.websockets;
 import java.io.IOException;
 import java.io.Writer;
 
-import javax.websocket.RemoteEndpoint;
+import jakarta.websocket.RemoteEndpoint;
 
 public class WebSocketWriter extends Writer {
 

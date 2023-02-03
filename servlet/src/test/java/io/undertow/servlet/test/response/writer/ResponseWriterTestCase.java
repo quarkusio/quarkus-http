@@ -18,7 +18,7 @@
 
 package io.undertow.servlet.test.response.writer;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;

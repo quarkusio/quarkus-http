@@ -21,7 +21,7 @@ package io.undertow.servlet.test.listener.request.async.onComplete;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;

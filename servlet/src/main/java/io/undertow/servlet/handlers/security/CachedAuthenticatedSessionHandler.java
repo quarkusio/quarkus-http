@@ -19,7 +19,7 @@ package io.undertow.servlet.handlers.security;
 
 import java.security.AccessController;
 
-import javax.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpSession;
 
 import io.undertow.security.api.AuthenticatedSessionManager;
 import io.undertow.security.api.AuthenticatedSessionManager.AuthenticatedSession;

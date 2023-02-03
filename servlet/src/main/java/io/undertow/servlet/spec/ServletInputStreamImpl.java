@@ -26,8 +26,8 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 import java.util.function.BiConsumer;
 
-import javax.servlet.ReadListener;
-import javax.servlet.ServletInputStream;
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.ServletInputStream;
 
 import io.netty.buffer.ByteBuf;
 import io.undertow.httpcore.InputChannel;

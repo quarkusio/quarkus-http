@@ -22,7 +22,7 @@ import static io.undertow.servlet.UndertowServletMessages.MESSAGES;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import io.undertow.security.handlers.SinglePortConfidentialityHandler;
 import io.undertow.server.HttpHandler;

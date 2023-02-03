@@ -18,7 +18,7 @@
 
 package io.undertow.servlet.test.lifecycle;
 
-import javax.servlet.DispatcherType;
+import jakarta.servlet.DispatcherType;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;

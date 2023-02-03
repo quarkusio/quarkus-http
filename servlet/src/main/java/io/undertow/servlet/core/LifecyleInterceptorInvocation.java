@@ -20,11 +20,11 @@ package io.undertow.servlet.core;
 
 import java.util.List;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterConfig;
-import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.Servlet;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
 
 import io.undertow.servlet.api.FilterInfo;
 import io.undertow.servlet.api.LifecycleInterceptor;

@@ -18,7 +18,7 @@
 
 package io.undertow.servlet.spec;
 
-import javax.servlet.SessionCookieConfig;
+import jakarta.servlet.SessionCookieConfig;
 
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.session.SessionConfig;

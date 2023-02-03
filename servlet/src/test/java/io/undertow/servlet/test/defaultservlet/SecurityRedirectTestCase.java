@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.undertow.httpcore.HttpHeaderNames;
