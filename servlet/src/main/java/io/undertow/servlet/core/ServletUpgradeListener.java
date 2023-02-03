@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
-import javax.servlet.http.HttpUpgradeHandler;
+import jakarta.servlet.http.HttpUpgradeHandler;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.concurrent.Future;

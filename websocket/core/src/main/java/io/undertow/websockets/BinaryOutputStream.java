@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
-import javax.websocket.RemoteEndpoint;
+import jakarta.websocket.RemoteEndpoint;
 
 public class BinaryOutputStream extends OutputStream {
 

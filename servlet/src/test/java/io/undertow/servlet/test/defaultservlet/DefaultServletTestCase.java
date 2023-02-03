@@ -21,8 +21,8 @@ package io.undertow.servlet.test.defaultservlet;
 import java.io.IOException;
 import java.util.Date;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.ServletException;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.ServletException;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;

@@ -23,7 +23,7 @@ import static io.undertow.servlet.Servlets.multipartConfig;
 import java.io.IOException;
 import java.util.Arrays;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;

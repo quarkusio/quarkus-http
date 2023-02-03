@@ -25,9 +25,9 @@ import static io.undertow.util.Bits.anyAreSet;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
-import javax.servlet.ServletOutputStream;
-import javax.servlet.ServletRequest;
-import javax.servlet.WriteListener;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.WriteListener;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;

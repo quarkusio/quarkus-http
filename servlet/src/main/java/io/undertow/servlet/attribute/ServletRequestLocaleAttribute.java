@@ -18,7 +18,7 @@
 
 package io.undertow.servlet.attribute;
 
-import javax.servlet.ServletRequest;
+import jakarta.servlet.ServletRequest;
 
 import io.undertow.attribute.ExchangeAttribute;
 import io.undertow.attribute.ExchangeAttributeBuilder;

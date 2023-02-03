@@ -21,8 +21,8 @@ package io.undertow.servlet.test.handlers;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.ServletException;
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.ServletException;
 
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;

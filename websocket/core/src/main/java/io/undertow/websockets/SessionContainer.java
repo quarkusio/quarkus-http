@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.websocket.Session;
+import jakarta.websocket.Session;
 
 /**
  * @author Stuart Douglas

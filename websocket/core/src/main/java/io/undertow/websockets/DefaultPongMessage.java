@@ -19,7 +19,7 @@ package io.undertow.websockets;
 
 import java.nio.ByteBuffer;
 
-import javax.websocket.PongMessage;
+import jakarta.websocket.PongMessage;
 
 /**
  * Default {@link PongMessage} implementation

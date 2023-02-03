@@ -18,7 +18,7 @@
 
 package io.undertow.servlet.test.lifecycle;
 
-import javax.servlet.DispatcherType;
+import jakarta.servlet.DispatcherType;
 
 import org.junit.Assert;
 import org.junit.Test;

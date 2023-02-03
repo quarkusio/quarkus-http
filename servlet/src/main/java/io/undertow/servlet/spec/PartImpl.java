@@ -30,8 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.MultipartConfigElement;
-import javax.servlet.http.Part;
+import jakarta.servlet.MultipartConfigElement;
+import jakarta.servlet.http.Part;
 
 import io.undertow.server.handlers.form.FormData;
 import io.undertow.servlet.UndertowServletMessages;
