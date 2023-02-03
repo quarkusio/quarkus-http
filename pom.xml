@@ -71,7 +71,7 @@
         <version.org.jboss.classfilewriter>1.2.4.Final</version.org.jboss.classfilewriter>
         <version.org.jboss.logging>3.4.0.Final</version.org.jboss.logging>
         <version.org.jboss.logging.processor>2.2.1.Final</version.org.jboss.logging.processor>
-        <version.org.jboss.logmanager>2.1.10.Final</version.org.jboss.logmanager>
+        <version.org.jboss.logmanager>2.1.19.Final</version.org.jboss.logmanager>
         <version.jakarta.annotations.api>2.1.1</version.jakarta.annotations.api>
         <version.jakarta.servlet>6.0.0</version.jakarta.servlet>
         <version.jakarta.websocket>2.1.0</version.jakarta.websocket>
