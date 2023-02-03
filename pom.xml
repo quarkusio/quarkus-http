@@ -147,16 +147,6 @@
                     <includes>**/*.i18n.properties,**/LocalDescriptions.properties</includes>
                 </configuration>
             </plugin>
-            <plugin>
-                <inherited>false</inherited>
-                <groupId>org.openrewrite.maven</groupId>
-                <artifactId>rewrite-maven-plugin</artifactId>
-                <configuration>
-                    <activeRecipes>
-                        <recipe>io.quarkus.jakarta-versions</recipe>
-                    </activeRecipes>
-                </configuration>
-            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
@@ -260,17 +250,6 @@
                     <groupId>org.apache.felix</groupId>
                     <artifactId>maven-bundle-plugin</artifactId>
                     <version>3.2.0</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.openrewrite.maven</groupId>
-                    <artifactId>rewrite-maven-plugin</artifactId>
-                    <version>4.21.0</version>
-                    <configuration>
-                        <configLocation>${maven.multiModuleProjectDirectory}/jakarta/rewrite.yml</configLocation>
-                        <activeStyles>
-                            <style>io.quarkus.style.maven</style>
-                        </activeStyles>
-                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
