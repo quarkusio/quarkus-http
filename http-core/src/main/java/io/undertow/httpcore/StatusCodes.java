@@ -76,6 +76,7 @@ public class StatusCodes {
     public static final int PRECONDITION_REQUIRED = 428;
     public static final int TOO_MANY_REQUESTS = 429;
     public static final int REQUEST_HEADER_FIELDS_TOO_LARGE = 431;
+    public static final int UNAVAILABLE_FOR_LEGAL_REASONS = 451;
     public static final int INTERNAL_SERVER_ERROR = 500;
     public static final int NOT_IMPLEMENTED = 501;
     public static final int BAD_GATEWAY = 502;
@@ -133,6 +134,7 @@ public class StatusCodes {
     public static final String PRECONDITION_REQUIRED_STRING = "Precondition Required";
     public static final String TOO_MANY_REQUESTS_STRING = "Too Many Requests";
     public static final String REQUEST_HEADER_FIELDS_TOO_LARGE_STRING = "Request Header Fields Too Large";
+    public static final String UNAVAILABLE_FOR_LEGAL_REASONS_STRING = "Unavailable For Legal Reasons";
     public static final String INTERNAL_SERVER_ERROR_STRING = "Internal Server Error";
     public static final String NOT_IMPLEMENTED_STRING = "Not Implemented";
     public static final String BAD_GATEWAY_STRING = "Bad Gateway";
@@ -191,6 +193,7 @@ public class StatusCodes {
         putCode(PRECONDITION_REQUIRED, PRECONDITION_REQUIRED_STRING);
         putCode(TOO_MANY_REQUESTS, TOO_MANY_REQUESTS_STRING);
         putCode(REQUEST_HEADER_FIELDS_TOO_LARGE, REQUEST_HEADER_FIELDS_TOO_LARGE_STRING);
+        putCode(UNAVAILABLE_FOR_LEGAL_REASONS, UNAVAILABLE_FOR_LEGAL_REASONS_STRING);
         putCode(INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR_STRING);
         putCode(NOT_IMPLEMENTED, NOT_IMPLEMENTED_STRING);
         putCode(BAD_GATEWAY, BAD_GATEWAY_STRING);
