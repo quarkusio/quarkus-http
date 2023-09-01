@@ -15,6 +15,7 @@ import io.vertx.core.http.HttpVersion;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.http.StreamPriority;
 import io.vertx.core.http.impl.HttpServerRequestInternal;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.net.SocketAddress;
 
@@ -426,5 +427,10 @@ public class PushedHttpServerRequest extends HttpServerRequestInternal implement
     @Override
     public Object metric() {
         return original.metric();
+    }
+
+    @Override
+    public HostAndPort authority() {
+        return original.authority();
     }
 }
