@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.quarkus.http</groupId>
         <artifactId>quarkus-http-parent</artifactId>
-        <version>5.0.4.Final-SNAPSHOT</version>
+        <version>5.1.0.Final</version>
     </parent>
 
     <artifactId>quarkus-http-vertx-backend</artifactId>
