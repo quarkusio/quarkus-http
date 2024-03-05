@@ -24,7 +24,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.http.impl.Http1xServerConnection;
 import io.vertx.core.net.impl.ConnectionBase;
 import io.vertx.ext.auth.User;
@@ -110,6 +109,8 @@ public class VertxWebSocketHttpExchange implements WebSocketHttpExchange {
 
     @Override
     public void upgradeChannel(Consumer<Object> listener) {
+        response.headers().set(HttpHeaderNames.CONNECTION, "upgrade");
+
         Http1xServerConnection connection = (Http1xServerConnection) request.connection();
         ChannelHandlerContext context = connection.channelHandlerContext();
         final ChannelHandler websocketChannelHandler = context.pipeline().get("webSocketExtensionHandler");
@@ -117,9 +118,13 @@ public class VertxWebSocketHttpExchange implements WebSocketHttpExchange {
             context.pipeline().remove(websocketChannelHandler);
         }
 
-        request.toWebSocket().onSuccess(new Handler<ServerWebSocket>() {
+        response.setStatusCode(101).end(new Handler<AsyncResult<Void>>() {
             @Override
-            public void handle(ServerWebSocket ws) {
+            public void handle(AsyncResult<Void> event) {
+                Http1xServerConnection connection = (Http1xServerConnection) request.connection();
+                ChannelHandlerContext context = connection.channelHandlerContext();
+                context.pipeline().remove("httpDecoder");
+                context.pipeline().remove("httpEncoder");
                 context.pipeline().remove("handler");
                 listener.accept(context);
             }
