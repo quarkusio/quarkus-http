@@ -38,6 +38,9 @@ import io.undertow.testutils.TestHttpClient;
 import io.undertow.util.FileUtils;
 import io.undertow.httpcore.StatusCodes;
 
+import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 /**
  * @author Tomaz Cerar
  */
@@ -57,7 +60,9 @@ public class ResponseWriterTestCase {
                 .addServlet(Servlets.servlet("resp", ResponseWriterServlet.class)
                         .addMapping("/resp"))
                 .addServlet(Servlets.servlet("respLArget", LargeResponseWriterServlet.class)
-                        .addMapping("/large"));
+                        .addMapping("/large"))
+                .addServlet(Servlets.servlet("exception", ExceptionWriterServlet.class)
+                        .addMapping("/exception"));
 
         DeploymentManager manager = container.addDeployment(builder);
         manager.deploy();
@@ -98,4 +103,19 @@ public class ResponseWriterTestCase {
             client.getConnectionManager().shutdown();
         }
     }
+
+    @Test
+    public void testExceptionResponse() throws Exception {
+        TestHttpClient client = new TestHttpClient();
+        try {
+            HttpGet get = new HttpGet(DefaultServer.getDefaultServerURL() + "/servletContext/exception");
+            HttpResponse result = client.execute(get);
+            Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
+            String response = FileUtils.readFile(result.getEntity().getContent());
+            assertThat(response, startsWith("java.lang.Exception: TestException"));
+        } finally {
+            client.getConnectionManager().shutdown();
+        }
+    }
+
 }
