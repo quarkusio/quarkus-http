@@ -23,6 +23,8 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.nio.NioEventLoop;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -182,7 +184,8 @@ class WebsocketConnectionBuilder {
                             }
                         }, connectFunction);
 
-        b.group(eventLoopGroup)
+
+        b.group(determineEventLoopGroup())
                 .channel(NioSocketChannel.class)
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
@@ -212,6 +215,15 @@ class WebsocketConnectionBuilder {
 
 
         return handler.handshakeFuture;
+    }
+
+    // the bootstrap always uses NioSocketChannel, so we need to provide a proper NioEventLoopGroup
+    private EventLoopGroup determineEventLoopGroup() {
+        if (NioEventLoopGroup.class.equals(eventLoopGroup.getClass())) {
+            return eventLoopGroup;
+        }
+        // there is not much else we can do here...
+        return new NioEventLoopGroup();
     }
 
 
