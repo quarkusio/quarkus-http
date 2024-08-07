@@ -36,7 +36,6 @@ import io.undertow.server.handlers.GracefulShutdownHandler;
 import io.undertow.server.handlers.HttpContinueReadHandler;
 import io.undertow.server.handlers.HttpTraceHandler;
 import io.undertow.server.handlers.IPAddressAccessControlHandler;
-import io.undertow.server.handlers.LearningPushHandler;
 import io.undertow.server.handlers.NameVirtualHostHandler;
 import io.undertow.server.handlers.PathHandler;
 import io.undertow.server.handlers.PathTemplateHandler;
@@ -450,29 +449,6 @@ public class Handlers {
      */
     public static ResponseRateLimitingHandler responseRateLimitingHandler(HttpHandler next, int bytes, long time, TimeUnit timeUnit) {
         return new ResponseRateLimitingHandler(next, bytes, time, timeUnit);
-    }
-
-    /**
-     * Creates a handler that automatically learns which resources to push based on the referer header
-     *
-     * @param maxEntries The maximum number of entries to store
-     * @param maxAge     The maximum age of the entries
-     * @param next       The next handler
-     * @return A caching push handler
-     */
-    public static LearningPushHandler learningPushHandler(int maxEntries, int maxAge, HttpHandler next) {
-        return new LearningPushHandler(maxEntries, maxAge, next);
-    }
-
-    /**
-     * Creates a handler that automatically learns which resources to push based on the referer header
-     *
-     * @param maxEntries The maximum number of entries to store
-     * @param next       The next handler
-     * @return A caching push handler
-     */
-    public static LearningPushHandler learningPushHandler(int maxEntries, HttpHandler next) {
-        return new LearningPushHandler(maxEntries, -1, next);
     }
 
     private Handlers() {
