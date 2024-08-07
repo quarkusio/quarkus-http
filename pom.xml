@@ -76,7 +76,7 @@
         <version.jakarta.servlet>6.0.0</version.jakarta.servlet>
         <version.jakarta.websocket>2.1.0</version.jakarta.websocket>
         <version.vertx>4.5.8</version.vertx>
-        <version.xnio>3.3.8.Final</version.xnio>
+        <version.xnio>3.8.16.Final</version.xnio>
 
         <version.org.osgi.core>6.0.0</version.org.osgi.core>
 
