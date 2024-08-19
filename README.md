@@ -11,7 +11,7 @@ A Vert.x based Servlet implementation.
 With Java 17:
 
 ```bash
-./mvnw release:prepare release:perform -Prelease -DskipTests -Darguments=-DskipTests
+mvn release:prepare release:perform -Prelease -DskipTests -Darguments=-DskipTests
 ```
 
 The staging repository is automatically closed. The sync with Maven Central should take ~30 minutes.
