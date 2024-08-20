@@ -4,11 +4,8 @@ on:
   push:
     branches:
       - main
-      - 4.x
+      - '[0-9]+.[0-9]+'
   pull_request:
-    branches:
-      - main
-      - 4.x
 
 jobs:
   # This is a hack to work around a GitHub API limitation:
@@ -37,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [ 11, 17 ]
+        java: [ 17, 21 ]
     steps:
       - uses: actions/checkout@v3
       - name: Install JDK ${{ matrix.java }}
