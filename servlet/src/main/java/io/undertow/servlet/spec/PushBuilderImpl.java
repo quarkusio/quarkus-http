@@ -112,15 +112,14 @@ public class PushBuilderImpl implements PushBuilder {
             if(cookie.getValue().getMaxAge() != null && cookie.getValue().getMaxAge() <= 0) {
                 //remove cookie
                 List<String> existing = this.headers.getAll(HttpHeaderNames.COOKIE);
-                if(existing != null) {
-                    Iterator<String> it = existing.iterator();
-                    while (it.hasNext()) {
-                        String val = it.next();
-                        if(val.startsWith(cookie.getKey() + "=")) {
-                            it.remove();
-                        }
+                List<String> newValues = new ArrayList<>(existing.size());
+                for (String value : existing) {
+                    if(value.startsWith(cookie.getKey() + "=")) {
+                        continue;
                     }
+                    newValues.add(value);
                 }
+                this.headers.set(HttpHeaderNames.COOKIE, newValues);
             } else if(!cookie.getKey().equals(servletRequest.getServletContext().getSessionCookieConfig().getName())){
                 this.headers.add(HttpHeaderNames.COOKIE, cookie.getKey() + "=" + cookie.getValue().getValue());
             }
