@@ -158,7 +158,7 @@ public class VertxWebSocketHttpExchange implements WebSocketHttpExchange {
 
     @Override
     public Object getSession() {
-        return null;
+        return exchange.session();
     }
 
     @Override
