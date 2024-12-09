@@ -271,6 +271,9 @@ public class Cookies {
                         cookieCount = createCookie(name, cookie.substring(start, i), maxCookies, cookieCount, cookies, additional);
                         state = 0;
                         start = i + 1;
+                    } else if (c == ';' || (commaIsSeperator && c == ',')) {
+                        state = 0;
+                        start = i + 1;
                     }
                     break;
                 }

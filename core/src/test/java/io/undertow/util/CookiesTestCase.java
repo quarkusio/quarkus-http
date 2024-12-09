@@ -362,4 +362,18 @@ public class CookiesTestCase {
         Rfc6265CookieSupport.validateDomain(cookie.getDomain());
     }
 
+    @Test
+    public void testNoDoubleQuoteTermination() {
+        Map<String, Cookie> cookies = Cookies.parseRequestCookies(4, false, Arrays.asList("CUSTOMER=\"WILE_E_COYOTE\"; BAD=\"X; SHIPPING=FEDEX"), true);
+        Assert.assertEquals(2, cookies.size());
+        Cookie cookie = cookies.get("CUSTOMER");
+        Assert.assertEquals("CUSTOMER", cookie.getName());
+        Assert.assertEquals("WILE_E_COYOTE", cookie.getValue());
+        cookie = cookies.get("BAD");
+        Assert.assertNull(cookie);
+        cookie = cookies.get("SHIPPING");
+        Assert.assertEquals("SHIPPING", cookie.getName());
+        Assert.assertEquals("FEDEX", cookie.getValue());
+        Assert.assertNotNull(cookie);
+    }
 }
