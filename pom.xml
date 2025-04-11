@@ -102,8 +102,6 @@
         <version.org.wildfly.openssl>2.2.5.Final</version.org.wildfly.openssl>
         <version.checkstyle>7.1</version.checkstyle>
 
-        <version.nexus-staging-maven-plugin>1.6.13</version.nexus-staging-maven-plugin>
-
         <checkstyle.skip>true</checkstyle.skip>
 
     </properties>
@@ -536,17 +534,6 @@
         </pluginRepository>
     </pluginRepositories>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>sonatype-nexus-release</id>
-            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
-
     <profiles>
         <profile>
             <id>spotbugs</id>
@@ -601,17 +588,10 @@
                             <tagNameFormat>@{project.version}</tagNameFormat>
                             <!-- Skip tests for now, we have a race condition in parallel(io.undertow.server.ssl.SimpleSSLTestCase) -->
                             <arguments>-DskipTests=true</arguments>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>${version.nexus-staging-maven-plugin}</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-                            <serverId>ossrh</serverId>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+
+                            <pushChanges>false</pushChanges>
+                            <localCheckout>true</localCheckout>
+                            <remoteTagging>false</remoteTagging>
                         </configuration>
                     </plugin>
                     <plugin>
@@ -637,25 +617,6 @@
                                 </goals>
                                 <configuration>
                                     <doclint>none</doclint>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                                <configuration>
-                                    <gpgArguments>
-                                        <arg>--pinentry-mode</arg>
-                                        <arg>loopback</arg>
-                                    </gpgArguments>
                                 </configuration>
                             </execution>
                         </executions>

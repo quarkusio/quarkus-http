@@ -8,10 +8,8 @@ A Vert.x based Servlet implementation.
 
 ## Release
 
-With Java 17:
+To release a new version, follow these steps:
 
-```bash
-mvn release:prepare release:perform -Prelease -DskipTests -Darguments=-DskipTests
-```
+https://github.com/smallrye/smallrye/wiki/Release-Process#releasing
 
 The staging repository is automatically closed. The sync with Maven Central should take ~30 minutes.
