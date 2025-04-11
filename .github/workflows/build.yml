@@ -5,7 +5,11 @@ on:
     branches:
       - main
       - '[0-9]+.[0-9]+'
+    paths-ignore:
+      - '.github/project.yml'
   pull_request:
+    paths-ignore:
+      - '.github/project.yml'
 
 jobs:
   # This is a hack to work around a GitHub API limitation:
