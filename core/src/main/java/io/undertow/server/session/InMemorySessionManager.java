@@ -184,8 +184,10 @@ public class InMemorySessionManager implements SessionManager, SessionManagerSta
         sessions.put(sessionID, session);
         config.setSessionId(serverExchange, session.getId());
         session.bumpTimeout();
-        sessionListeners.sessionCreated(session, serverExchange);
+        // Store an information about new session *before* notifying listeners
+        // Otherwise there might be a cycle with CDI observers for session context lifecycle
         serverExchange.putAttachment(NEW_SESSION, session);
+        sessionListeners.sessionCreated(session, serverExchange);
 
         if (statisticsEnabled) {
             createdSessionCount.incrementAndGet();
