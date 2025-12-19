@@ -90,6 +90,10 @@
         <!--by default run all tests-->
         <test.categories>io.undertow.testutils.category.UnitTest OR NOT io.undertow.testutils.category.UnitTest</test.categories>
 
+        <!-- maven-release-plugin -->
+        <releaseProfiles>release</releaseProfiles>
+        <signTag>false</signTag><!-- we don't sign tags as we don't want GPG secrets available in repository -->
+
         <!-- Checkstyle configuration -->
         <linkXRef>false</linkXRef>
         <version.io.undertow.build.checkstyle-config>1.0.1.Final</version.io.undertow.build.checkstyle-config>
