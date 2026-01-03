@@ -31,6 +31,7 @@ import org.jboss.logging.annotations.LogMessage;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageLogger;
 
+import static java.lang.invoke.MethodHandles.lookup;
 import static org.jboss.logging.Logger.Level.DEBUG;
 
 /**
@@ -41,10 +42,10 @@ import static org.jboss.logging.Logger.Level.DEBUG;
 @MessageLogger(projectCode = "UT")
 public interface JsrWebSocketLogger extends BasicLogger {
 
-    JsrWebSocketLogger ROOT_LOGGER = Logger.getMessageLogger(JsrWebSocketLogger.class, JsrWebSocketLogger.class.getPackage().getName());
+    JsrWebSocketLogger ROOT_LOGGER = Logger.getMessageLogger(lookup(), JsrWebSocketLogger.class, JsrWebSocketLogger.class.getPackage().getName());
 
-    JsrWebSocketLogger REQUEST_LOGGER = Logger.getMessageLogger(JsrWebSocketLogger.class, JsrWebSocketLogger.class.getPackage().getName() + ".request");
-    JsrWebSocketLogger REQUEST_IO_LOGGER = Logger.getMessageLogger(JsrWebSocketLogger.class,  "io.undertow.request.io");
+    JsrWebSocketLogger REQUEST_LOGGER = Logger.getMessageLogger(lookup(), JsrWebSocketLogger.class, JsrWebSocketLogger.class.getPackage().getName() + ".request");
+    JsrWebSocketLogger REQUEST_IO_LOGGER = Logger.getMessageLogger(lookup(), JsrWebSocketLogger.class,  "io.undertow.request.io");
 
     @LogMessage(level = Logger.Level.ERROR)
     @Message(id = 26001, value = "Unable to instantiate endpoint")

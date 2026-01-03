@@ -15,6 +15,8 @@
 
 package io.undertow.util;
 
+import static java.lang.invoke.MethodHandles.lookup;
+
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 
@@ -33,7 +35,7 @@ import org.jboss.logging.annotations.MessageBundle;
 @MessageBundle(projectCode = "UT")
 public interface UndertowConnectorMessages {
 
-    UndertowConnectorMessages MESSAGES = Messages.getBundle(UndertowConnectorMessages.class);
+    UndertowConnectorMessages MESSAGES = Messages.getBundle(lookup(), UndertowConnectorMessages.class);
 
     @Message(id = 1, value = "Maximum concurrent requests must be larger than zero.")
     IllegalArgumentException maximumConcurrentRequestsMustBeLargerThanZero();
