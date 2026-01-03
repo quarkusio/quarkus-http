@@ -63,8 +63,7 @@
 
         <dependency>
             <groupId>org.jboss.logging</groupId>
-            <artifactId>jboss-logging-processor</artifactId>
-            <scope>provided</scope>
+            <artifactId>jboss-logging-annotations</artifactId>
         </dependency>
 
         <dependency>

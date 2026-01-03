@@ -18,6 +18,8 @@
 
 package io.undertow;
 
+import static java.lang.invoke.MethodHandles.lookup;
+
 import java.io.IOException;
 import java.nio.channels.ClosedChannelException;
 
@@ -45,7 +47,7 @@ import io.undertow.util.RequestTooBigException;
 @MessageBundle(projectCode = "UT")
 public interface UndertowMessages {
 
-    UndertowMessages MESSAGES = Messages.getBundle(UndertowMessages.class);
+    UndertowMessages MESSAGES = Messages.getBundle(lookup(), UndertowMessages.class);
 
     @Message(id = 1, value = "Maximum concurrent requests must be larger than zero.")
     IllegalArgumentException maximumConcurrentRequestsMustBeLargerThanZero();

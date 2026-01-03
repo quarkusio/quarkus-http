@@ -18,6 +18,7 @@
 
 package io.undertow.servlet;
 
+import static java.lang.invoke.MethodHandles.lookup;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.WARN;
 
@@ -42,9 +43,9 @@ import org.jboss.logging.annotations.MessageLogger;
 @MessageLogger(projectCode = "UT")
 public interface UndertowServletLogger extends BasicLogger {
 
-    UndertowServletLogger ROOT_LOGGER = Logger.getMessageLogger(UndertowServletLogger.class, UndertowServletLogger.class.getPackage().getName());
+    UndertowServletLogger ROOT_LOGGER = Logger.getMessageLogger(lookup(), UndertowServletLogger.class, UndertowServletLogger.class.getPackage().getName());
 
-    UndertowServletLogger REQUEST_LOGGER = Logger.getMessageLogger(UndertowServletLogger.class, UndertowServletLogger.class.getPackage().getName() + ".request");
+    UndertowServletLogger REQUEST_LOGGER = Logger.getMessageLogger(lookup(), UndertowServletLogger.class, UndertowServletLogger.class.getPackage().getName() + ".request");
 //
 //    @LogMessage(level = ERROR)
 //    @Message(id = 15000, value = "IOException handling request")

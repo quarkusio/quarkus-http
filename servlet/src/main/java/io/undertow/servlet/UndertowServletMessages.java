@@ -18,6 +18,8 @@
 
 package io.undertow.servlet;
 
+import static java.lang.invoke.MethodHandles.lookup;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -43,7 +45,7 @@ import io.undertow.servlet.api.DeploymentManager;
 @MessageBundle(projectCode = "UT")
 public interface UndertowServletMessages {
 
-    UndertowServletMessages MESSAGES = Messages.getBundle(UndertowServletMessages.class);
+    UndertowServletMessages MESSAGES = Messages.getBundle(lookup(), UndertowServletMessages.class);
 
     @Message(id = 10000, value = "%s cannot be null")
     IllegalArgumentException paramCannotBeNull(String param);

@@ -18,6 +18,7 @@
 
 package io.undertow;
 
+import static java.lang.invoke.MethodHandles.lookup;
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
@@ -51,19 +52,19 @@ import io.undertow.util.HttpString;
 public interface
 UndertowLogger extends BasicLogger {
 
-    UndertowLogger ROOT_LOGGER = Logger.getMessageLogger(UndertowLogger.class, UndertowLogger.class.getPackage().getName());
+    UndertowLogger ROOT_LOGGER = Logger.getMessageLogger(lookup(), UndertowLogger.class, UndertowLogger.class.getPackage().getName());
 
-    UndertowLogger REQUEST_LOGGER = Logger.getMessageLogger(UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".request");
-    UndertowLogger SESSION_LOGGER = Logger.getMessageLogger(UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".session");
-    UndertowLogger SECURITY_LOGGER = Logger.getMessageLogger(UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".request.security");
-    UndertowLogger PROXY_REQUEST_LOGGER = Logger.getMessageLogger(UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".proxy");
-    UndertowLogger REQUEST_DUMPER_LOGGER = Logger.getMessageLogger(UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".request.dump");
+    UndertowLogger REQUEST_LOGGER = Logger.getMessageLogger(lookup(), UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".request");
+    UndertowLogger SESSION_LOGGER = Logger.getMessageLogger(lookup(), UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".session");
+    UndertowLogger SECURITY_LOGGER = Logger.getMessageLogger(lookup(), UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".request.security");
+    UndertowLogger PROXY_REQUEST_LOGGER = Logger.getMessageLogger(lookup(), UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".proxy");
+    UndertowLogger REQUEST_DUMPER_LOGGER = Logger.getMessageLogger(lookup(), UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".request.dump");
     /**
      * Logger used for IO exceptions. Generally these should be suppressed, because they are of little interest, and it is easy for an
      * attacker to fill up the logs by intentionally causing IO exceptions.
      */
-    UndertowLogger REQUEST_IO_LOGGER = Logger.getMessageLogger(UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".request.io");
-    UndertowLogger ERROR_RESPONSE = Logger.getMessageLogger(UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".request.error-response");
+    UndertowLogger REQUEST_IO_LOGGER = Logger.getMessageLogger(lookup(), UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".request.io");
+    UndertowLogger ERROR_RESPONSE = Logger.getMessageLogger(lookup(), UndertowLogger.class, UndertowLogger.class.getPackage().getName() + ".request.error-response");
 
     @LogMessage(level = ERROR)
     @Message(id = 5001, value = "An exception occurred processing the request")

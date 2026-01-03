@@ -69,8 +69,8 @@
         <version.org.apache.httpmime>4.5.14</version.org.apache.httpmime>
         <version.org.apache.httpcomponents>4.5.14</version.org.apache.httpcomponents>
         <version.org.jboss.classfilewriter>1.2.4.Final</version.org.jboss.classfilewriter>
-        <version.org.jboss.logging>3.5.0.Final</version.org.jboss.logging>
-        <version.org.jboss.logging.processor>2.2.1.Final</version.org.jboss.logging.processor>
+        <version.org.jboss.logging>3.6.1.Final</version.org.jboss.logging>
+        <version.org.jboss.logging.processor>3.0.4.Final</version.org.jboss.logging.processor>
         <version.org.jboss.logmanager>2.1.19.Final</version.org.jboss.logmanager>
         <version.jakarta.annotations.api>2.1.1</version.jakarta.annotations.api>
         <version.jakarta.servlet>6.0.0</version.jakarta.servlet>
@@ -203,6 +203,19 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.jboss.logging</groupId>
+                                <artifactId>jboss-logging-processor</artifactId>
+                                <version>${version.org.jboss.logging.processor}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                    </configuration>
                 </plugin>
 
                 <plugin>
@@ -436,8 +449,10 @@
 
             <dependency>
                 <groupId>org.jboss.logging</groupId>
-                <artifactId>jboss-logging-processor</artifactId>
+                <artifactId>jboss-logging-annotations</artifactId>
                 <version>${version.org.jboss.logging.processor}</version>
+                <scope>provided</scope>
+                <optional>true</optional>
             </dependency>
 
             <dependency>
