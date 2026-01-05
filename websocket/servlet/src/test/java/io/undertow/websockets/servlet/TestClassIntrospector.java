@@ -1,4 +1,4 @@
-package io.undertow.websockets;
+package io.undertow.websockets.servlet;
 
 import io.undertow.websockets.util.ConstructorObjectFactory;
 import io.undertow.websockets.util.ObjectFactory;

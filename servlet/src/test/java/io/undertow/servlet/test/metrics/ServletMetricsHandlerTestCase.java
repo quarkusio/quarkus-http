@@ -41,7 +41,6 @@ import io.undertow.servlet.test.util.TestResourceLoader;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpClientUtils;
 import io.undertow.testutils.TestHttpClient;
-import io.undertow.util.CompletionLatchHandler;
 import io.undertow.httpcore.StatusCodes;
 
 /**

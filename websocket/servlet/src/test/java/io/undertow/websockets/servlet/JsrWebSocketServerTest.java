@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.undertow.websockets;
+package io.undertow.websockets.servlet;
 
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
@@ -30,11 +30,12 @@ import io.undertow.testutils.AjpIgnore;
 import io.undertow.testutils.DefaultServer;
 import io.undertow.testutils.HttpOneOnly;
 import io.undertow.util.NetworkUtils;
+import io.undertow.websockets.ServerWebSocketContainer;
+import io.undertow.websockets.UndertowSession;
 import io.undertow.websockets.jsr.test.FrameChecker;
 import io.undertow.websockets.jsr.test.ProgramaticErrorEndpoint;
 import io.undertow.websockets.jsr.test.WebSocketTestClient;
 import io.undertow.websockets.jsr.test.annotated.AnnotatedClientEndpoint;
-import io.undertow.websockets.servlet.JsrWebSocketFilter;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;

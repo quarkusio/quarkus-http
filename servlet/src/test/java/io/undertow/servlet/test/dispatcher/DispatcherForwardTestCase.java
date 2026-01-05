@@ -36,7 +36,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import io.undertow.server.handlers.PathHandler;
-import io.undertow.server.handlers.accesslog.AccessLogFileTestCase;
 import io.undertow.server.handlers.accesslog.AccessLogHandler;
 import io.undertow.server.handlers.accesslog.AccessLogReceiver;
 import io.undertow.servlet.api.DeploymentInfo;
@@ -118,7 +117,7 @@ public class DispatcherForwardTestCase {
         manager.deploy();
         root.addPrefixPath(builder.getContextPath(), manager.start());
 
-        DefaultServer.setRootHandler(new AccessLogHandler(root, RECEIVER, "%r %U %R", AccessLogFileTestCase.class.getClassLoader()));
+        DefaultServer.setRootHandler(new AccessLogHandler(root, RECEIVER, "%r %U %R", DispatcherForwardTestCase.class.getClassLoader()));
     }
 
     @Test

@@ -83,7 +83,6 @@
             <scope>test</scope>
         </dependency>
 
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -125,31 +124,6 @@
 
         <plugins>
             <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>generate-manifest</id>
-                        <goals>
-                            <goal>manifest</goal>
-                        </goals>
-                        <configuration>
-                            <instructions>
-                                <Export-Package>
-                                    io.undertow.websockets.jsr.*;version=${project.version};-noimport:=true
-                                </Export-Package>
-                                <Import-Package>
-                                    !sun.*, *
-                                </Import-Package>
-                                <Bundle-Activator>
-                                    io.undertow.websockets.jsr.osgi.Activator
-                                </Bundle-Activator>
-                            </instructions>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
@@ -167,16 +141,18 @@
                         <sun.net.useExclusiveBind>false</sun.net.useExclusiveBind>
                         <org.wildfly.openssl.path>${org.wildfly.openssl.path}</org.wildfly.openssl.path>
                     </systemPropertyVariables>
-                    <argLine>${surefire.system.args} ${jacoco.agent.argLine}</argLine>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-                    </archive>
+                    <argLine>
+                        ${surefire.system.args}
+                        ${jacoco.agent.argLine}
+                        --add-opens=io.quarkus.http.undertow.websockets.servlet/io.undertow.websockets.servlet=io.quarkus.http.undertow.servlet
+                        --add-exports=io.quarkus.http.undertow.websockets.servlet/io.undertow.websockets.jsr.test=io.quarkus.http.undertow.servlet
+                        --add-exports=io.quarkus.http.undertow.websockets.servlet/io.undertow.websockets.suspendresume=io.quarkus.http.undertow.servlet,io.quarkus.http.undertow.websockets
+                        --add-exports=io.quarkus.http.undertow.websockets.servlet/io.undertow.websockets.stress=io.quarkus.http.undertow.servlet,io.quarkus.http.undertow.websockets
+                        --add-exports=io.quarkus.http.undertow.websockets.servlet/io.undertow.websockets.security=io.quarkus.http.undertow.servlet,io.quarkus.http.undertow.websockets
+                        --add-exports=io.quarkus.http.undertow.websockets.servlet/io.undertow.websockets.jsr.test=io.quarkus.http.undertow.websockets
+                        --add-exports=io.quarkus.http.undertow.websockets.servlet/io.undertow.websockets.jsr.test.annotated=io.quarkus.http.undertow.servlet,io.quarkus.http.undertow.websockets
+                        --add-exports=io.quarkus.http.undertow.websockets.servlet/io.undertow.websockets.jsr.test.dynamicupgrade=io.quarkus.http.undertow.servlet,io.quarkus.http.undertow.websockets
+                    </argLine>
                 </configuration>
             </plugin>
         </plugins>
