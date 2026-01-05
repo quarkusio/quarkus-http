@@ -18,6 +18,8 @@
 
 package io.undertow.websockets;
 
+import static java.lang.invoke.MethodHandles.lookup;
+
 import io.undertow.websockets.util.PathTemplate;
 import org.jboss.logging.Messages;
 import org.jboss.logging.annotations.Cause;
@@ -41,7 +43,7 @@ import java.util.Set;
 @MessageBundle(projectCode = "UT")
 public interface JsrWebSocketMessages {
 
-    JsrWebSocketMessages MESSAGES = Messages.getBundle(JsrWebSocketMessages.class);
+    JsrWebSocketMessages MESSAGES = Messages.getBundle(lookup(), JsrWebSocketMessages.class);
 
     @Message(id = 3001, value = "PongMessage not supported with MessageHandler.Async")
     IllegalStateException pongMessageNotSupported();

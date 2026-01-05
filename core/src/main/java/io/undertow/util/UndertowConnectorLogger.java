@@ -15,6 +15,7 @@
 
 package io.undertow.util;
 
+import static java.lang.invoke.MethodHandles.lookup;
 import static org.jboss.logging.Logger.Level.DEBUG;
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
@@ -44,19 +45,19 @@ import org.jboss.logging.annotations.MessageLogger;
 @MessageLogger(projectCode = "UT")
 public interface UndertowConnectorLogger extends BasicLogger {
 
-    UndertowConnectorLogger ROOT_LOGGER = Logger.getMessageLogger(UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName());
+    UndertowConnectorLogger ROOT_LOGGER = Logger.getMessageLogger(lookup(), UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName());
 
-    UndertowConnectorLogger REQUEST_LOGGER = Logger.getMessageLogger(UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".request");
-    UndertowConnectorLogger SESSION_LOGGER = Logger.getMessageLogger(UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".session");
-    UndertowConnectorLogger SECURITY_LOGGER = Logger.getMessageLogger(UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".request.security");
-    UndertowConnectorLogger PROXY_REQUEST_LOGGER = Logger.getMessageLogger(UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".proxy");
-    UndertowConnectorLogger REQUEST_DUMPER_LOGGER = Logger.getMessageLogger(UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".request.dump");
+    UndertowConnectorLogger REQUEST_LOGGER = Logger.getMessageLogger(lookup(), UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".request");
+    UndertowConnectorLogger SESSION_LOGGER = Logger.getMessageLogger(lookup(), UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".session");
+    UndertowConnectorLogger SECURITY_LOGGER = Logger.getMessageLogger(lookup(), UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".request.security");
+    UndertowConnectorLogger PROXY_REQUEST_LOGGER = Logger.getMessageLogger(lookup(), UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".proxy");
+    UndertowConnectorLogger REQUEST_DUMPER_LOGGER = Logger.getMessageLogger(lookup(), UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".request.dump");
     /**
      * Logger used for IO exceptions. Generally these should be suppressed, because they are of little interest, and it is easy for an
      * attacker to fill up the logs by intentionally causing IO exceptions.
      */
-    UndertowConnectorLogger REQUEST_IO_LOGGER = Logger.getMessageLogger(UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".request.io");
-    UndertowConnectorLogger ERROR_RESPONSE = Logger.getMessageLogger(UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".request.error-response");
+    UndertowConnectorLogger REQUEST_IO_LOGGER = Logger.getMessageLogger(lookup(), UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".request.io");
+    UndertowConnectorLogger ERROR_RESPONSE = Logger.getMessageLogger(lookup(), UndertowConnectorLogger.class, UndertowConnectorLogger.class.getPackage().getName() + ".request.error-response");
 
     @LogMessage(level = ERROR)
     @Message(id = 5001, value = "An exception occurred processing the request")
