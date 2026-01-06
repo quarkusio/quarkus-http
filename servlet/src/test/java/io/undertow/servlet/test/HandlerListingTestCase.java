@@ -47,6 +47,7 @@ public class HandlerListingTestCase {
         out.println();
         out.println("handlers");
         ArrayList<HandlerBuilder> builds = new ArrayList<>();
+        HandlerListingTestCase.class.getModule().addUses(HandlerBuilder.class);
         for (HandlerBuilder i : ServiceLoader.load(HandlerBuilder.class, getClass().getClassLoader())) {
             builds.add(i);
         }
@@ -106,6 +107,7 @@ public class HandlerListingTestCase {
         out.println();
         out.println("predicates");
         ArrayList<PredicateBuilder> builds = new ArrayList<PredicateBuilder>();
+        HandlerListingTestCase.class.getModule().addUses(PredicateBuilder.class);
         for (PredicateBuilder i : ServiceLoader.load(PredicateBuilder.class, getClass().getClassLoader())) {
             builds.add(i);
         }
