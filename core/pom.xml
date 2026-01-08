@@ -23,7 +23,7 @@
     <parent>
         <groupId>io.quarkus.http</groupId>
         <artifactId>quarkus-http-parent</artifactId>
-        <version>999-SNAPSHOT</version>
+        <version>5.4.0</version>
     </parent>
 
     <artifactId>quarkus-http-core</artifactId>
