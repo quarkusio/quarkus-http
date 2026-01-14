@@ -95,7 +95,6 @@ public class Http2InputStreamTestCase {
                 }
                 String message = builder.toString();
                 runTest(message, ASYNC_SERVLET, true, false);
-                System.out.println("test complete");
             } catch (Throwable e) {
                 throw new RuntimeException("test failed with i equal to " + i, e);
             }
@@ -175,8 +174,6 @@ public class Http2InputStreamTestCase {
             try {
                 runTest(message, ASYNC_SERVLET, false, false);
             } catch (Throwable e) {
-                System.out.println("test failed with i equal to " + i);
-                e.printStackTrace();
                 throw new RuntimeException("test failed with i equal to " + i, e);
             }
         }
@@ -187,6 +184,7 @@ public class Http2InputStreamTestCase {
         try {
             CompletableFuture<String> res = new CompletableFuture<>();
             Vertx vertx = Vertx.vertx();
+            io.vertx.core.http.HttpClient httpClient = null;
             try {
                 HttpClientOptions options = new HttpClientOptions().
                         setSsl(true).
@@ -194,7 +192,8 @@ public class Http2InputStreamTestCase {
                         setProtocolVersion(HttpVersion.HTTP_2).
                         setTrustAll(true);
 
-                HttpClientRequest request = vertx.createHttpClient(options)
+                httpClient = vertx.createHttpClient(options);
+                HttpClientRequest request = httpClient
                         .request(HttpMethod.POST, DefaultServer.getHostSSLPort("default"),
                                 DefaultServer.getHostAddress(), "/servletContext/" + url)
                         .toCompletionStage().toCompletableFuture().join();
@@ -211,7 +210,13 @@ public class Http2InputStreamTestCase {
                 request.end(message);
                 Assert.assertEquals(message, res.get(10, TimeUnit.SECONDS));
             } finally {
-                vertx.close();
+                try {
+                    if (httpClient != null) {
+                        httpClient.close().toCompletionStage().toCompletableFuture().join();
+                    }
+                } finally {
+                    vertx.close().toCompletionStage().toCompletableFuture().join();
+                }
             }
         } finally {
             client.getConnectionManager().shutdown();
@@ -222,16 +227,18 @@ public class Http2InputStreamTestCase {
             boolean offIOThread) throws Exception {
 
         Vertx vertx = Vertx.vertx();
+        io.vertx.core.http.HttpClient httpClient = null;
         try {
+            HttpClientOptions options = new HttpClientOptions().
+                    setSsl(true).
+                    setUseAlpn(true).
+                    setProtocolVersion(HttpVersion.HTTP_2).
+                    setTrustAll(true);
+
+            httpClient = vertx.createHttpClient(options);
             List<Future<?>> results = new ArrayList<>();
             for (int i = 0; i < concurrency * 5; i++) {
-                HttpClientOptions options = new HttpClientOptions().
-                        setSsl(true).
-                        setUseAlpn(true).
-                        setProtocolVersion(HttpVersion.HTTP_2).
-                        setTrustAll(true);
-
-                HttpClientRequest request = vertx.createHttpClient(options)
+                HttpClientRequest request = httpClient
                         .request(HttpMethod.POST, DefaultServer.getHostSSLPort("default"),
                                 DefaultServer.getHostAddress(), "/servletContext/" + url)
                         .toCompletionStage().toCompletableFuture().join();
@@ -255,12 +262,16 @@ public class Http2InputStreamTestCase {
                     }
                 });
                 request.end(message);
+                results.add(res);
             }
             for (Future<?> i : results) {
                 i.get();
             }
         } finally {
-            vertx.close();
+            if (httpClient != null) {
+                httpClient.close();
+            }
+            vertx.close().toCompletionStage().toCompletableFuture().join();
         }
     }
 
