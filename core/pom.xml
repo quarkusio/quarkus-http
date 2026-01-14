@@ -190,6 +190,7 @@
                 <configuration>
                     <enableAssertions>true</enableAssertions>
                     <runOrder>reversealphabetical</runOrder>
+                    <useModulePath>false</useModulePath>
                     <systemPropertyVariables>
                         <test.ajp>${ajp}</test.ajp>
                         <test.proxy>${proxy}</test.proxy>
