@@ -12,6 +12,7 @@ module io.quarkus.http.undertow.websockets.servlet {
     requires io.quarkus.http.undertow.httpcore;
     requires io.quarkus.http.undertow.servlet;
     requires io.quarkus.http.undertow.websockets;
+    requires io.netty.codec.http;
 
     provides io.undertow.servlet.ServletExtension with
         io.undertow.websockets.servlet.Bootstrap;

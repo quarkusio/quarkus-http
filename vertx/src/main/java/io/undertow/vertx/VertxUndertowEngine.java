@@ -11,6 +11,7 @@ import io.undertow.httpcore.UndertowEngine;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Promise;
 import io.vertx.core.Verticle;
@@ -35,14 +36,13 @@ public class VertxUndertowEngine implements UndertowEngine {
         ei.vertx.deployVerticle(new Supplier<Verticle>() {
             @Override
             public Verticle get() {
-                System.out.println("getting verticle");
                 HttpServerOptions opts = (HttpServerOptions) options;
                 if (opts == null) {
                     opts = new HttpServerOptions();
                 }
                 return new MyVerticle(ei.allocator, port, host, ei.vertx, ei.executor, handler, opts);
             }
-        }, new DeploymentOptions().setInstances(ei.ioThreads), new Handler<AsyncResult<String>>() {
+        }, new DeploymentOptions().setInstances(ei.ioThreads)).onComplete(new Handler<AsyncResult<String>>() {
             @Override
             public void handle(AsyncResult<String> event) {
                 if (event.failed()) {
@@ -53,7 +53,7 @@ public class VertxUndertowEngine implements UndertowEngine {
             }
         });
         try {
-            deploymentId.get();
+            String id = deploymentId.get();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -66,9 +66,9 @@ public class VertxUndertowEngine implements UndertowEngine {
             opts = new HttpServerOptions();
         }
         opts.setSsl(true);
-        opts.setKeyStoreOptions(new JksOptions().setPath(keyStore).setPassword(keyStorePassword));
+        opts.setKeyCertOptions(new JksOptions().setPath(keyStore).setPassword(keyStorePassword));
         if (trustStore != null) {
-            opts.setTrustStoreOptions(new JksOptions().setPath(trustStore).setPassword(trustStorePassword));
+            opts.setTrustOptions(new JksOptions().setPath(trustStore).setPassword(trustStorePassword));
         }
         bindHttp(instance, handler, port, host, opts);
     }
@@ -90,7 +90,7 @@ public class VertxUndertowEngine implements UndertowEngine {
         @Override
         public void close() {
             CountDownLatch latch = new CountDownLatch(1);
-            vertx.close(new Handler<AsyncResult<Void>>() {
+            vertx.close().onComplete(new Handler<AsyncResult<Void>>() {
                 @Override
                 public void handle(AsyncResult<Void> event) {
                     latch.countDown();
@@ -150,7 +150,7 @@ public class VertxUndertowEngine implements UndertowEngine {
                 }
             });
 
-            server.listen(port, host, new Handler<AsyncResult<HttpServer>>() {
+            server.listen(port, host).onComplete(new Handler<AsyncResult<HttpServer>>() {
                 @Override
                 public void handle(AsyncResult<HttpServer> event) {
                     if (event.failed()) {
@@ -164,7 +164,7 @@ public class VertxUndertowEngine implements UndertowEngine {
 
         @Override
         public void stop(Promise<Void> stopPromise) throws Exception {
-            server.close(new Handler<AsyncResult<Void>>() {
+            server.close().onComplete(new Handler<AsyncResult<Void>>() {
                 @Override
                 public void handle(AsyncResult<Void> event) {
                     if (event.failed()) {
@@ -174,6 +174,27 @@ public class VertxUndertowEngine implements UndertowEngine {
                     }
                 }
             });
+        }
+
+        @Override
+        public Future<?> deploy(Context context) throws Exception {
+            server = vertx.createHttpServer(options);
+
+            server.requestHandler(new Handler<HttpServerRequest>() {
+                @Override
+                public void handle(HttpServerRequest request) {
+                    VertxHttpExchange delegate = new VertxHttpExchange(request, allocator, blockingExecutor, null, null);
+                    delegate.setPushHandler(this);
+                    rootHandler.handle(delegate);
+                }
+            });
+
+            return server.listen(port, host);
+        }
+
+        @Override
+        public Future<?> undeploy(Context context) throws Exception {
+            return server.close();
         }
     }
 }

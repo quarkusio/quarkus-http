@@ -28,6 +28,7 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.core.http.impl.Http1xServerConnection;
+import io.vertx.core.internal.buffer.BufferInternal;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.core.net.impl.ConnectionBase;
 import org.jboss.logging.Logger;
@@ -119,12 +120,13 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                         if (waitingForRead) {
                             request.connection().notify();
                             if (input1 != null) {
-                                input1.getByteBuf().release();
+                                release(input1);
                                 input1 = null;
                             }
                             if (inputOverflow != null) {
                                 while (!inputOverflow.isEmpty()) {
-                                    inputOverflow.poll().getByteBuf().release();
+                                    var buff = inputOverflow.poll();
+                                    release(buff);
                                 }
                             }
                         }
@@ -427,7 +429,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             if (readError != null) {
                 throw new IOException(readError);
             } else if (input1 != null) {
-                ByteBuf ret = input1.getByteBuf();
+                ByteBuf ret = ((BufferInternal) input1).getByteBuf();
                 if (inputOverflow != null) {
                     input1 = inputOverflow.poll();
                     if (input1 == null) {
@@ -482,7 +484,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     public int readBytesAvailable() {
         synchronized (request.connection()) {
             if (input1 != null) {
-                return input1.getByteBuf().readableBytes();
+                return ((BufferInternal) input1).getByteBuf().readableBytes();
             }
         }
         return 0;
@@ -529,7 +531,11 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             if (ret == null) {
                 terminateRequest();
             }
-            return ret == null ? null : ret.getByteBuf();
+            if (ret == null) {
+                return null;
+            } else {
+                return ((BufferInternal) ret).getByteBuf();
+            }
         }
     }
 
@@ -568,7 +574,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             if (upgradeHandler == null) {
                 request.response().end();
             } else {
-                request.response().end(upgradeHandler);
+                request.response().end().onComplete(upgradeHandler);
             }
             return;
         }
@@ -582,7 +588,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                         if (upgradeHandler == null) {
                             request.response().end(createBuffer(data));
                         } else {
-                            request.response().end(createBuffer(data), upgradeHandler);
+                            request.response().end(createBuffer(data)).onComplete(upgradeHandler);
                         }
                     } else {
                         request.response().write(createBuffer(data));
@@ -665,7 +671,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
             if (upgradeHandler == null) {
                 request.response().end();
             } else {
-                request.response().end(upgradeHandler);
+                request.response().end().onComplete(upgradeHandler);
             }
             queueWriteListener(callback, context, last);
             return;
@@ -681,7 +687,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                             if (upgradeHandler == null) {
                                 request.response().end(createBuffer(data));
                             } else {
-                                request.response().end(createBuffer(data), upgradeHandler);
+                                request.response().end(createBuffer(data)).onComplete(upgradeHandler);
                             }
                         } else {
                             request.response().write(createBuffer(data));
@@ -704,7 +710,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                     if (upgradeHandler == null) {
                         request.response().end(createBuffer(data));
                     } else {
-                        request.response().end(createBuffer(data), upgradeHandler);
+                        request.response().end(createBuffer(data)).onComplete(upgradeHandler);
                     }
                 } else {
                     request.response().write(createBuffer(data));
@@ -742,12 +748,18 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         return new VertxBufferImpl(data);
     }
 
+    private void release(Buffer buffer) {
+        if (buffer instanceof BufferInternal) {
+            ((BufferInternal) buffer).getByteBuf().release();
+        }
+    }
+
     @Override
     public void handle(Buffer event) {
         BiConsumer<InputChannel, Object> readCallback = null;
         Object context = null;
         if (event.length() == 0) {
-            event.getByteBuf().release();
+            release(event);
             return;
         }
         synchronized (request.connection()) {
@@ -811,7 +823,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     @Override
     public void setUndertowOptions(UndertowOptionMap options) {
-        this.optionMap =  options;
+        this.optionMap = options;
     }
 
     @Override
@@ -857,7 +869,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
         for (Map.Entry<String, List<String>> entry : requestHeaders.entrySet()) {
             map.add(entry.getKey().toLowerCase(Locale.ENGLISH), entry.getValue());
         }
-        response.push(HttpMethod.valueOf(method), request.host(), path, map, new Handler<AsyncResult<HttpServerResponse>>() {
+        response.push(HttpMethod.valueOf(method), request.authority(), path, map).onComplete(new Handler<AsyncResult<HttpServerResponse>>() {
             @Override
             public void handle(AsyncResult<HttpServerResponse> event) {
                 if (event.succeeded()) {

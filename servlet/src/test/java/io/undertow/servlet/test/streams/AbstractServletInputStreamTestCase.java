@@ -103,7 +103,6 @@ public abstract class AbstractServletInputStreamTestCase {
                 }
                 String message = builder.toString();
                 runTest(message, ASYNC_SERVLET, true, false);
-                System.out.println("test complete");
             } catch (Throwable e) {
                 throw new RuntimeException("test failed with i equal to " + i, e);
             }
@@ -219,8 +218,6 @@ public abstract class AbstractServletInputStreamTestCase {
             try {
                 runTestViaJavaImpl(message, ASYNC_SERVLET);
             } catch (Throwable e) {
-                System.out.println("test failed with i equal to " + i);
-                e.printStackTrace();
                 throw new RuntimeException("test failed with i equal to " + i, e);
             }
         }

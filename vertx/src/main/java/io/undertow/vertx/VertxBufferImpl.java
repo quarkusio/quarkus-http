@@ -6,6 +6,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.util.CharsetUtil;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.impl.Arguments;
+import io.vertx.core.internal.buffer.BufferInternal;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -15,7 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 
-public class VertxBufferImpl implements Buffer {
+public class VertxBufferImpl implements Buffer, BufferInternal {
 
   private ByteBuf buffer;
 
@@ -83,11 +84,21 @@ public class VertxBufferImpl implements Buffer {
     return buffer.getDouble(pos);
   }
 
-  public float getFloat(int pos) {
+    @Override
+    public double getDoubleLE(int i) {
+        return buffer.getDoubleLE(i);
+    }
+
+    public float getFloat(int pos) {
     return buffer.getFloat(pos);
   }
 
-  public short getShort(int pos) {
+    @Override
+    public float getFloatLE(int i) {
+        return buffer.getFloatLE(i);
+    }
+
+    public short getShort(int pos) {
     return buffer.getShort(pos);
   }
 
@@ -155,7 +166,7 @@ public class VertxBufferImpl implements Buffer {
   }
 
   public Buffer getBuffer(int start, int end) {
-    return new VertxBufferImpl(Unpooled.wrappedBuffer(getBytes(start, end)));
+    return new VertxBufferImpl(buffer.slice(start, end));
   }
 
   public String getString(int start, int end, String enc) {
@@ -169,222 +180,247 @@ public class VertxBufferImpl implements Buffer {
     return new String(bytes, StandardCharsets.UTF_8);
   }
 
-  public Buffer appendBuffer(Buffer buff) {
-    buffer.writeBytes(buff.getByteBuf());
+  public BufferInternal appendBuffer(Buffer buff) {
+    buffer.writeBytes(buff.getBytes());
     return this;
   }
 
-  public Buffer appendBuffer(Buffer buff, int offset, int len) {
-    ByteBuf byteBuf = buff.getByteBuf();
-    int from = byteBuf.readerIndex() + offset;
-    buffer.writeBytes(byteBuf, from, len);
-    return this;
-  }
-
-  public Buffer appendBytes(byte[] bytes) {
-    buffer.writeBytes(bytes);
-    return this;
-  }
-
-  public Buffer appendBytes(byte[] bytes, int offset, int len) {
+  public BufferInternal appendBuffer(Buffer buff, int offset, int len) {
+    byte[] bytes = buff.getBytes();
     buffer.writeBytes(bytes, offset, len);
     return this;
   }
 
-  public Buffer appendByte(byte b) {
+  public BufferInternal appendBytes(byte[] bytes) {
+    buffer.writeBytes(bytes);
+    return this;
+  }
+
+  public BufferInternal appendBytes(byte[] bytes, int offset, int len) {
+    buffer.writeBytes(bytes, offset, len);
+    return this;
+  }
+
+  public BufferInternal appendByte(byte b) {
     buffer.writeByte(b);
     return this;
   }
 
-  public Buffer appendUnsignedByte(short b) {
+  public BufferInternal appendUnsignedByte(short b) {
     buffer.writeByte(b);
     return this;
   }
 
-  public Buffer appendInt(int i) {
+  public BufferInternal appendInt(int i) {
     buffer.writeInt(i);
     return this;
   }
 
-  public Buffer appendIntLE(int i) {
+  public BufferInternal appendIntLE(int i) {
     buffer.writeIntLE(i);
     return this;
   }
 
-  public Buffer appendUnsignedInt(long i) {
+  public BufferInternal appendUnsignedInt(long i) {
     buffer.writeInt((int) i);
     return this;
   }
 
-  public Buffer appendUnsignedIntLE(long i) {
+  public BufferInternal appendUnsignedIntLE(long i) {
     buffer.writeIntLE((int) i);
     return this;
   }
 
-  public Buffer appendMedium(int i) {
+  public BufferInternal appendMedium(int i) {
     buffer.writeMedium(i);
     return this;
   }
 
-  public Buffer appendMediumLE(int i) {
+  public BufferInternal appendMediumLE(int i) {
     buffer.writeMediumLE(i);
     return this;
   }
 
-  public Buffer appendLong(long l) {
+  public BufferInternal appendLong(long l) {
     buffer.writeLong(l);
     return this;
   }
 
-  public Buffer appendLongLE(long l) {
+  public BufferInternal appendLongLE(long l) {
     buffer.writeLongLE(l);
     return this;
   }
 
-  public Buffer appendShort(short s) {
+  public BufferInternal appendShort(short s) {
     buffer.writeShort(s);
     return this;
   }
 
-  public Buffer appendShortLE(short s) {
+  public BufferInternal appendShortLE(short s) {
     buffer.writeShortLE(s);
     return this;
   }
 
-  public Buffer appendUnsignedShort(int s) {
+  public BufferInternal appendUnsignedShort(int s) {
     buffer.writeShort(s);
     return this;
   }
 
-  public Buffer appendUnsignedShortLE(int s) {
+  public BufferInternal appendUnsignedShortLE(int s) {
     buffer.writeShortLE(s);
     return this;
   }
 
-  public Buffer appendFloat(float f) {
+  public BufferInternal appendFloat(float f) {
     buffer.writeFloat(f);
     return this;
   }
 
-  public Buffer appendDouble(double d) {
+    @Override
+    public BufferInternal appendFloatLE(float v) {
+        buffer.writeFloatLE(v);
+        return this;
+    }
+
+    public BufferInternal appendDouble(double d) {
     buffer.writeDouble(d);
     return this;
   }
 
-  public Buffer appendString(String str, String enc) {
+    @Override
+    public BufferInternal appendDoubleLE(double v) {
+        buffer.writeDoubleLE(v);
+        return this;
+    }
+
+    public BufferInternal appendString(String str, String enc) {
     return append(str, Charset.forName(Objects.requireNonNull(enc)));
   }
 
-  public Buffer appendString(String str) {
+  public BufferInternal appendString(String str) {
     return append(str, CharsetUtil.UTF_8);
   }
 
-  public Buffer setByte(int pos, byte b) {
+  public BufferInternal setByte(int pos, byte b) {
     ensureWritable(pos, 1);
     buffer.setByte(pos, b);
     return this;
   }
 
-  public Buffer setUnsignedByte(int pos, short b) {
+  public BufferInternal setUnsignedByte(int pos, short b) {
     ensureWritable(pos, 1);
     buffer.setByte(pos, b);
     return this;
   }
 
-  public Buffer setInt(int pos, int i) {
+  public BufferInternal setInt(int pos, int i) {
     ensureWritable(pos, 4);
     buffer.setInt(pos, i);
     return this;
   }
 
-  public Buffer setIntLE(int pos, int i) {
+  public BufferInternal setIntLE(int pos, int i) {
     ensureWritable(pos, 4);
     buffer.setIntLE(pos, i);
     return this;
   }
 
-  public Buffer setUnsignedInt(int pos, long i) {
+  public BufferInternal setUnsignedInt(int pos, long i) {
     ensureWritable(pos, 4);
     buffer.setInt(pos, (int) i);
     return this;
   }
 
-  public Buffer setUnsignedIntLE(int pos, long i) {
+  public BufferInternal setUnsignedIntLE(int pos, long i) {
     ensureWritable(pos, 4);
     buffer.setIntLE(pos, (int) i);
     return this;
   }
 
-  public Buffer setMedium(int pos, int i) {
+  public BufferInternal setMedium(int pos, int i) {
     ensureWritable(pos, 3);
     buffer.setMedium(pos, i);
     return this;
   }
 
-  public Buffer setMediumLE(int pos, int i) {
+  public BufferInternal setMediumLE(int pos, int i) {
     ensureWritable(pos, 3);
     buffer.setMediumLE(pos, i);
     return this;
   }
 
-  public Buffer setLong(int pos, long l) {
+  public BufferInternal setLong(int pos, long l) {
     ensureWritable(pos, 8);
     buffer.setLong(pos, l);
     return this;
   }
 
-  public Buffer setLongLE(int pos, long l) {
+  public BufferInternal setLongLE(int pos, long l) {
     ensureWritable(pos, 8);
     buffer.setLongLE(pos, l);
     return this;
   }
 
-  public Buffer setDouble(int pos, double d) {
+  public BufferInternal setDouble(int pos, double d) {
     ensureWritable(pos, 8);
     buffer.setDouble(pos, d);
     return this;
   }
 
-  public Buffer setFloat(int pos, float f) {
+    @Override
+    public BufferInternal setDoubleLE(int pos, double v) {
+        ensureWritable(pos, 8);
+        buffer.setDoubleLE(pos, v);
+        return this;
+    }
+
+    public BufferInternal setFloat(int pos, float f) {
     ensureWritable(pos, 4);
     buffer.setFloat(pos, f);
     return this;
   }
 
-  public Buffer setShort(int pos, short s) {
+    @Override
+    public BufferInternal setFloatLE(int pos, float v) {
+        ensureWritable(pos, 4);
+        buffer.setFloatLE(pos, v);
+        return this;
+    }
+
+    public BufferInternal setShort(int pos, short s) {
     ensureWritable(pos, 2);
     buffer.setShort(pos, s);
     return this;
   }
 
-  public Buffer setShortLE(int pos, short s) {
+  public BufferInternal setShortLE(int pos, short s) {
     ensureWritable(pos, 2);
     buffer.setShortLE(pos, s);
     return this;
   }
 
-  public Buffer setUnsignedShort(int pos, int s) {
+  public BufferInternal setUnsignedShort(int pos, int s) {
     ensureWritable(pos, 2);
     buffer.setShort(pos, s);
     return this;
   }
 
-  public Buffer setUnsignedShortLE(int pos, int s) {
+  public BufferInternal setUnsignedShortLE(int pos, int s) {
     ensureWritable(pos, 2);
     buffer.setShortLE(pos, s);
     return this;
   }
 
-  public Buffer setBuffer(int pos, Buffer b) {
+  public BufferInternal setBuffer(int pos, Buffer b) {
     ensureWritable(pos, b.length());
-    buffer.setBytes(pos, b.getByteBuf());
+    buffer.setBytes(pos, b.getBytes());
     return this;
   }
 
-  public Buffer setBuffer(int pos, Buffer b, int offset, int len) {
+  public BufferInternal setBuffer(int pos, Buffer b, int offset, int len) {
     ensureWritable(pos, len);
-    ByteBuf byteBuf = b.getByteBuf();
-    buffer.setBytes(pos, byteBuf, byteBuf.readerIndex() + offset, len);
+    var byteBuf = b.getBytes();
+    buffer.setBytes(pos, byteBuf, offset, len);
     return this;
   }
 
@@ -394,23 +430,23 @@ public class VertxBufferImpl implements Buffer {
     return this;
   }
 
-  public Buffer setBytes(int pos, byte[] b) {
+  public BufferInternal setBytes(int pos, byte[] b) {
     ensureWritable(pos, b.length);
     buffer.setBytes(pos, b);
     return this;
   }
 
-  public Buffer setBytes(int pos, byte[] b, int offset, int len) {
+  public BufferInternal setBytes(int pos, byte[] b, int offset, int len) {
     ensureWritable(pos, len);
     buffer.setBytes(pos, b, offset, len);
     return this;
   }
 
-  public Buffer setString(int pos, String str) {
+  public BufferInternal setString(int pos, String str) {
     return setBytes(pos, str, CharsetUtil.UTF_8);
   }
 
-  public Buffer setString(int pos, String str, String enc) {
+  public BufferInternal setString(int pos, String str, String enc) {
     return setBytes(pos, str, Charset.forName(enc));
   }
 
@@ -418,15 +454,15 @@ public class VertxBufferImpl implements Buffer {
     return buffer.writerIndex();
   }
 
-  public Buffer copy() {
+  public BufferInternal copy() {
     return new VertxBufferImpl(buffer.copy());
   }
 
-  public Buffer slice() {
+  public BufferInternal slice() {
     return new VertxBufferImpl(buffer.slice());
   }
 
-  public Buffer slice(int start, int end) {
+  public BufferInternal slice(int start, int end) {
     return new VertxBufferImpl(buffer.slice(start, end - start));
   }
 
@@ -436,13 +472,13 @@ public class VertxBufferImpl implements Buffer {
     return buffer;
   }
 
-  private Buffer append(String str, Charset charset) {
+  private BufferInternal append(String str, Charset charset) {
     byte[] bytes = str.getBytes(charset);
     buffer.writeBytes(bytes);
     return this;
   }
 
-  private Buffer setBytes(int pos, String str, Charset charset) {
+  private BufferInternal setBytes(int pos, String str, Charset charset) {
     byte[] bytes = str.getBytes(charset);
     ensureWritable(pos, bytes.length);
     buffer.setBytes(pos, bytes);
@@ -486,7 +522,7 @@ public class VertxBufferImpl implements Buffer {
   public int readFromBuffer(int pos, Buffer buffer) {
     int len = buffer.getInt(pos);
     Buffer b = buffer.getBuffer(pos + 4, pos + 4 + len);
-    this.buffer = b.getByteBuf();
+    this.buffer = Unpooled.copiedBuffer(b.getBytes());
     return pos + 4 + len;
   }
 }
