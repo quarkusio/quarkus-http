@@ -62,7 +62,7 @@
             For example: <version.org.jboss.as.console>
          -->
         <version.com.h2database>1.4.197</version.com.h2database>
-        <version.easymock>3.6</version.easymock>
+        <version.easymock>5.3.0</version.easymock>
         <version.junit>4.13.1</version.junit>
         <version.netty>4.1.111.Final</version.netty>
         <version.org.apache.directory.server>2.0.0-M15</version.org.apache.directory.server>
