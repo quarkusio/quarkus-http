@@ -11,6 +11,9 @@ on:
     paths-ignore:
       - '.github/project.yml'
 
+permissions:
+  contents: read
+
 jobs:
   # This is a hack to work around a GitHub API limitation:
   # when the PR is coming from another fork, the pull_requests field of the
