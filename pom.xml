@@ -276,6 +276,16 @@
                         </lifecycleMappingMetadata>
                     </configuration>
                 </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>3.12.0</version>
+                    <configuration>
+                        <doclint>none</doclint>
+                        <legacyMode>true</legacyMode>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -638,7 +648,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.12.0</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -647,10 +656,6 @@
                                 </goals>
                             </execution>
                         </executions>
-                        <configuration>
-                            <doclint>none</doclint>
-                            <legacyMode>true</legacyMode>
-                        </configuration>
                     </plugin>
                 </plugins>
             </build>
