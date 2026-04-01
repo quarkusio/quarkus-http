@@ -2,7 +2,9 @@ package io.undertow.vertx;
 
 import io.netty.handler.codec.DecoderResult;
 import io.netty.handler.codec.http.QueryStringDecoder;
-import io.vertx.core.*;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.MultiMap;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.Cookie;
 import io.vertx.core.http.HttpConnection;
@@ -14,14 +16,13 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.HttpVersion;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.http.StreamPriority;
-import io.vertx.core.http.impl.HttpServerRequestInternal;
+import io.vertx.core.internal.ContextInternal;
+import io.vertx.core.internal.http.HttpServerRequestInternal;
 import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.NetSocket;
 import io.vertx.core.net.SocketAddress;
 
-import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSession;
-import javax.security.cert.X509Certificate;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -120,10 +121,6 @@ public class PushedHttpServerRequest extends HttpServerRequestInternal implement
         }
     }
 
-    @Override
-    public String host() {
-        return original.host();
-    }
 
     @Override
     public long bytesRead() {
@@ -189,15 +186,10 @@ public class PushedHttpServerRequest extends HttpServerRequestInternal implement
     }
 
     @Override
-    public X509Certificate[] peerCertificateChain() throws SSLPeerUnverifiedException {
-        return original.peerCertificateChain();
-    }
-
-    @Override
     public String absoluteURI() {
         if (absoluteURI == null) {
             try {
-                absoluteURI = absoluteURI(original.host(), this);
+                absoluteURI = absoluteURI(original.authority().host(), this);
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
@@ -281,11 +273,6 @@ public class PushedHttpServerRequest extends HttpServerRequestInternal implement
     }
 
     @Override
-    public Map<String, Cookie> cookieMap() {
-        return original.cookieMap();
-    }
-
-    @Override
     public Cookie getCookie(String name, String domain, String path) {
         return original.getCookie(name, domain, path);
     }
@@ -346,7 +333,7 @@ public class PushedHttpServerRequest extends HttpServerRequestInternal implement
         if (scheme != null && (scheme.equals("http") || scheme.equals("https"))) {
             absoluteURI = uri.toString();
         } else {
-            String host = req.host();
+            String host = req.authority().host();
             if (host != null) {
                 absoluteURI = req.scheme() + "://" + host + uri;
             } else {
@@ -380,28 +367,8 @@ public class PushedHttpServerRequest extends HttpServerRequestInternal implement
     }
 
     @Override
-    public HttpServerRequest body(Handler<AsyncResult<Buffer>> handler) {
-        return original.body(handler);
-    }
-
-    @Override
-    public void end(Handler<AsyncResult<Void>> handler) {
-        original.end(handler);
-    }
-
-    @Override
-    public void toNetSocket(Handler<AsyncResult<NetSocket>> handler) {
-        original.toNetSocket(handler);
-    }
-
-    @Override
     public int streamId() {
         return original.streamId();
-    }
-
-    @Override
-    public void toWebSocket(Handler<AsyncResult<ServerWebSocket>> handler) {
-        original.toWebSocket(handler);
     }
 
     @Override
@@ -420,9 +387,11 @@ public class PushedHttpServerRequest extends HttpServerRequestInternal implement
     }
 
     @Override
-    public Context context() {
+    public ContextInternal context() {
         return original.context();
     }
+
+
 
     @Override
     public Object metric() {
@@ -432,6 +401,11 @@ public class PushedHttpServerRequest extends HttpServerRequestInternal implement
     @Override
     public HostAndPort authority() {
         return original.authority();
+    }
+
+    @Override
+    public HostAndPort authority(boolean real) {
+        return original.authority(real);
     }
 
     @Override

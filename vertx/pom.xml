@@ -147,6 +147,20 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <compilerArgs>
+                        <arg>--add-exports</arg>
+                        <arg>io.vertx.core/io.vertx.core.impl=io.quarkus.http.undertow.vertx</arg>
+                        <arg>--add-exports</arg>
+                        <arg>io.vertx.core/io.vertx.core.http.impl=io.quarkus.http.undertow.vertx</arg>
+                        <arg>--add-exports</arg>
+                        <arg>io.vertx.core/io.vertx.core.net.impl=io.quarkus.http.undertow.vertx</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <executions>
                     <execution>
