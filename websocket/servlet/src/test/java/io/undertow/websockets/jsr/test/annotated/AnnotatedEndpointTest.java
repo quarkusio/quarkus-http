@@ -87,6 +87,7 @@ public class AnnotatedEndpointTest {
                                 .addEndpoint(AnnotatedClientEndpoint.class)
                                 .addEndpoint(AnnotatedClientEndpointWithConfigurator.class)
                                 .addEndpoint(IncrementEndpoint.class)
+                                .addEndpoint(UUIDEndpoint.class)
                                 .addEndpoint(EncodingEndpoint.class)
                                 .addEndpoint(EncodingGenericsEndpoint.class)
                                 .addEndpoint(TimeoutEndpoint.class)
@@ -322,6 +323,18 @@ public class AnnotatedEndpointTest {
         WebSocketTestClient client = new WebSocketTestClient(new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort("default") + "/ws/encoding/Stuart"));
         client.connect();
         client.send(new TextWebSocketFrame(Unpooled.wrappedBuffer(payload)), new FrameChecker(TextWebSocketFrame.class, "hello Stuart".getBytes(), latch));
+        latch.get();
+        client.destroy();
+    }
+
+    @Test
+    public void testPathParamDecoder() throws Exception {
+        final byte[] payload = "hello".getBytes();
+        final CompletableFuture latch = new CompletableFuture();
+
+        WebSocketTestClient client = new WebSocketTestClient(new URI("ws://" + DefaultServer.getHostAddress("default") + ":" + DefaultServer.getHostPort("default") + "/ws/uuid/40164304-B94D-4332-AC31-09D7F9A8B943"));
+        client.connect();
+        client.send(new TextWebSocketFrame(Unpooled.wrappedBuffer(payload)), new FrameChecker(TextWebSocketFrame.class, "hello40164304-b94d-4332-ac31-09d7f9a8b943".getBytes(), latch));
         latch.get();
         client.destroy();
     }
