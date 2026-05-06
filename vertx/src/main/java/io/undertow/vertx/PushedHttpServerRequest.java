@@ -435,6 +435,11 @@ public class PushedHttpServerRequest extends HttpServerRequestInternal implement
     }
 
     @Override
+    public HostAndPort authority(boolean real) {
+        return original.authority(real);
+    }
+
+    @Override
     public MultiMap params(boolean semicolonIsNormalChar) {
         return original.params(semicolonIsNormalChar);
     }
