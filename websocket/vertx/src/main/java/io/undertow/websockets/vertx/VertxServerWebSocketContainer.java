@@ -78,7 +78,7 @@ public class VertxServerWebSocketContainer extends ServerWebSocketContainer {
 
             AnnotatedEndpointFactory annotatedEndpointFactory = null;
             if (!Endpoint.class.isAssignableFrom(sec.getEndpointClass())) {
-                annotatedEndpointFactory = AnnotatedEndpointFactory.create(sec.getEndpointClass(), encodingFactory, pt.getParameterNames());
+                annotatedEndpointFactory = AnnotatedEndpointFactory.create(sec.getEndpointClass(), encodingFactory, pt.getParameterNames(), config);
             }
 
 
