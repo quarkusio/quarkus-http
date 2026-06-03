@@ -26,6 +26,7 @@ module io.quarkus.http.undertow {
 
     requires io.netty.buffer;
     requires io.netty.codec.http;
+    requires io.netty.codec.compression;
     requires io.netty.common;
 
     requires io.quarkus.http.undertow.httpcore;
