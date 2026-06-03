@@ -1,6 +1,7 @@
 package io.undertow.vertx;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
@@ -744,7 +745,11 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
     }
 
     private Buffer createBuffer(ByteBuf data) {
-        return new VertxBufferImpl(data);
+        try {
+            return new VertxBufferImpl(Unpooled.copiedBuffer(data));
+        } finally {
+            data.release();
+        }
     }
 
     private void release(Buffer buffer) {
