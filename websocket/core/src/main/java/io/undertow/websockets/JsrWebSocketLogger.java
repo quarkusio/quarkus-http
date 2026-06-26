@@ -51,9 +51,9 @@ public interface JsrWebSocketLogger extends BasicLogger {
     @Message(id = 26001, value = "Unable to instantiate endpoint")
     void endpointCreationFailed(@Cause Exception cause);
 
-    @LogMessage(level = Logger.Level.ERROR)
-    @Message(id = 26002, value = "Unable to instantiate server configuration %s")
-    void couldNotInitializeConfiguration(Class<?> clazz, @Cause Throwable t);
+    //@LogMessage(level = Logger.Level.ERROR)
+    //@Message(id = 26002, value = "Unable to instantiate server configuration %s")
+    //void couldNotInitializeConfiguration(Class<?> clazz, @Cause Throwable t);
 
     @LogMessage(level = Logger.Level.INFO)
     @Message(id = 26003, value = "Adding annotated server endpoint %s for path %s")
@@ -79,19 +79,19 @@ public interface JsrWebSocketLogger extends BasicLogger {
     @Message(id = 26008, value = "Could not close endpoint on undeploy.")
     void couldNotCloseOnUndeploy(@Cause Exception e);
 
-    @LogMessage(level = Logger.Level.WARN)
-    @Message(id = 26009, value = "XNIO worker was not set on WebSocketDeploymentInfo, the default worker will be used")
-    void xnioWorkerWasNull();
+    //@LogMessage(level = Logger.Level.WARN)
+    //@Message(id = 26009, value = "XNIO worker was not set on WebSocketDeploymentInfo, the default worker will be used")
+    //void xnioWorkerWasNull();
 
-    @LogMessage(level = Logger.Level.WARN)
-    @Message(id = 26010, value = "Buffer pool was not set on WebSocketDeploymentInfo, the default pool will be used")
-    void bufferPoolWasNull();
+    //@LogMessage(level = Logger.Level.WARN)
+    //@Message(id = 26010, value = "Buffer pool was not set on WebSocketDeploymentInfo, the default pool will be used")
+    //void bufferPoolWasNull();
 
-    @Message(id = 26011, value = "XNIO worker was not set on WebSocketDeploymentInfo, and there is no default to use")
-    IllegalArgumentException xnioWorkerWasNullAndNoDefault();
+    //@Message(id = 26011, value = "XNIO worker was not set on WebSocketDeploymentInfo, and there is no default to use")
+    //IllegalArgumentException xnioWorkerWasNullAndNoDefault();
 
-    @Message(id = 26012, value = "Buffer pool was not set on WebSocketDeploymentInfo, and there is no default to use")
-    IllegalArgumentException bufferPoolWasNullAndNoDefault();
+    //@Message(id = 26012, value = "Buffer pool was not set on WebSocketDeploymentInfo, and there is no default to use")
+    //IllegalArgumentException bufferPoolWasNullAndNoDefault();
 
     @LogMessage(level = Logger.Level.ERROR)
     @Message(id = 26013, value = "Unhandled error in annotated endpoint %s")
