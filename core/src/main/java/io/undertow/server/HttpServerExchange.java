@@ -769,6 +769,10 @@ public final class HttpServerExchange extends AbstractAttachable implements Buff
         return delegate.isResponseComplete();
     }
 
+    public boolean isResponseAborted() {
+        return delegate.isResponseAborted();
+    }
+
     /**
      * Sets the source address of the HTTP request. If this is not explicitly set
      * the actual source address of the channel is used.
