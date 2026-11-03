@@ -338,31 +338,28 @@ public class URLResource implements Resource, RangeAwareResource {
     @Override
     public void serveRangeBlocking(OutputStream sender, HttpServerExchange exchange, long start, long end) throws IOException {
         ByteBuf buffer = exchange.allocateBuffer(false);
-        int pos = 0;
+        long pos = 0;
         try (InputStream in = url.openStream()) {
             int r;
             while ((r = in.read(buffer.array(), buffer.arrayOffset(), buffer.writableBytes())) > 0) {
-                int sw, ew;
+                int sw;
                 if (pos < start) {
-                    int toEat = (int) (start - pos);
-                    if (toEat > r) {
+                    long toEat = start - pos;
+                    if (toEat >= r) {
                         sw = -1;
                     } else {
-                        sw = toEat;
+                        sw = (int) toEat;
                     }
                 } else {
                     sw = 0;
                 }
-                int rem = (int) (end - Math.max(pos, start)) + 1;
+                long rem = end - Math.max(pos, start) + 1;
                 if (rem <= 0) {
                     sender.close();
                     return;
-                } else if (r > rem) {
-                    ew = rem;
-                } else {
-                    ew = r;
                 }
                 if (sw != -1) {
+                    int ew = (int) Math.min((long) (r - sw), rem);
                     sender.write(buffer.array(), buffer.arrayOffset() + sw, ew);
                 }
                 pos += r;
