@@ -156,6 +156,12 @@ public interface HttpExchange extends Closeable {
      */
     boolean isResponseComplete();
 
+    /**
+     * @return true if the response was terminated before it was completely written, which is the case when the client
+     * aborted it
+     */
+    boolean isResponseAborted();
+
     void close();
 
     EventExecutor getIoThread();
