@@ -170,4 +170,7 @@ public interface JsrWebSocketMessages {
 
     @Message(id = 3045, value = "Cannot add path template %s, matcher already contains an equivalent pattern %s")
     IllegalStateException matcherAlreadyContainsTemplate(String templateString, String templateString1);
+
+    @Message(id = 3046, value = "%s did not implement known decoder interface")
+    DeploymentException didNotImplementKnownEncoderSubclass(Class<? extends Encoder> decoder);
 }
