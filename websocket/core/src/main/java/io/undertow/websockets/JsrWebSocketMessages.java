@@ -45,17 +45,17 @@ public interface JsrWebSocketMessages {
 
     JsrWebSocketMessages MESSAGES = Messages.getBundle(lookup(), JsrWebSocketMessages.class);
 
-    @Message(id = 3001, value = "PongMessage not supported with MessageHandler.Async")
-    IllegalStateException pongMessageNotSupported();
+    //@Message(id = 3001, value = "PongMessage not supported with MessageHandler.Async")
+    //IllegalStateException pongMessageNotSupported();
 
-    @Message(id = 3002, value = "SendStream is closed")
-    IOException sendStreamClosed();
+    //@Message(id = 3002, value = "SendStream is closed")
+    //IOException sendStreamClosed();
 
-    @Message(id = 3003, value = "SendWriter is closed")
-    IOException sendWriterClosed();
+    //@Message(id = 3003, value = "SendWriter is closed")
+    //IOException sendWriterClosed();
 
-    @Message(id = 3004, value = "Client not supported")
-    DeploymentException clientNotSupported();
+    //@Message(id = 3004, value = "Client not supported")
+    //DeploymentException clientNotSupported();
 
     @Message(id = 3005, value = "MessageHandler for type %s already registered")
     IllegalStateException handlerAlreadyRegistered(FrameHandler.FrameType frameType);
@@ -84,8 +84,8 @@ public interface JsrWebSocketMessages {
     @Message(id = 3014, value = "Could not determine decoder type for %s")
     IllegalArgumentException couldNotDetermineDecoderTypeFor(Class<?> decoderClass);
 
-    @Message(id = 3015, value = "No decoder accepted message %s")
-    String noDecoderAcceptedMessage(List<? extends Decoder> decoders);
+    //@Message(id = 3015, value = "No decoder accepted message %s")
+    //String noDecoderAcceptedMessage(List<? extends Decoder> decoders);
 
     @Message(id = 3016, value = "Cannot send in middle of fragmeneted message")
     IllegalStateException cannotSendInMiddleOfFragmentedMessage();
@@ -102,8 +102,8 @@ public interface JsrWebSocketMessages {
     @Message(id = 3020, value = "%s did not implement known decoder interface")
     DeploymentException didNotImplementKnownDecoderSubclass(Class<? extends Decoder> decoder);
 
-    @Message(id = 3021, value = "%s does not have default constructor")
-    DeploymentException classDoesNotHaveDefaultConstructor(Class<?> c, @Cause NoSuchMethodException e);
+    //@Message(id = 3021, value = "%s does not have default constructor")
+    //DeploymentException classDoesNotHaveDefaultConstructor(Class<?> c, @Cause NoSuchMethodException e);
 
     @Message(id = 3023, value = "Multiple endpoints with the same logical mapping %s and %s")
     DeploymentException multipleEndpointsWithOverlappingPaths(PathTemplate template, PathTemplate existing);
@@ -111,8 +111,8 @@ public interface JsrWebSocketMessages {
     @Message(id = 3024, value = "Web socket deployment failed")
     DeploymentException couldNotDeploy(@Cause Exception e);
 
-    @Message(id = 3025, value = "Cannot connect until deployment is complete")
-    IllegalStateException cannotConnectUntilDeploymentComplete();
+    //@Message(id = 3025, value = "Cannot connect until deployment is complete")
+    //IllegalStateException cannotConnectUntilDeploymentComplete();
 
     @Message(id = 3026, value = "%s is not a valid client endpoint type")
     DeploymentException notAValidClientEndpointType(Class<?> type);
@@ -126,11 +126,11 @@ public interface JsrWebSocketMessages {
     @Message(id = 3029, value = "Could not find message parameter on method %s")
     DeploymentException couldNotFindMessageParameter(Method method);
 
-    @Message(id = 3030, value = "Received a text frame however endpoint does not have a method capable of handling it")
-    RuntimeException receivedTextFrameButNoMethod();
+    //@Message(id = 3030, value = "Received a text frame however endpoint does not have a method capable of handling it")
+    //RuntimeException receivedTextFrameButNoMethod();
 
-    @Message(id = 3031, value = "Received a binary frame however endpoint does not have a method capable of handling it")
-    RuntimeException receivedBinaryFrameButNoMethod();
+    //@Message(id = 3031, value = "Received a binary frame however endpoint does not have a method capable of handling it")
+    //RuntimeException receivedBinaryFrameButNoMethod();
 
     @Message(id = 3033, value = "Method %s has invalid parameters at locations %s. It looks like you may have accidentally used jakarta.ws.rs.PathParam instead of jakarta.websocket.server.PathParam")
     DeploymentException invalidParametersWithWrongAnnotation(Method method, Set<Integer> allParams);
@@ -138,8 +138,8 @@ public interface JsrWebSocketMessages {
     @Message(id = 3034, value = "Server provided extension %s which was not in client supported extensions %s")
     IOException extensionWasNotPresentInClientHandshake(String e, List supportedExtensions);
 
-    @Message(id = 3035, value = "Connection timed out")
-    IOException connectionTimedOut();
+    //@Message(id = 3035, value = "Connection timed out")
+    //IOException connectionTimedOut();
 
     @Message(id = 3036, value = "SendHandler is null")
     IllegalArgumentException handlerIsNull();
@@ -150,8 +150,8 @@ public interface JsrWebSocketMessages {
     @Message(id = 3038, value = "Message of size %s was larger than the maximum of %s")
     IllegalArgumentException messageTooLarge(int size, int max);
 
-    @Message(id = 3039, value = "The container cannot find a suitable constructor to instantiate endpoint of type %s")
-    InstantiationException cannotInstantiateEndpoint(Class<?> c);
+    //@Message(id = 3039, value = "The container cannot find a suitable constructor to instantiate endpoint of type %s")
+    //InstantiationException cannotInstantiateEndpoint(Class<?> c);
 
     @Message(id = 3040, value = "Annotated endpoint instance %s was not of correct type %s")
     IllegalArgumentException endpointNotOfCorrectType(Object instance, Class expected);

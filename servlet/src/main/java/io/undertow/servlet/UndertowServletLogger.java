@@ -46,7 +46,7 @@ public interface UndertowServletLogger extends BasicLogger {
     UndertowServletLogger ROOT_LOGGER = Logger.getMessageLogger(lookup(), UndertowServletLogger.class, UndertowServletLogger.class.getPackage().getName());
 
     UndertowServletLogger REQUEST_LOGGER = Logger.getMessageLogger(lookup(), UndertowServletLogger.class, UndertowServletLogger.class.getPackage().getName() + ".request");
-//
+
 //    @LogMessage(level = ERROR)
 //    @Message(id = 15000, value = "IOException handling request")
 //    void ioExceptionHandingRequest(@Cause IOException e);
@@ -62,7 +62,7 @@ public interface UndertowServletLogger extends BasicLogger {
     @LogMessage(level = ERROR)
     @Message(id = 15003, value = "Stopping servlet %s till %s due to temporary unavailability")
     void stoppingServletUntilDueToTemporaryUnavailability(String name, Date till, @Cause UnavailableException e);
-//
+
 //    @LogMessage(level = ERROR)
 //    @Message(id = 15004, value = "Malformed URL exception reading resource %s")
 //    void malformedUrlException(String relativePath, @Cause MalformedURLException e);
@@ -91,7 +91,7 @@ public interface UndertowServletLogger extends BasicLogger {
     @LogMessage(level = Logger.Level.WARN)
     @Message(id = 15010, value = "Failed to persist sessions")
     void failedToPersistSessions(@Cause Exception e);
-//
+
 //    @LogMessage(level = Logger.Level.WARN)
 //    @Message(id = 15011, value = "Non standard filter mapping '*' for filter %s. Portable application should use '/*' instead.")
 //    void nonStandardFilterMapping(String filterName);
@@ -99,7 +99,7 @@ public interface UndertowServletLogger extends BasicLogger {
     @LogMessage(level = ERROR)
     @Message(id = 15012, value = "Failed to generate error page %s for original exception: %s. Generating error page resulted in a %s.")
     void errorGeneratingErrorPage(String originalErrorPage, Object originalException, int code,  @Cause Throwable cause);
-//
+
 //    @Message(id = 15013, value = "Error opening rewrite configuration")
 //    String errorOpeningRewriteConfiguration();
 
