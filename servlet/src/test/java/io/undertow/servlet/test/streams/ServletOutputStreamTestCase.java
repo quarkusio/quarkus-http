@@ -18,7 +18,14 @@
 
 package io.undertow.servlet.test.streams;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
@@ -51,6 +58,7 @@ public class ServletOutputStreamTestCase {
     public static final String BLOCKING_SERVLET = "blockingOutput";
     public static final String ASYNC_SERVLET = "asyncOutput";
     public static final String CONTENT_LENGTH_SERVLET = "contentLength";
+    public static final String FLUSH_BUFFER_SERVLET = "flushBuffer";
     public static final String RESET = "reset";
 
     public static final String START = "START";
@@ -71,9 +79,111 @@ public class ServletOutputStreamTestCase {
                         .setAsyncSupported(true),
                 new ServletInfo(CONTENT_LENGTH_SERVLET, ContentLengthCloseFlushServlet.class)
                         .addMapping("/" + CONTENT_LENGTH_SERVLET),
+                new ServletInfo(FLUSH_BUFFER_SERVLET, FlushBufferServlet.class)
+                        .addMapping("/" + FLUSH_BUFFER_SERVLET)
+                        .setAsyncSupported(true),
                 new ServletInfo(RESET, ResetBufferServlet.class).addMapping("/" + RESET));
     }
 
+    @Test
+    public void testFlushBufferCommitsEmptyResponseAndAllowsSubsequentOutput() throws IOException {
+        runFlushBufferTest(null, "true:body");
+    }
+
+    @Test
+    public void testResetBufferFailsAfterFlushingEmptyResponse() throws IOException {
+        runFlushBufferTest("resetBuffer", "true");
+    }
+
+    @Test
+    public void testResetFailsWithoutChangingOutputModeAfterFlushingEmptyResponse() throws IOException {
+        runFlushBufferTest("reset", "true:true");
+    }
+
+    @Test
+    public void testAsyncFlushCommitsEmptyResponseAndRejectsResetBuffer() throws IOException {
+        runFlushBufferTest("async", "true:true:body");
+    }
+
+    @Test
+    public void testAsyncEmptyFlushDoesNotTriggerAnotherWriteCallback() throws IOException {
+        runFlushBufferTest("asyncOpen", "");
+    }
+
+    @Test
+    public void testAsyncEmptyAllocatedBufferFlushDoesNotTriggerAnotherWriteCallback() throws IOException {
+        runFlushBufferTest("asyncOpenReset", "");
+    }
+
+    @Test
+    public void testAsyncEmptyFlushSendsResponseHeadBeforeCompletion() throws Exception {
+        assertAsyncEmptyFlushSendsResponseHeadBeforeCompletion("asyncHead");
+    }
+
+    @Test
+    public void testAsyncEmptyNonBlockingFlushSendsResponseHeadBeforeCompletion() throws Exception {
+        assertAsyncEmptyFlushSendsResponseHeadBeforeCompletion("asyncHeadNonBlocking");
+    }
+
+    private void assertAsyncEmptyFlushSendsResponseHeadBeforeCompletion(String action) throws Exception {
+        FlushBufferServlet.AsyncHeadControl control = new FlushBufferServlet.AsyncHeadControl();
+        FlushBufferServlet.asyncHeadControl = control;
+        try {
+            URI uri = URI.create(getBaseUrl());
+            Socket socket = "https".equals(uri.getScheme())
+                    ? DefaultServer.createClientSslContext().getSocketFactory().createSocket()
+                    : new Socket();
+            try (Socket response = socket) {
+                response.connect(new InetSocketAddress(uri.getHost(), uri.getPort()), 3_000);
+                response.setSoTimeout(3_000);
+                response.getOutputStream().write(("GET /servletContext/" + FLUSH_BUFFER_SERVLET
+                        + "?action=" + action + " HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
+                        .getBytes(StandardCharsets.US_ASCII));
+                response.getOutputStream().flush();
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(response.getInputStream(), StandardCharsets.US_ASCII));
+                Assert.assertEquals("HTTP/1.1 200 OK", reader.readLine());
+                boolean foundHeader = false;
+                boolean headComplete = false;
+                for (int i = 0; i < 50; i++) {
+                    String line = reader.readLine();
+                    Assert.assertNotNull("Response head ended before the blank line", line);
+                    if (line.isEmpty()) {
+                        headComplete = true;
+                        break;
+                    }
+                    if (line.equalsIgnoreCase("X-Async-Head: ready")) {
+                        foundHeader = true;
+                    }
+                }
+                Assert.assertTrue("Response head was not complete", headComplete);
+                Assert.assertTrue("Response head marker was missing", foundHeader);
+                Assert.assertEquals("Async context completed before the response head arrived", 1, control.completed.getCount());
+                control.release.countDown();
+                Assert.assertTrue("Async context did not complete", control.completed.await(5, TimeUnit.SECONDS));
+            }
+        } finally {
+            control.release.countDown();
+            FlushBufferServlet.asyncHeadControl = null;
+        }
+    }
+
+    private void runFlushBufferTest(String action, String expectedBody) throws IOException {
+        TestHttpClient client = createClient();
+        try {
+            String uri = getBaseUrl() + "/servletContext/" + FLUSH_BUFFER_SERVLET;
+            if (action != null) {
+                uri += "?action=" + action;
+            }
+            HttpGet get = new HttpGet(uri);
+            HttpResponse result = client.execute(get);
+
+            Assert.assertEquals(StatusCodes.OK, result.getStatusLine().getStatusCode());
+            Assert.assertEquals(expectedBody, HttpClientUtils.readResponse(result));
+        } finally {
+            client.getConnectionManager().shutdown();
+        }
+    }
 
     @Test
     public void testFlushAndCloseWithContentLength() throws Exception {
