@@ -209,7 +209,7 @@ public class SecurityContextImpl extends AbstractSecurityContext implements Auth
             return false;
         }
 
-        authenticationComplete(account, programaticMechName, true);
+        authenticationComplete(account, programaticMechName, true, true);
         this.authenticationState = AuthenticationState.AUTHENTICATED;
 
         return true;
