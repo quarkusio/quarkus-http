@@ -78,6 +78,17 @@ public class ServletOutputStreamImpl extends ServletOutputStream {
 
     private WriteListener listener;
     private volatile ListenerCallback listenerCallback;
+    private final IoCallback<Void> emptyBufferFlushCallback = new IoCallback<Void>() {
+        @Override
+        public void onComplete(HttpExchange exchange, Void context) {
+            // An empty flush commits the response without changing write readiness.
+        }
+
+        @Override
+        public void onException(HttpExchange exchange, Void context, IOException exception) {
+            listenerCallback.onException(exchange, context, exception);
+        }
+    };
 
     /**
      * Construct a new instance.  No write timeout is configured.
@@ -204,16 +215,19 @@ public class ServletOutputStreamImpl extends ServletOutputStream {
         if (anyAreSet(state, FLAG_CLOSED)) {
             return;
         }
+        if ((pooledBuffer == null || !pooledBuffer.isReadable()) && anyAreSet(state, FLAG_WRITE_STARTED)) {
+            return;
+        }
         try {
-            if (pooledBuffer != null) {
-                if (listener == null) {
-                    exchange.writeBlocking(pooledBuffer, false);
-                    pooledBuffer = null;
-                } else {
-                    exchange.writeAsync(pooledBuffer, false, listenerCallback, null);
-                    pooledBuffer = null;
-                }
+            ByteBuf buffer = pooledBuffer == null ? Unpooled.EMPTY_BUFFER : pooledBuffer;
+            if (listener == null) {
+                exchange.writeBlocking(buffer, false);
+            } else {
+                IoCallback<Void> callback = buffer.isReadable() ? listenerCallback : emptyBufferFlushCallback;
+                exchange.writeAsync(buffer, false, callback, null);
             }
+            setFlags(FLAG_WRITE_STARTED);
+            pooledBuffer = null;
         } catch (Exception e) {
             if (pooledBuffer != null) {
                 pooledBuffer.release();
