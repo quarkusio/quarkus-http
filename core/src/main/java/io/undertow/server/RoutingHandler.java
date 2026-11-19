@@ -120,7 +120,7 @@ public class RoutingHandler implements HttpHandler {
         if (res == null) {
             matcher.add(template, res = new RoutingMatch());
         }
-        if (allMethodsMatcher.get(template) == null) {
+        if (allMethodsMatcher.match(template) == null) {
             allMethodsMatcher.add(template, res);
         }
         res.defaultHandler = handler;
@@ -152,7 +152,7 @@ public class RoutingHandler implements HttpHandler {
         if (res == null) {
             matcher.add(template, res = new RoutingMatch());
         }
-        if (allMethodsMatcher.get(template) == null) {
+        if (allMethodsMatcher.match(template) == null) {
             allMethodsMatcher.add(template, res);
         }
         res.predicatedHandlers.add(new HandlerHolder(predicate, handler));
@@ -186,7 +186,7 @@ public class RoutingHandler implements HttpHandler {
             // If we use allMethodsMatcher.addAll() we can have duplicate
             // PathTemplates which we want to ignore here so it does not crash.
             for (PathTemplate template : entry.getValue().getPathTemplates()) {
-                if (allMethodsMatcher.get(template.getTemplateString()) == null) {
+                if (allMethodsMatcher.match(template.getTemplateString()) == null) {
                     allMethodsMatcher.add(template, new RoutingMatch());
                 }
             }

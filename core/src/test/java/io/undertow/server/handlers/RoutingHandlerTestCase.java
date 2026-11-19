@@ -126,6 +126,12 @@ public class RoutingHandlerTestCase {
                         exchange.writeAsync("posted foo");
                     }
                 })
+                .add(HttpMethodNames.POST, "/foo/{baz}", new HttpHandler() {
+                    @Override
+                    public void handleRequest(HttpServerExchange exchange) throws Exception {
+                        exchange.writeAsync("foo-path" + exchange.getQueryParameters().get("bar"));
+                    }
+                })
                 .add(HttpMethodNames.GET, "/foo/{bar}", new HttpHandler() {
                     @Override
                     public void handleRequest(HttpServerExchange exchange) throws Exception {
