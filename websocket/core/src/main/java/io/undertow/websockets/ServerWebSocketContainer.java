@@ -37,8 +37,11 @@ import javax.net.ssl.SSLContext;
 import jakarta.websocket.ClientEndpoint;
 import jakarta.websocket.ClientEndpointConfig;
 import jakarta.websocket.CloseReason;
+import jakarta.websocket.Decoder;
 import jakarta.websocket.DeploymentException;
+import jakarta.websocket.Encoder;
 import jakarta.websocket.Endpoint;
+import jakarta.websocket.EndpointConfig;
 import jakarta.websocket.Extension;
 import jakarta.websocket.HandshakeResponse;
 import jakarta.websocket.Session;
@@ -578,7 +581,8 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
             Class<? extends ServerEndpointConfig.Configurator> configuratorClass = serverEndpoint.configurator();
 
             EncodingFactory encodingFactory = EncodingFactory.createFactory(objectIntrospecter, serverEndpoint.decoders(), serverEndpoint.encoders());
-            AnnotatedEndpointFactory annotatedEndpointFactory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, template.getParameterNames());
+            EndpointConfig endpointConfig = createEndpointConfig(serverEndpoint.encoders(), serverEndpoint.decoders());
+            AnnotatedEndpointFactory annotatedEndpointFactory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, template.getParameterNames(), endpointConfig);
             ObjectFactory<?> ObjectFactory = null;
             try {
                 ObjectFactory = objectIntrospecter.createInstanceFactory(endpoint);
@@ -636,7 +640,8 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
                     }
                 }
             }
-            AnnotatedEndpointFactory factory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, Collections.<String>emptySet());
+            EndpointConfig endpointConfig = createEndpointConfig(clientEndpoint.encoders(), clientEndpoint.decoders());
+            AnnotatedEndpointFactory factory = AnnotatedEndpointFactory.create(endpoint, encodingFactory, Collections.<String>emptySet(), endpointConfig);
 
             ClientEndpointConfig.Configurator configurator = null;
             configurator = objectIntrospecter.createInstanceFactory(clientEndpoint.configurator()).createInstance().getInstance();
@@ -653,6 +658,25 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         } else {
             throw JsrWebSocketMessages.MESSAGES.classWasNotAnnotated(endpoint);
         }
+    }
+
+    private EndpointConfig createEndpointConfig(Class<? extends Encoder>[] encoders, Class<? extends Decoder>[] decoders) {
+        return new EndpointConfig() {
+            @Override
+            public List<Class<? extends Encoder>> getEncoders() {
+                return Arrays.asList(encoders);
+            }
+
+            @Override
+            public List<Class<? extends Decoder>> getDecoders() {
+                return Arrays.asList(decoders);
+            }
+
+            @Override
+            public Map<String, Object> getUserProperties() {
+                return Collections.emptyMap();
+            }
+        };
     }
 
 
@@ -682,7 +706,7 @@ public class ServerWebSocketContainer implements ServerContainer, Closeable {
         AnnotatedEndpointFactory annotatedEndpointFactory = null;
         if (!Endpoint.class.isAssignableFrom(endpoint.getEndpointClass())) {
             // We may want to check that the path in @ServerEndpoint matches the specified path, and throw if they are not equivalent
-            annotatedEndpointFactory = AnnotatedEndpointFactory.create(endpoint.getEndpointClass(), encodingFactory, template.getParameterNames());
+            annotatedEndpointFactory = AnnotatedEndpointFactory.create(endpoint.getEndpointClass(), encodingFactory, template.getParameterNames(), endpoint);
         }
         ConfiguredServerEndpoint confguredServerEndpoint = new ConfiguredServerEndpoint(endpoint, null, template, encodingFactory, annotatedEndpointFactory, endpoint.getExtensions());
         configuredServerEndpoints.add(confguredServerEndpoint);

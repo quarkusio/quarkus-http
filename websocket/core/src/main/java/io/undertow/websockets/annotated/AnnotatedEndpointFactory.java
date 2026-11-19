@@ -73,7 +73,7 @@ public class AnnotatedEndpointFactory {
     }
 
 
-    public static AnnotatedEndpointFactory create(final Class<?> endpointClass, final EncodingFactory encodingFactory, final Set<String> paths) throws DeploymentException {
+    public static AnnotatedEndpointFactory create(final Class<?> endpointClass, final EncodingFactory encodingFactory, final Set<String> paths, final EndpointConfig endpointConfig) throws DeploymentException {
         final Set<Class<? extends Annotation>> found = new HashSet<>();
         BoundMethod onOpen = null;
         BoundMethod onClose = null;
@@ -96,7 +96,7 @@ public class AnnotatedEndpointFactory {
                     found.add(OnOpen.class);
                     onOpen = new BoundMethod(method, null, false, 0, new BoundSingleParameter(method, Session.class, true),
                             new BoundSingleParameter(method, EndpointConfig.class, true),
-                            createBoundPathParameters(method, paths, endpointClass));
+                            createBoundPathParameters(method, paths, endpointClass, encodingFactory, endpointConfig));
                 }
                 if (method.isAnnotationPresent(OnClose.class)) {
                     if (found.contains(OnClose.class)) {
@@ -109,7 +109,7 @@ public class AnnotatedEndpointFactory {
                     found.add(OnClose.class);
                     onClose = new BoundMethod(method, null, false, 0, new BoundSingleParameter(method, Session.class, true),
                             new BoundSingleParameter(method, CloseReason.class, true),
-                            createBoundPathParameters(method, paths, endpointClass));
+                            createBoundPathParameters(method, paths, endpointClass, encodingFactory, endpointConfig));
                 }
                 if (method.isAnnotationPresent(OnError.class)) {
                     if (found.contains(OnError.class)) {
@@ -122,7 +122,7 @@ public class AnnotatedEndpointFactory {
                     found.add(OnError.class);
                     onError = new BoundMethod(method, null, false, 0, new BoundSingleParameter(method, Session.class, true),
                             new BoundSingleParameter(method, Throwable.class, false),
-                            createBoundPathParameters(method, paths, endpointClass));
+                            createBoundPathParameters(method, paths, endpointClass, encodingFactory, endpointConfig));
                 }
                 if (method.isAnnotationPresent(OnMessage.class) && !method.isBridge()) {
                     if (binaryMessage != null && binaryMessage.overrides(method)) {
@@ -153,7 +153,7 @@ public class AnnotatedEndpointFactory {
                             }
                             textMessage = new BoundMethod(method, param, true, maxMessageSize, new BoundSingleParameter(method, Session.class, true),
                                     new BoundSingleParameter(i, param),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(method, paths, endpointClass, encodingFactory, endpointConfig));
                             messageHandled = true;
                             break;
                         } else if (encodingFactory.canDecodeBinary(param)) {
@@ -162,7 +162,7 @@ public class AnnotatedEndpointFactory {
                             }
                             binaryMessage = new BoundMethod(method, param, true, maxMessageSize, new BoundSingleParameter(method, Session.class, true),
                                     new BoundSingleParameter(i, param),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(method, paths, endpointClass, encodingFactory, endpointConfig));
                             messageHandled = true;
                             break;
                         } else if (param.equals(byte[].class)) {
@@ -172,7 +172,7 @@ public class AnnotatedEndpointFactory {
                             binaryMessage = new BoundMethod(method, byte[].class, false, maxMessageSize, new BoundSingleParameter(method, Session.class, true),
                                     new BoundSingleParameter(method, boolean.class, true),
                                     new BoundSingleParameter(i, byte[].class),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(method, paths, endpointClass, encodingFactory, endpointConfig));
                             messageHandled = true;
                             break;
                         } else if (param.equals(ByteBuffer.class)) {
@@ -183,7 +183,7 @@ public class AnnotatedEndpointFactory {
                                     maxMessageSize, new BoundSingleParameter(method, Session.class, true),
                                     new BoundSingleParameter(method, boolean.class, true),
                                     new BoundSingleParameter(i, ByteBuffer.class),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(method, paths, endpointClass, encodingFactory, endpointConfig));
                             messageHandled = true;
                             break;
 
@@ -194,7 +194,7 @@ public class AnnotatedEndpointFactory {
                             binaryMessage = new BoundMethod(method, InputStream.class, false,
                                     maxMessageSize, new BoundSingleParameter(method, Session.class, true),
                                     new BoundSingleParameter(i, InputStream.class),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(method, paths, endpointClass, encodingFactory, endpointConfig));
                             messageHandled = true;
                             break;
 
@@ -205,7 +205,7 @@ public class AnnotatedEndpointFactory {
                             textMessage = new BoundMethod(method, String.class, false, maxMessageSize, new BoundSingleParameter(method, Session.class, true),
                                     new BoundSingleParameter(method, boolean.class, true),
                                     new BoundSingleParameter(i, String.class),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(method, paths, endpointClass, encodingFactory, endpointConfig));
                             messageHandled = true;
                             break;
 
@@ -216,7 +216,7 @@ public class AnnotatedEndpointFactory {
                             textMessage = new BoundMethod(method, Reader.class, false,
                                     maxMessageSize, new BoundSingleParameter(method, Session.class, true),
                                     new BoundSingleParameter(i, Reader.class),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(method, paths, endpointClass, encodingFactory, endpointConfig));
                             messageHandled = true;
                             break;
 
@@ -226,7 +226,7 @@ public class AnnotatedEndpointFactory {
                             }
                             pongMessage = new BoundMethod(method, PongMessage.class, false, maxMessageSize, new BoundSingleParameter(method, Session.class, true),
                                     new BoundSingleParameter(i, PongMessage.class),
-                                    createBoundPathParameters(method, paths, endpointClass));
+                                    createBoundPathParameters(method, paths, endpointClass, encodingFactory, endpointConfig));
                             messageHandled = true;
                             break;
                         }
@@ -240,7 +240,7 @@ public class AnnotatedEndpointFactory {
                         textMessage = new BoundMethod(method, boolClass, true, maxMessageSize, new BoundSingleParameter(method, Session.class, true),
                                 new BoundSingleParameter(method, boolean.class, true),
                                 new BoundSingleParameter(booleanLocation, boolClass),
-                                createBoundPathParameters(method, paths, endpointClass));
+                                createBoundPathParameters(method, paths, endpointClass, encodingFactory, endpointConfig));
                         messageHandled = true;
                     }
                     if (!messageHandled) {
@@ -253,8 +253,8 @@ public class AnnotatedEndpointFactory {
         return new AnnotatedEndpointFactory(endpointClass, onOpen, onClose, onError, textMessage, binaryMessage, pongMessage);
     }
 
-    private static BoundPathParameters createBoundPathParameters(final Method method, Set<String> paths, Class<?> endpointClass) throws DeploymentException {
-        return new BoundPathParameters(pathParams(method), method, endpointClass, paths);
+    private static BoundPathParameters createBoundPathParameters(final Method method, Set<String> paths, Class<?> endpointClass, final EncodingFactory encodingFactory, final EndpointConfig endpointConfig) throws DeploymentException {
+        return new BoundPathParameters(pathParams(method), method, endpointClass, paths, encodingFactory, endpointConfig);
     }
 
 
@@ -364,24 +364,20 @@ public class AnnotatedEndpointFactory {
      */
     private static class BoundPathParameters implements BoundParameter {
 
-        private final Class<?> endpointClass;
-        private final Set<String> paths;
         private final String[] positions;
         private final Encoding[] encoders;
         private final Class[] types;
 
-        BoundPathParameters(final String[] positions, final Method method, Class<?> endpointClass, Set<String> paths) throws DeploymentException {
+        BoundPathParameters(final String[] positions, final Method method, Class<?> endpointClass, Set<String> paths, final EncodingFactory encodingFactory, final EndpointConfig endpointConfig) throws DeploymentException {
             this.positions = positions;
-            this.endpointClass = endpointClass;
-            this.paths = paths;
             this.encoders = new Encoding[positions.length];
             this.types = new Class[positions.length];
             for (int i = 0; i < positions.length; ++i) {
                 Class type = method.getParameterTypes()[i];
                 Annotation[] annotations = method.getParameterAnnotations()[i];
-                for (int j = 0; j < annotations.length; ++j) {
-                    if (annotations[j] instanceof PathParam) {
-                        PathParam param = (PathParam) annotations[j];
+                for (Annotation annotation : annotations) {
+                    if (annotation instanceof PathParam) {
+                        PathParam param = (PathParam) annotation;
                         if (!paths.contains(param.value())) {
                             JsrWebSocketLogger.ROOT_LOGGER.pathTemplateNotFound(endpointClass, param, method, paths);
                         }
@@ -390,8 +386,8 @@ public class AnnotatedEndpointFactory {
                 if (positions[i] == null || type == null || type == String.class) {
                     continue;
                 }
-                if (EncodingFactory.DEFAULT.canEncodeText(type)) {
-                    encoders[i] = EncodingFactory.DEFAULT.createEncoding(EmptyEndpointConfig.INSTANCE);
+                if (encodingFactory.canDecodeText(type)) {
+                    encoders[i] = encodingFactory.createEncoding(endpointConfig);
                     types[i] = type;
 
                 } else {
