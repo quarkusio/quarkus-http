@@ -103,6 +103,9 @@ public class AsyncContextImpl implements AsyncContext {
         this.requestSupplied = requestSupplied;
         this.previousAsyncContext = previousAsyncContext;
         initiatingThread = Thread.currentThread();
+        if (!exchange.isComplete()) {
+            exchange.addExchangeCompleteListener(new AbortListener());
+        }
         exchange.dispatch(SameThreadExecutor.INSTANCE, new Runnable() {
             @Override
             public void run() {
@@ -542,6 +545,29 @@ public class AsyncContextImpl implements AsyncContext {
                                     }
                                 }
                             });
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    /**
+     * The client can abort the response of an async cycle which is not completed nor dispatched, such as the one of a
+     * Server-Sent Events endpoint. The async cycle then has to be terminated on behalf of the application, so that it
+     * gets the chance to release any state it keeps for the connection.
+     */
+    private final class AbortListener implements ExchangeCompletionListener {
+
+        @Override
+        public void exchangeEvent(HttpServerExchange exchange) {
+            synchronized (AsyncContextImpl.this) {
+                if (exchange.isResponseAborted() && !dispatched && !complete) {
+                    addAsyncTask(new Runnable() {
+                        @Override
+                        public void run() {
+                            UndertowServletLogger.REQUEST_LOGGER.debug("Async request was aborted by the client");
+                            handleError(UndertowServletMessages.MESSAGES.asyncRequestAborted());
                         }
                     });
                 }

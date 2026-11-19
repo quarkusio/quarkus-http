@@ -73,7 +73,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
 
     private boolean eof = false;
     private boolean eofRead = false;
-    private boolean responseDone = false;
+    private volatile boolean responseDone = false;
 
     private boolean waitingForWrite;
     private boolean drainHandlerRegistered;
@@ -202,7 +202,7 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                     }
 
                 }
-                terminateResponse();
+                abortResponse();
                 VertxHttpExchange.this.close();
             }
         });
@@ -215,7 +215,11 @@ public class VertxHttpExchange extends HttpExchangeBase implements HttpExchange,
                         request.connection().notify();
                     }
                 }
-                terminateResponse();
+                if (responseDone) {
+                    terminateResponse();
+                } else {
+                    abortResponse();
+                }
             }
         });
         if (request.headers().contains(HttpHeaderNames.UPGRADE)) {

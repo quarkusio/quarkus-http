@@ -37,6 +37,7 @@ public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
 
     private boolean requestTerminated;
     private boolean responseTerminated;
+    private boolean responseAborted;
     private CompletedListener completedListener;
     private BlockingHttpExchange blockingHttpExchange;
 
@@ -95,6 +96,15 @@ public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
         }
     }
 
+    /**
+     * Terminate the response because the connection was closed before it was completely written, so that
+     * {@link #isResponseAborted()} can tell it apart from a response which was completely written.
+     */
+    protected void abortResponse() {
+        responseAborted = true;
+        terminateResponse();
+    }
+
     @Override
     public void setBlockingHttpExchange(BlockingHttpExchange exchange) {
         if (blockingHttpExchange != null) {
@@ -149,6 +159,11 @@ public abstract class HttpExchangeBase implements HttpExchange, OutputChannel {
     @Override
     public boolean isResponseComplete() {
         return responseTerminated;
+    }
+
+    @Override
+    public boolean isResponseAborted() {
+        return responseAborted;
     }
 
     public void endExchange() {
